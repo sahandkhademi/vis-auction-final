@@ -1,15 +1,8 @@
 import { FeaturedAuction } from "@/components/FeaturedAuction";
 import { AuctionCard } from "@/components/AuctionCard";
 import { motion } from "framer-motion";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
 
 const Index = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-
   const featuredAuction = {
     title: "Ethereal Luminescence by Sarah Chen",
     description: "A masterpiece that captures the ephemeral nature of light and shadow through innovative digital techniques. This piece represents a breakthrough in digital art.",
@@ -53,18 +46,6 @@ const Index = () => {
     }
   ];
 
-  const filteredAndSortedAuctions = auctions
-    .filter(auction => {
-      const matchesSearch = auction.title.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = categoryFilter === "all" || auction.category === categoryFilter;
-      return matchesSearch && matchesCategory;
-    })
-    .sort((a, b) => {
-      if (sortBy === "highest") return b.currentBid - a.currentBid;
-      if (sortBy === "lowest") return a.currentBid - b.currentBid;
-      return 0; // "newest" is default, keep original order
-    });
-
   return (
     <div className="min-h-screen bg-gray-50">
       <FeaturedAuction {...featuredAuction} />
@@ -82,45 +63,8 @@ const Index = () => {
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="flex-1">
-            <Input
-              placeholder="Search auctions..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <div>
-            <Select defaultValue={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="Digital Art">Digital Art</SelectItem>
-                <SelectItem value="Photography">Photography</SelectItem>
-                <SelectItem value="Abstract">Abstract</SelectItem>
-                <SelectItem value="Landscape">Landscape</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Select defaultValue={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="highest">Highest Price</SelectItem>
-                <SelectItem value="lowest">Lowest Price</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredAndSortedAuctions.map((auction) => (
+          {auctions.map((auction) => (
             <AuctionCard key={auction.id} {...auction} />
           ))}
         </div>
