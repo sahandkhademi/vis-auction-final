@@ -1,8 +1,15 @@
 import { FeaturedAuction } from "@/components/FeaturedAuction";
 import { AuctionCard } from "@/components/AuctionCard";
 import { motion } from "framer-motion";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
 
 const Index = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+
   const featuredAuction = {
     title: "Ethereal Luminescence by Sarah Chen",
     description: "A masterpiece that captures the ephemeral nature of light and shadow through innovative digital techniques. This piece represents a breakthrough in digital art.",
@@ -13,6 +20,7 @@ const Index = () => {
 
   const auctions = [
     {
+      id: 1,
       title: "Digital Dystopia",
       image: "https://images.unsplash.com/photo-1563089145-599997674d42?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
       currentBid: 5000,
@@ -20,6 +28,7 @@ const Index = () => {
       category: "Digital Art"
     },
     {
+      id: 2,
       title: "Neon Dreams",
       image: "https://images.unsplash.com/photo-1577083552431-6e5fd01988ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
       currentBid: 3200,
@@ -27,6 +36,7 @@ const Index = () => {
       category: "Photography"
     },
     {
+      id: 3,
       title: "Abstract Thoughts",
       image: "https://images.unsplash.com/photo-1574169208507-84376144848b?ixlib=rb-4.0.3&auto=format&fit=crop&w=879&q=80",
       currentBid: 7500,
@@ -34,6 +44,7 @@ const Index = () => {
       category: "Abstract"
     },
     {
+      id: 4,
       title: "Future Perfect",
       image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
       currentBid: 4200,
@@ -41,6 +52,18 @@ const Index = () => {
       category: "Landscape"
     }
   ];
+
+  const filteredAndSortedAuctions = auctions
+    .filter(auction => {
+      const matchesSearch = auction.title.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = categoryFilter === "all" || auction.category === categoryFilter;
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      if (sortBy === "highest") return b.currentBid - a.currentBid;
+      if (sortBy === "lowest") return a.currentBid - b.currentBid;
+      return 0; // "newest" is default, keep original order
+    });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -59,9 +82,42 @@ const Index = () => {
           </p>
         </div>
 
+        <div className="flex flex-col md:flex-row gap-4 mb-8">
+          <div className="flex-1">
+            <Input
+              placeholder="Search auctions..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-full md:w-[180px]">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="Digital Art">Digital Art</SelectItem>
+              <SelectItem value="Photography">Photography</SelectItem>
+              <SelectItem value="Abstract">Abstract</SelectItem>
+              <SelectItem value="Landscape">Landscape</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-full md:w-[180px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="highest">Highest Price</SelectItem>
+              <SelectItem value="lowest">Lowest Price</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {auctions.map((auction, index) => (
-            <AuctionCard key={index} {...auction} />
+          {filteredAndSortedAuctions.map((auction) => (
+            <AuctionCard key={auction.id} {...auction} />
           ))}
         </div>
       </motion.div>
