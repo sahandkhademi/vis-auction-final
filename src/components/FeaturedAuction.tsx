@@ -1,9 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
 
 interface FeaturedAuctionProps {
   title: string;
@@ -20,36 +17,6 @@ export const FeaturedAuction = ({
   currentBid,
   timeLeft,
 }: FeaturedAuctionProps) => {
-  const [bidAmount, setBidAmount] = useState("");
-  const { toast } = useToast();
-
-  const handleBid = () => {
-    const bid = parseFloat(bidAmount);
-    if (isNaN(bid)) {
-      toast({
-        title: "Invalid bid amount",
-        description: "Please enter a valid number",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (bid <= currentBid) {
-      toast({
-        title: "Bid too low",
-        description: "Your bid must be higher than the current bid",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    toast({
-      title: "Bid placed successfully!",
-      description: `You placed a bid of $${bid.toLocaleString()} on ${title}`,
-    });
-    setBidAmount("");
-  };
-
   return (
     <div className="relative h-[80vh] overflow-hidden">
       <div className="absolute inset-0">
@@ -85,22 +52,9 @@ export const FeaturedAuction = ({
             </div>
           </div>
           
-          <div className="flex gap-4 items-center">
-            <Input
-              type="number"
-              placeholder="Enter bid amount"
-              value={bidAmount}
-              onChange={(e) => setBidAmount(e.target.value)}
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              min={currentBid + 1}
-            />
-            <Button 
-              onClick={handleBid}
-              className="bg-white text-black hover:bg-gold hover:text-white transition-colors duration-300"
-            >
-              Place Bid
-            </Button>
-          </div>
+          <Button className="bg-white text-black hover:bg-gold hover:text-white transition-colors duration-300">
+            Place Bid
+          </Button>
         </div>
       </motion.div>
     </div>
