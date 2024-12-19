@@ -91,28 +91,32 @@ const Index = () => {
               className="w-full"
             />
           </div>
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full md:w-[180px]">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="Digital Art">Digital Art</SelectItem>
-              <SelectItem value="Photography">Photography</SelectItem>
-              <SelectItem value="Abstract">Abstract</SelectItem>
-              <SelectItem value="Landscape">Landscape</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-full md:w-[180px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="highest">Highest Price</SelectItem>
-              <SelectItem value="lowest">Lowest Price</SelectItem>
-            </SelectContent>
-          </Select>
+          <div>
+            <Select defaultValue={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full md:w-[180px]">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="Digital Art">Digital Art</SelectItem>
+                <SelectItem value="Photography">Photography</SelectItem>
+                <SelectItem value="Abstract">Abstract</SelectItem>
+                <SelectItem value="Landscape">Landscape</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Select defaultValue={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full md:w-[180px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="highest">Highest Price</SelectItem>
+                <SelectItem value="lowest">Lowest Price</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
