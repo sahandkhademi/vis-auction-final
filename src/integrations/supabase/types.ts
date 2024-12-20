@@ -9,32 +9,89 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      auctions: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          current_bid: number | null
+          description: string | null
+          end_time: string
+          id: string
+          image_url: string
+          starting_bid: number
+          status: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          current_bid?: number | null
+          description?: string | null
+          end_time: string
+          id?: string
+          image_url: string
+          starting_bid?: number
+          status?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          current_bid?: number | null
+          description?: string | null
+          end_time?: string
+          id?: string
+          image_url?: string
+          starting_bid?: number
+          status?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auctions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bidding_history: {
         Row: {
           amount: number
+          auction_id: string | null
           created_at: string | null
           id: string
-          item_id: string
+          item_id: string | null
           user_id: string
           won: boolean | null
         }
         Insert: {
           amount: number
+          auction_id?: string | null
           created_at?: string | null
           id?: string
-          item_id: string
+          item_id?: string | null
           user_id: string
           won?: boolean | null
         }
         Update: {
           amount?: number
+          auction_id?: string | null
           created_at?: string | null
           id?: string
-          item_id?: string
+          item_id?: string | null
           user_id?: string
           won?: boolean | null
         }
         Relationships: [
+          {
+            foreignKeyName: "bidding_history_auction_id_fkey"
+            columns: ["auction_id"]
+            isOneToOne: false
+            referencedRelation: "auctions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bidding_history_user_id_fkey"
             columns: ["user_id"]
