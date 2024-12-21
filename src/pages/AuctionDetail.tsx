@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const AuctionDetail = () => {
   const { id } = useParams();
@@ -20,11 +19,7 @@ const AuctionDetail = () => {
     timeLeft: "1d 8h 45m",
     category: "Digital Art",
     description: "A stunning piece that explores the intersection of technology and human existence. This digital masterpiece combines elements of cyberpunk aesthetics with contemporary digital art techniques.",
-    artist: {
-      id: 1,
-      name: "Digital Artist X",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
-    },
+    artist: "Digital Artist X",
     createdYear: "2024",
     dimensions: "4000x3000px",
     format: "Digital NFT"
@@ -76,14 +71,6 @@ const AuctionDetail = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="space-y-6"
           >
-            <Link to={`/artist/${auction.artist.id}`} className="flex items-center gap-4 hover:opacity-80 transition-opacity">
-              <Avatar>
-                <AvatarImage src={auction.artist.image} alt={auction.artist.name} />
-                <AvatarFallback>{auction.artist.name[0]}</AvatarFallback>
-              </Avatar>
-              <span className="text-lg font-medium">{auction.artist.name}</span>
-            </Link>
-
             <h1 className="text-4xl font-bold text-gray-900">{auction.title}</h1>
             <p className="text-lg text-gray-600">{auction.description}</p>
 
@@ -124,7 +111,7 @@ const AuctionDetail = () => {
               <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <dt className="text-gray-500">Artist</dt>
-                  <dd className="font-medium">{auction.artist.name}</dd>
+                  <dd className="font-medium">{auction.artist}</dd>
                 </div>
                 <div>
                   <dt className="text-gray-500">Year</dt>
