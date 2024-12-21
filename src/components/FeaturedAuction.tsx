@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
 
 interface FeaturedAuctionProps {
   title: string;
@@ -45,7 +44,7 @@ export const FeaturedAuction = ({
           <div className="flex gap-8 py-4">
             <div>
               <p className="text-gray-300">Current Bid</p>
-              <p className="text-2xl font-semibold">${currentBid?.toLocaleString()}</p>
+              <p className="text-2xl font-semibold">${currentBid.toLocaleString()}</p>
             </div>
             <div>
               <p className="text-gray-300">Time Left</p>
@@ -53,11 +52,9 @@ export const FeaturedAuction = ({
             </div>
           </div>
           
-          <Link to="/auction/1">
-            <Button className="bg-white text-black hover:bg-gold hover:text-white transition-colors duration-300">
-              Place Bid
-            </Button>
-          </Link>
+          <Button className="bg-white text-black hover:bg-gold hover:text-white transition-colors duration-300">
+            Place Bid
+          </Button>
         </div>
       </motion.div>
     </div>

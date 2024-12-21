@@ -1,40 +1,50 @@
 import { FeaturedAuction } from "@/components/FeaturedAuction";
 import { AuctionCard } from "@/components/AuctionCard";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
-  const { data: auctions, isLoading } = useQuery({
-    queryKey: ['auctions'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('auctions')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const featuredAuction = auctions?.[0] ? {
-    title: auctions[0].title,
-    description: auctions[0].description || "",
-    image: auctions[0].image_url,
-    currentBid: auctions[0].current_bid || auctions[0].starting_bid,
-    timeLeft: new Date(auctions[0].end_time).toLocaleDateString()
-  } : {
-    title: "No auctions available",
-    description: "Check back later for new auctions",
+  const featuredAuction = {
+    title: "Ethereal Luminescence by Sarah Chen",
+    description: "A masterpiece that captures the ephemeral nature of light and shadow through innovative digital techniques. This piece represents a breakthrough in digital art.",
     image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-    currentBid: 0,
-    timeLeft: "N/A"
+    currentBid: 15000,
+    timeLeft: "2d 15h 30m"
   };
 
-  if (isLoading) {
-    return <div className="container mx-auto p-8">Loading...</div>;
-  }
+  const auctions = [
+    {
+      id: 1,
+      title: "Digital Dystopia",
+      image: "https://images.unsplash.com/photo-1563089145-599997674d42?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
+      currentBid: 5000,
+      timeLeft: "1d 8h 45m",
+      category: "Digital Art"
+    },
+    {
+      id: 2,
+      title: "Neon Dreams",
+      image: "https://images.unsplash.com/photo-1577083552431-6e5fd01988ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
+      currentBid: 3200,
+      timeLeft: "15h 20m",
+      category: "Photography"
+    },
+    {
+      id: 3,
+      title: "Abstract Thoughts",
+      image: "https://images.unsplash.com/photo-1574169208507-84376144848b?ixlib=rb-4.0.3&auto=format&fit=crop&w=879&q=80",
+      currentBid: 7500,
+      timeLeft: "3d 12h",
+      category: "Abstract"
+    },
+    {
+      id: 4,
+      title: "Future Perfect",
+      image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
+      currentBid: 4200,
+      timeLeft: "2d 5h 15m",
+      category: "Landscape"
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -54,16 +64,8 @@ const Index = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {auctions?.map((auction) => (
-            <AuctionCard 
-              key={auction.id}
-              id={auction.id}
-              title={auction.title}
-              image={auction.image_url}
-              currentBid={auction.current_bid || auction.starting_bid}
-              timeLeft={new Date(auction.end_time).toLocaleDateString()}
-              category="Digital Art"
-            />
+          {auctions.map((auction) => (
+            <AuctionCard key={auction.id} {...auction} />
           ))}
         </div>
       </motion.div>
