@@ -54,7 +54,7 @@ const App = () => (
           <main className="flex-grow">
             <Routes>
               <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="/about" element={<About />} />
               <Route path="/auction/:id" element={
                 <ProtectedRoute><AuctionDetail /></ProtectedRoute>
