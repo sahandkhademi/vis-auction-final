@@ -1,7 +1,27 @@
 import { Link } from "react-router-dom";
 import { Search, User } from "lucide-react";
+import { useState } from "react";
+import { Button } from "./ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "./ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 
 const Navigation = () => {
+  const [searchOpen, setSearchOpen] = useState(false);
+
   return (
     <nav className="sticky top-0 z-50 bg-white border-b">
       <div className="container mx-auto px-4">
@@ -29,12 +49,44 @@ const Navigation = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <button className="p-2 hover:bg-gray-100 rounded-full">
-              <Search className="w-5 h-5" />
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full">
-              <User className="w-5 h-5" />
-            </button>
+            <Sheet open={searchOpen} onOpenChange={setSearchOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="p-2">
+                  <Search className="w-5 h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="top">
+                <SheetHeader>
+                  <SheetTitle>Search Artworks</SheetTitle>
+                  <SheetDescription>
+                    <input
+                      type="search"
+                      placeholder="Search for artworks, artists, or collections..."
+                      className="w-full p-2 border rounded-md mt-4"
+                    />
+                  </SheetDescription>
+                </SheetHeader>
+              </SheetContent>
+            </Sheet>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="p-2">
+                  <User className="w-5 h-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Account</DialogTitle>
+                  <DialogDescription>
+                    <div className="space-y-4 mt-4">
+                      <Button className="w-full" variant="outline">Sign In</Button>
+                      <Button className="w-full">Sign Up</Button>
+                    </div>
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </div>
