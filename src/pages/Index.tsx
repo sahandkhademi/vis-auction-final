@@ -22,7 +22,7 @@ const Index = () => {
     title: auctions[0].title,
     description: auctions[0].description || "",
     image: auctions[0].image_url,
-    currentBid: Number(auctions[0].current_bid) || Number(auctions[0].starting_bid),
+    currentBid: parseFloat(auctions[0].current_bid) || parseFloat(auctions[0].starting_bid),
     timeLeft: new Date(auctions[0].end_time).toLocaleDateString()
   } : {
     title: "No auctions available",
@@ -60,7 +60,7 @@ const Index = () => {
               id={auction.id}
               title={auction.title}
               image={auction.image_url}
-              currentBid={Number(auction.current_bid) || Number(auction.starting_bid)}
+              currentBid={parseFloat(auction.current_bid) || parseFloat(auction.starting_bid)}
               timeLeft={new Date(auction.end_time).toLocaleDateString()}
               category="Digital Art"
             />
