@@ -8,6 +8,7 @@ import Footer from "./components/Footer";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import AuctionDetail from "./pages/AuctionDetail";
+import ArtistProfile from "./pages/ArtistProfile";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
               <Route path="/auction/:id" element={<AuctionDetail />} />
+              <Route path="/artist/:id" element={<ArtistProfile />} />
             </Routes>
           </main>
           <Footer />
