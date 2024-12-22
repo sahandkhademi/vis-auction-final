@@ -1,8 +1,31 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Search, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { User as SupabaseUser } from "@supabase/supabase-js";
 
 const Navigation = () => {
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
       <div className="max-w-[1400px] mx-auto px-6">
@@ -33,9 +56,23 @@ const Navigation = () => {
             <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900">
               <Search className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900">
-              <User className="h-5 w-5" />
-            </Button>
+            {user ? (
+              <Button 
+                variant="ghost" 
+                onClick={handleSignOut}
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Sign out
+              </Button>
+            ) : (
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate("/auth")}
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Sign in
+              </Button>
+            )}
           </div>
         </div>
       </div>
