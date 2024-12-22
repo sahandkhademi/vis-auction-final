@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 
 interface AuctionCardProps {
   id?: number;
   title: string;
+  artist: string;
   image: string;
   currentBid: number;
   timeLeft: string;
   category: string;
 }
 
-export const AuctionCard = ({ id = 1, title, image, currentBid, timeLeft, category }: AuctionCardProps) => {
+export const AuctionCard = ({ id = 1, title, artist, image, currentBid, category }: AuctionCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
@@ -24,7 +24,7 @@ export const AuctionCard = ({ id = 1, title, image, currentBid, timeLeft, catego
         transition={{ duration: 0.5 }}
         className="group cursor-pointer"
       >
-        <Card className="overflow-hidden bg-white/80 backdrop-blur-sm border border-gray-100 hover:border-gold/30 transition-all duration-300">
+        <Card className="overflow-hidden bg-white border-0 shadow-none">
           <div className="relative aspect-[4/3] overflow-hidden">
             <div className={`absolute inset-0 bg-gray-100 ${imageLoaded ? 'hidden' : 'block'}`} />
             <img
@@ -37,19 +37,10 @@ export const AuctionCard = ({ id = 1, title, image, currentBid, timeLeft, catego
             />
           </div>
           <div className="p-4">
-            <Badge variant="outline" className="mb-2 bg-white/50 text-xs font-medium">
-              {category}
-            </Badge>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">{title}</h3>
-            <div className="flex justify-between items-center text-sm">
-              <div>
-                <p className="text-gray-500">Current Bid</p>
-                <p className="font-semibold text-gold">${currentBid.toLocaleString()}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-gray-500">Time Left</p>
-                <p className="font-medium text-gray-700">{timeLeft}</p>
-              </div>
+            <h3 className="text-sm font-medium text-gray-900 uppercase">{artist}</h3>
+            <p className="text-sm text-gray-600 mt-1">{title}</p>
+            <div className="mt-2 text-xs text-gray-500">
+              <p>Estimate: ${currentBid.toLocaleString()} – ${(currentBid * 1.2).toLocaleString()}</p>
             </div>
           </div>
         </Card>
