@@ -58,6 +58,11 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      borderRadius: {
+        lg: "0",
+        md: "0",
+        sm: "0",
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
