@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import About from "./pages/About";
 import AuctionDetail from "./pages/AuctionDetail";
 import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
                 <Route path="/about" element={<About />} />
                 <Route path="/auction/:id" element={<AuctionDetail />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/profile" element={<Profile />} />
               </Routes>
             </main>
             <Footer />

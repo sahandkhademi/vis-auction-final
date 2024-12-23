@@ -57,13 +57,20 @@ const Navigation = () => {
               <Search className="h-5 w-5" />
             </Button>
             {user ? (
-              <Button 
-                variant="ghost" 
-                onClick={handleSignOut}
-                className="text-sm text-gray-600 hover:text-gray-900"
-              >
-                Sign out
-              </Button>
+              <div className="flex items-center space-x-4">
+                <Link to="/profile">
+                  <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <Button 
+                  variant="ghost" 
+                  onClick={handleSignOut}
+                  className="text-sm text-gray-600 hover:text-gray-900"
+                >
+                  Sign out
+                </Button>
+              </div>
             ) : (
               <Button 
                 variant="ghost" 
