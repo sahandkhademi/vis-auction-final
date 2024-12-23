@@ -1,19 +1,19 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@supabase/auth-helpers-react";
+import { useSession } from "@supabase/auth-helpers-react";
+import { BidForm } from "@/components/auction/BidForm";
+import { AuctionInfo } from "@/components/auction/AuctionInfo";
 
 const AuctionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [bidAmount, setBidAmount] = useState("");
   const [currentHighestBid, setCurrentHighestBid] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const user = useAuth();
+  const session = useSession();
 
   // Mock auction data - in a real app, this would come from an API
   const auction = {
@@ -80,49 +80,6 @@ const AuctionDetail = () => {
     };
   };
 
-  const handleBid = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!user) {
-      toast.error("Please sign in to place a bid");
-      return;
-    }
-
-    const amount = parseFloat(bidAmount);
-    if (isNaN(amount)) {
-      toast.error("Please enter a valid bid amount");
-      return;
-    }
-
-    if (currentHighestBid && amount <= currentHighestBid) {
-      toast.error(`Bid must be higher than current bid: $${currentHighestBid.toLocaleString()}`);
-      return;
-    }
-
-    setIsLoading(true);
-    
-    const { error } = await supabase
-      .from('bids')
-      .insert([
-        {
-          auction_id: id,
-          amount: amount,
-          user_id: user.id
-        }
-      ]);
-
-    setIsLoading(false);
-
-    if (error) {
-      console.error('Error placing bid:', error);
-      toast.error("Failed to place bid. Please try again.");
-      return;
-    }
-
-    toast.success(`Bid of $${amount.toLocaleString()} placed successfully!`);
-    setBidAmount("");
-  };
-
   return (
     <div className="min-h-screen bg-white pt-20">
       <div className="max-w-[1400px] mx-auto px-6">
@@ -180,56 +137,21 @@ const AuctionDetail = () => {
             </div>
 
             <div className="pt-6">
-              <form onSubmit={handleBid} className="space-y-4">
-                <div className="flex gap-4">
-                  <Input
-                    type="number"
-                    value={bidAmount}
-                    onChange={(e) => setBidAmount(e.target.value)}
-                    placeholder="Enter bid amount"
-                    className="flex-1 h-12 text-lg rounded-none border-gray-200"
-                    min={currentHighestBid ? currentHighestBid + 1 : auction.currentBid + 1}
-                    disabled={isLoading || !user}
-                  />
-                  <Button 
-                    type="submit" 
-                    className="h-12 px-8 bg-black hover:bg-gray-900 text-white rounded-none"
-                    disabled={isLoading || !user}
-                  >
-                    {isLoading ? "Placing Bid..." : "Place Bid"}
-                  </Button>
-                </div>
-                {!user && (
-                  <p className="text-sm text-gray-500 mt-2">
-                    Please sign in to place a bid
-                  </p>
-                )}
-              </form>
+              <BidForm
+                auctionId={id || ""}
+                currentHighestBid={currentHighestBid}
+                defaultBid={auction.currentBid}
+                isLoading={isLoading}
+                onBidPlaced={fetchCurrentHighestBid}
+              />
             </div>
 
-            <div className="border-t border-gray-100 pt-8">
-              <h3 className="text-sm uppercase tracking-wider text-gray-500 mb-6">
-                Artwork Details
-              </h3>
-              <dl className="grid grid-cols-2 gap-x-8 gap-y-4">
-                <div>
-                  <dt className="text-sm text-gray-500">Artist</dt>
-                  <dd className="mt-1 text-gray-900">{auction.artist}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-gray-500">Year</dt>
-                  <dd className="mt-1 text-gray-900">{auction.createdYear}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-gray-500">Dimensions</dt>
-                  <dd className="mt-1 text-gray-900">{auction.dimensions}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm text-gray-500">Format</dt>
-                  <dd className="mt-1 text-gray-900">{auction.format}</dd>
-                </div>
-              </dl>
-            </div>
+            <AuctionInfo
+              artist={auction.artist}
+              createdYear={auction.createdYear}
+              dimensions={auction.dimensions}
+              format={auction.format}
+            />
           </motion.div>
         </div>
       </div>
