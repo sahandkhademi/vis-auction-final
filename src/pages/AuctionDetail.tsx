@@ -1,14 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@supabase/auth-helpers-react";
 
 const AuctionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [bidAmount, setBidAmount] = useState("");
+  const [currentHighestBid, setCurrentHighestBid] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const user = useAuth();
 
   // Mock auction data - in a real app, this would come from an API
   const auction = {
@@ -25,12 +30,92 @@ const AuctionDetail = () => {
     format: "Digital NFT"
   };
 
-  const handleBid = (e: React.FormEvent) => {
-    e.preventDefault();
-    const amount = parseFloat(bidAmount);
+  useEffect(() => {
+    fetchCurrentHighestBid();
+    subscribeToNewBids();
+  }, [id]);
 
-    if (isNaN(amount) || amount <= auction.currentBid) {
-      toast.error("Please enter a bid higher than the current bid");
+  const fetchCurrentHighestBid = async () => {
+    const { data, error } = await supabase
+      .from('bids')
+      .select('amount')
+      .eq('auction_id', id)
+      .order('amount', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error) {
+      console.error('Error fetching highest bid:', error);
+      return;
+    }
+
+    if (data) {
+      setCurrentHighestBid(data.amount);
+    }
+  };
+
+  const subscribeToNewBids = () => {
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'bids',
+          filter: `auction_id=eq.${id}`
+        },
+        (payload) => {
+          const newBid = payload.new as { amount: number };
+          if (newBid.amount > (currentHighestBid || 0)) {
+            setCurrentHighestBid(newBid.amount);
+            toast.info(`New highest bid: $${newBid.amount.toLocaleString()}`);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const handleBid = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user) {
+      toast.error("Please sign in to place a bid");
+      return;
+    }
+
+    const amount = parseFloat(bidAmount);
+    if (isNaN(amount)) {
+      toast.error("Please enter a valid bid amount");
+      return;
+    }
+
+    if (currentHighestBid && amount <= currentHighestBid) {
+      toast.error(`Bid must be higher than current bid: $${currentHighestBid.toLocaleString()}`);
+      return;
+    }
+
+    setIsLoading(true);
+    
+    const { error } = await supabase
+      .from('bids')
+      .insert([
+        {
+          auction_id: id,
+          amount: amount,
+          user_id: user.id
+        }
+      ]);
+
+    setIsLoading(false);
+
+    if (error) {
+      console.error('Error placing bid:', error);
+      toast.error("Failed to place bid. Please try again.");
       return;
     }
 
@@ -83,7 +168,7 @@ const AuctionDetail = () => {
               <div className="space-y-1">
                 <p className="text-sm uppercase tracking-wider text-gray-500">Current Bid</p>
                 <p className="text-2xl font-light">
-                  ${auction.currentBid.toLocaleString()}
+                  ${(currentHighestBid || auction.currentBid).toLocaleString()}
                 </p>
               </div>
               <div className="space-y-1">
@@ -103,15 +188,22 @@ const AuctionDetail = () => {
                     onChange={(e) => setBidAmount(e.target.value)}
                     placeholder="Enter bid amount"
                     className="flex-1 h-12 text-lg rounded-none border-gray-200"
-                    min={auction.currentBid + 1}
+                    min={currentHighestBid ? currentHighestBid + 1 : auction.currentBid + 1}
+                    disabled={isLoading || !user}
                   />
                   <Button 
                     type="submit" 
                     className="h-12 px-8 bg-black hover:bg-gray-900 text-white rounded-none"
+                    disabled={isLoading || !user}
                   >
-                    Place Bid
+                    {isLoading ? "Placing Bid..." : "Place Bid"}
                   </Button>
                 </div>
+                {!user && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    Please sign in to place a bid
+                  </p>
+                )}
               </form>
             </div>
 
