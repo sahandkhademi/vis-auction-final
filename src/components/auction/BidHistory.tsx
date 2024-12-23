@@ -9,14 +9,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+interface Profile {
+  username: string | null;
+}
+
 interface Bid {
   id: string;
   amount: number;
   created_at: string;
   user_id: string;
-  profiles?: {
-    username: string | null;
-  } | null;
+  profile?: Profile | null;
 }
 
 interface BidHistoryProps {
@@ -28,24 +30,40 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchBids = async () => {
-    const { data, error } = await supabase
+    // First, fetch bids
+    const { data: bidsData, error: bidsError } = await supabase
       .from('bids')
       .select(`
         id,
         amount,
         created_at,
-        user_id,
-        profiles (username)
+        user_id
       `)
       .eq('auction_id', auctionId)
       .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching bids:', error);
+    if (bidsError) {
+      console.error('Error fetching bids:', bidsError);
       return;
     }
 
-    setBids(data || []);
+    // Then fetch profiles for each bid's user_id
+    const bidsWithProfiles = await Promise.all(
+      (bidsData || []).map(async (bid) => {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', bid.user_id)
+          .single();
+
+        return {
+          ...bid,
+          profile: profileData
+        };
+      })
+    );
+
+    setBids(bidsWithProfiles);
     setIsLoading(false);
   };
 
@@ -96,7 +114,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         <TableBody>
           {bids.map((bid) => (
             <TableRow key={bid.id}>
-              <TableCell>{bid.profiles?.username || 'Anonymous'}</TableCell>
+              <TableCell>{bid.profile?.username || 'Anonymous'}</TableCell>
               <TableCell>${bid.amount.toLocaleString()}</TableCell>
               <TableCell>
                 {new Date(bid.created_at).toLocaleDateString()} {new Date(bid.created_at).toLocaleTimeString()}
