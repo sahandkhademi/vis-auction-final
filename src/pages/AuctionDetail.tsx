@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { BidForm } from "@/components/auction/BidForm";
 import { AuctionInfo } from "@/components/auction/AuctionInfo";
+import { BidHistory } from "@/components/auction/BidHistory";
 
 const AuctionDetail = () => {
   const { id } = useParams();
@@ -145,6 +146,8 @@ const AuctionDetail = () => {
                 onBidPlaced={fetchCurrentHighestBid}
               />
             </div>
+
+            <BidHistory auctionId={id || ""} />
 
             <AuctionInfo
               artist={auction.artist}
