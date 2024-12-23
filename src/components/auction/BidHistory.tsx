@@ -13,6 +13,7 @@ interface Bid {
   id: string;
   amount: number;
   created_at: string;
+  user_id: string;
   profiles: {
     username: string | null;
   } | null;
@@ -33,7 +34,10 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         id,
         amount,
         created_at,
-        profiles!bids_user_id_fkey(username)
+        user_id,
+        profiles (
+          username
+        )
       `)
       .eq('auction_id', auctionId)
       .order('created_at', { ascending: false });
