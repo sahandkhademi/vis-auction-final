@@ -42,7 +42,7 @@ const AuctionDetail = () => {
       .eq('auction_id', id)
       .order('amount', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error fetching highest bid:', error);
