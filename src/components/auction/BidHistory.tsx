@@ -35,7 +35,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         amount,
         created_at,
         user_id,
-        profiles (
+        profiles!user_id(
           username
         )
       `)
