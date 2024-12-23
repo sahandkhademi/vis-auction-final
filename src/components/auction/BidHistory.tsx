@@ -13,7 +13,7 @@ interface Bid {
   id: string;
   amount: number;
   created_at: string;
-  profiles: {
+  user: {
     username: string | null;
   } | null;
 }
@@ -33,7 +33,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         id,
         amount,
         created_at,
-        profiles:user_id (
+        user:user_id (
           username
         )
       `)
@@ -96,7 +96,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         <TableBody>
           {bids.map((bid) => (
             <TableRow key={bid.id}>
-              <TableCell>{bid.profiles?.username || 'Anonymous'}</TableCell>
+              <TableCell>{bid.user?.username || 'Anonymous'}</TableCell>
               <TableCell>${bid.amount.toLocaleString()}</TableCell>
               <TableCell>
                 {new Date(bid.created_at).toLocaleDateString()} {new Date(bid.created_at).toLocaleTimeString()}
