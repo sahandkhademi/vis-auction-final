@@ -35,9 +35,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         amount,
         created_at,
         user_id,
-        profiles:user_id(
-          username
-        )
+        profiles(username)
       `)
       .eq('auction_id', auctionId)
       .order('created_at', { ascending: false });
