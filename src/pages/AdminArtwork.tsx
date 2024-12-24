@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArtworkForm } from "@/components/admin/ArtworkForm";
-import { ArtworkFormData, ArtworkData, ArtworkStatus } from "@/types/artwork";
+import { ArtworkFormData, ArtworkData } from "@/types/artwork";
 
 const AdminArtwork = () => {
   const { id } = useParams();
@@ -52,9 +52,19 @@ const AdminArtwork = () => {
       }
 
       if (data) {
-        // Ensure status is of type ArtworkStatus
-        const status = data.status as ArtworkStatus;
-        setArtwork({ ...data, status });
+        // Convert the artwork data to match ArtworkFormData type
+        const formData: ArtworkFormData = {
+          title: data.title,
+          artist: data.artist,
+          description: data.description || "",
+          created_year: data.created_year || "",
+          dimensions: data.dimensions || "",
+          format: data.format || "",
+          starting_price: data.starting_price,
+          image_url: data.image_url || "",
+          status: data.status as ArtworkFormData["status"] || "draft"
+        };
+        setArtwork(formData);
       }
     };
 
