@@ -18,11 +18,13 @@ import {
   UserRound, 
   History, 
   Settings,
-  ChartBar
+  ChartBar,
+  Bell
 } from "lucide-react";
 import { BidHistory } from "@/components/auction/BidHistory";
 import { UserStats } from "@/components/profile/UserStats";
 import { AccountSettings } from "@/components/profile/AccountSettings";
+import { NotificationPreferences } from "@/components/profile/NotificationPreferences";
 
 interface Profile {
   username: string | null;
@@ -144,7 +146,7 @@ const Profile = () => {
         </Card>
 
         <Tabs defaultValue="activity" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="activity" className="flex items-center gap-2">
               <History className="h-4 w-4" />
               Activity
@@ -152,6 +154,10 @@ const Profile = () => {
             <TabsTrigger value="stats" className="flex items-center gap-2">
               <ChartBar className="h-4 w-4" />
               Statistics
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              Notifications
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -172,6 +178,10 @@ const Profile = () => {
 
           <TabsContent value="stats">
             <UserStats userId={user?.id} />
+          </TabsContent>
+
+          <TabsContent value="notifications">
+            <NotificationPreferences user={user} />
           </TabsContent>
 
           <TabsContent value="settings">

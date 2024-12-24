@@ -33,6 +33,63 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          auction_ending_notifications: boolean | null
+          auction_won_notifications: boolean | null
+          created_at: string
+          marketing_notifications: boolean | null
+          outbid_notifications: boolean | null
+          user_id: string
+        }
+        Insert: {
+          auction_ending_notifications?: boolean | null
+          auction_won_notifications?: boolean | null
+          created_at?: string
+          marketing_notifications?: boolean | null
+          outbid_notifications?: boolean | null
+          user_id: string
+        }
+        Update: {
+          auction_ending_notifications?: boolean | null
+          auction_won_notifications?: boolean | null
+          created_at?: string
+          marketing_notifications?: boolean | null
+          outbid_notifications?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
