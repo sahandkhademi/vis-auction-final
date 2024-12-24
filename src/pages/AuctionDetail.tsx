@@ -8,6 +8,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { BidForm } from "@/components/auction/BidForm";
 import { AuctionInfo } from "@/components/auction/AuctionInfo";
 import { BidHistory } from "@/components/auction/BidHistory";
+import { useQuery } from "@tanstack/react-query";
 
 const AuctionDetail = () => {
   const { id } = useParams();
@@ -16,20 +17,19 @@ const AuctionDetail = () => {
   const [isLoading, setIsLoading] = useState(false);
   const session = useSession();
 
-  // Mock auction data - in a real app, this would come from an API
-  const auction = {
-    id: parseInt(id || "1"),
-    title: "Digital Dystopia",
-    image: "https://images.unsplash.com/photo-1563089145-599997674d42?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
-    currentBid: 5000,
-    timeLeft: "1d 8h 45m",
-    category: "Digital Art",
-    description: "A stunning piece that explores the intersection of technology and human existence. This digital masterpiece combines elements of cyberpunk aesthetics with contemporary digital art techniques.",
-    artist: "Digital Artist X",
-    createdYear: "2024",
-    dimensions: "4000x3000px",
-    format: "Digital NFT"
-  };
+  const { data: artwork, error: artworkError } = useQuery({
+    queryKey: ['artwork', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('artworks')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   useEffect(() => {
     fetchCurrentHighestBid();
@@ -81,15 +81,24 @@ const AuctionDetail = () => {
     };
   };
 
+  if (artworkError) {
+    toast.error("Error loading artwork details");
+    return null;
+  }
+
+  if (!artwork) {
+    return <div className="min-h-screen bg-white pt-20 text-center">Loading...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-white pt-20">
       <div className="max-w-[1400px] mx-auto px-6">
         <Button
           variant="ghost"
           className="mb-8 text-gray-600 hover:text-gray-900 -ml-4"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/auctions")}
         >
-          ← Back
+          ← Back to Auctions
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
@@ -100,8 +109,8 @@ const AuctionDetail = () => {
             className="relative aspect-[4/3]"
           >
             <img
-              src={auction.image}
-              alt={auction.title}
+              src={artwork.image_url || '/placeholder.svg'}
+              alt={artwork.title}
               className="w-full h-full object-cover"
             />
           </motion.div>
@@ -113,12 +122,12 @@ const AuctionDetail = () => {
             className="space-y-8"
           >
             <div className="space-y-2">
-              <p className="text-sm uppercase tracking-wider text-gray-500">{auction.artist}</p>
+              <p className="text-sm uppercase tracking-wider text-gray-500">{artwork.artist}</p>
               <h1 className="text-4xl font-light tracking-tight text-gray-900">
-                {auction.title}
+                {artwork.title}
               </h1>
               <p className="text-base text-gray-600 leading-relaxed mt-4">
-                {auction.description}
+                {artwork.description}
               </p>
             </div>
 
@@ -126,13 +135,13 @@ const AuctionDetail = () => {
               <div className="space-y-1">
                 <p className="text-sm uppercase tracking-wider text-gray-500">Current Bid</p>
                 <p className="text-2xl font-light">
-                  ${(currentHighestBid || auction.currentBid).toLocaleString()}
+                  ${(currentHighestBid || artwork.starting_price).toLocaleString()}
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm uppercase tracking-wider text-gray-500">Time Left</p>
+                <p className="text-sm uppercase tracking-wider text-gray-500">Starting Price</p>
                 <p className="text-2xl font-light">
-                  {auction.timeLeft}
+                  ${artwork.starting_price.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -141,7 +150,7 @@ const AuctionDetail = () => {
               <BidForm
                 auctionId={id || ""}
                 currentHighestBid={currentHighestBid}
-                defaultBid={auction.currentBid}
+                defaultBid={artwork.starting_price}
                 isLoading={isLoading}
                 onBidPlaced={fetchCurrentHighestBid}
               />
@@ -150,10 +159,10 @@ const AuctionDetail = () => {
             <BidHistory auctionId={id || ""} />
 
             <AuctionInfo
-              artist={auction.artist}
-              createdYear={auction.createdYear}
-              dimensions={auction.dimensions}
-              format={auction.format}
+              artist={artwork.artist}
+              createdYear={artwork.created_year || ""}
+              dimensions={artwork.dimensions || ""}
+              format={artwork.format || ""}
             />
           </motion.div>
         </div>
