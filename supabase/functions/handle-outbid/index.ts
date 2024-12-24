@@ -6,6 +6,7 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -31,7 +32,7 @@ Deno.serve(async (req) => {
         .from('notifications')
         .insert({
           user_id: previousBidUserId,
-          title: 'You've been outbid!',
+          title: "You have been outbid!",
           message: `Someone has placed a higher bid of $${newBidAmount.toLocaleString()} on an auction you were winning.`,
           type: 'outbid'
         })
