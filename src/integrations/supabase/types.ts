@@ -9,6 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      artworks: {
+        Row: {
+          artist: string
+          created_at: string
+          created_by: string | null
+          created_year: string | null
+          current_price: number | null
+          description: string | null
+          dimensions: string | null
+          format: string | null
+          id: string
+          image_url: string | null
+          starting_price: number
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          artist: string
+          created_at?: string
+          created_by?: string | null
+          created_year?: string | null
+          current_price?: number | null
+          description?: string | null
+          dimensions?: string | null
+          format?: string | null
+          id?: string
+          image_url?: string | null
+          starting_price: number
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          artist?: string
+          created_at?: string
+          created_by?: string | null
+          created_year?: string | null
+          current_price?: number | null
+          description?: string | null
+          dimensions?: string | null
+          format?: string | null
+          id?: string
+          image_url?: string | null
+          starting_price?: number
+          status?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bids: {
         Row: {
           amount: number
@@ -95,18 +146,21 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           id: string
+          is_admin: boolean | null
           username: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           id: string
+          is_admin?: boolean | null
           username?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           id?: string
+          is_admin?: boolean | null
           username?: string | null
         }
         Relationships: []
