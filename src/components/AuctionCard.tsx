@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 
 interface AuctionCardProps {
-  id?: number;
+  id?: string;  // Changed from number to string to match Supabase UUID
   title: string;
   artist: string;
   image: string;
@@ -13,7 +13,7 @@ interface AuctionCardProps {
   category: string;
 }
 
-export const AuctionCard = ({ id = 1, title, artist, image, currentBid, category }: AuctionCardProps) => {
+export const AuctionCard = ({ id = "1", title, artist, image, currentBid, category }: AuctionCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
