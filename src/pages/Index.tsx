@@ -1,6 +1,7 @@
 import { FeaturedAuction } from "@/components/FeaturedAuction";
 import { AuctionCard } from "@/components/AuctionCard";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const featuredAuction = {
@@ -63,7 +64,12 @@ const Index = () => {
       >
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-xl font-medium text-gray-900">Trending lots</h2>
-          <button className="text-sm text-gray-600 hover:text-gray-900">View all</button>
+          <Link 
+            to="/auctions" 
+            className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            View all
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
