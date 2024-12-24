@@ -15,7 +15,7 @@ const Index = () => {
 
   const auctions = [
     {
-      id: 1,
+      id: "1",
       title: "Monumental Composition",
       artist: "PREDRAG MILOSAVLJEVIC",
       image: "https://images.unsplash.com/photo-1563089145-599997674d42?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
@@ -24,7 +24,7 @@ const Index = () => {
       category: "Contemporary"
     },
     {
-      id: 2,
+      id: "2",
       title: "Paris at Night",
       artist: "KONSTANTIN MAKSIMOV",
       image: "https://images.unsplash.com/photo-1577083552431-6e5fd01988ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
@@ -33,7 +33,7 @@ const Index = () => {
       category: "Modern"
     },
     {
-      id: 3,
+      id: "3",
       title: "Bali",
       artist: "TENG-HIOK CHIU",
       image: "https://images.unsplash.com/photo-1574169208507-84376144848b?ixlib=rb-4.0.3&auto=format&fit=crop&w=879&q=80",
@@ -42,7 +42,7 @@ const Index = () => {
       category: "Contemporary"
     },
     {
-      id: 4,
+      id: "4",
       title: "Woman picking Flowers",
       artist: "LE PHO",
       image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
