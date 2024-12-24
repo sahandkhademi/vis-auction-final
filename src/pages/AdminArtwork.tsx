@@ -9,7 +9,7 @@ const AdminArtwork = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [artwork, setArtwork] = useState<ArtworkData | null>(null);
+  const [artwork, setArtwork] = useState<Partial<ArtworkFormData>>({});
 
   // Check if user is admin
   useEffect(() => {
@@ -109,7 +109,7 @@ const AdminArtwork = () => {
       </h1>
 
       <ArtworkForm
-        defaultValues={artwork || {}}
+        defaultValues={artwork}
         onSubmit={onSubmit}
         isLoading={isLoading}
         onCancel={() => navigate("/admin")}
