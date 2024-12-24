@@ -40,21 +40,48 @@ export const NotificationPreferences = ({ user }: NotificationPreferencesProps) 
   }, [user]);
 
   const fetchPreferences = async () => {
-    const { data, error } = await supabase
-      .from("notification_preferences")
-      .select("*")
-      .eq("user_id", user?.id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("notification_preferences")
+        .select("*")
+        .eq("user_id", user?.id)
+        .maybeSingle();
 
-    if (error) {
-      console.error("Error fetching preferences:", error);
-      return;
-    }
+      if (error) {
+        console.error("Error fetching preferences:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load notification preferences",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    if (data) {
-      setPreferences(data);
+      if (data) {
+        setPreferences(data);
+      } else {
+        // If no preferences exist, create default ones
+        const { error: insertError } = await supabase
+          .from("notification_preferences")
+          .insert({
+            user_id: user?.id,
+            ...preferences,
+          });
+
+        if (insertError) {
+          console.error("Error creating preferences:", insertError);
+          toast({
+            title: "Error",
+            description: "Failed to create notification preferences",
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Error in fetchPreferences:", err);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const updatePreference = async (key: keyof NotificationPreferences, value: boolean) => {
