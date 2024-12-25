@@ -10,6 +10,7 @@ export interface ArtworkFormData {
   starting_price: number;
   image_url: string;
   status: ArtworkStatus;
+  end_date: string | null;
 }
 
 export interface ArtworkData extends ArtworkFormData {
