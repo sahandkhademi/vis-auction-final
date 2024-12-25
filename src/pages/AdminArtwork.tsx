@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ArtworkForm } from "@/components/admin/ArtworkForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import type { ArtworkFormData } from "@/types/artwork";
+import type { ArtworkFormData, ArtworkStatus } from "@/types/artwork";
 
 const AdminArtwork = () => {
   const { id } = useParams();
@@ -41,7 +41,7 @@ const AdminArtwork = () => {
           format: data.format || "",
           starting_price: data.starting_price || 0,
           image_url: data.image_url || "",
-          status: data.status || "draft",
+          status: (data.status as ArtworkStatus) || "draft",
           end_date: data.end_date || null
         };
         setArtwork(formData);
