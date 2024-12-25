@@ -21,7 +21,8 @@ const Index = () => {
       image: "https://images.unsplash.com/photo-1563089145-599997674d42?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
       currentBid: 5000,
       timeLeft: "1d 8h 45m",
-      category: "Contemporary"
+      category: "Contemporary",
+      endDate: "2024-05-01T00:00:00Z"
     },
     {
       id: "2",
@@ -30,7 +31,8 @@ const Index = () => {
       image: "https://images.unsplash.com/photo-1577083552431-6e5fd01988ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
       currentBid: 3200,
       timeLeft: "15h 20m",
-      category: "Modern"
+      category: "Modern",
+      endDate: "2024-04-15T00:00:00Z"
     },
     {
       id: "3",
@@ -39,7 +41,8 @@ const Index = () => {
       image: "https://images.unsplash.com/photo-1574169208507-84376144848b?ixlib=rb-4.0.3&auto=format&fit=crop&w=879&q=80",
       currentBid: 7500,
       timeLeft: "3d 12h",
-      category: "Contemporary"
+      category: "Contemporary",
+      endDate: "2024-05-10T00:00:00Z"
     },
     {
       id: "4",
@@ -48,7 +51,8 @@ const Index = () => {
       image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
       currentBid: 4200,
       timeLeft: "2d 5h 15m",
-      category: "Modern"
+      category: "Modern",
+      endDate: "2024-04-20T00:00:00Z"
     }
   ];
 
