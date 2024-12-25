@@ -1,45 +1,26 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useParams, useNavigate } from "react-router-dom";
 import { ArtworkForm } from "@/components/admin/ArtworkForm";
-import { ArtworkFormData, ArtworkData } from "@/types/artwork";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import type { ArtworkFormData } from "@/types/artwork";
 
 const AdminArtwork = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [artwork, setArtwork] = useState<ArtworkFormData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [artwork, setArtwork] = useState<Partial<ArtworkFormData>>({});
 
-  // Check if user is admin
   useEffect(() => {
-    const checkAdmin = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/auth");
-        return;
-      }
+    if (id) {
+      fetchArtwork();
+    }
+  }, [id]);
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", session.user.id)
-        .single();
-
-      if (!profile?.is_admin) {
-        toast.error("You don't have access to this page");
-        navigate("/");
-      }
-    };
-
-    checkAdmin();
-  }, [navigate]);
-
-  // Fetch artwork data if editing
-  useEffect(() => {
-    if (id === "new") return;
-
-    const fetchArtwork = async () => {
+  const fetchArtwork = async () => {
+    try {
+      setIsLoading(true);
       const { data, error } = await supabase
         .from("artworks")
         .select("*")
@@ -47,72 +28,75 @@ const AdminArtwork = () => {
         .single();
 
       if (error) {
-        toast.error("Error fetching artwork");
-        return;
+        throw error;
       }
 
       if (data) {
-        setArtwork({
-          title: data.title,
-          artist: data.artist,
+        const formData: ArtworkFormData = {
+          title: data.title || "",
+          artist: data.artist || "",
           description: data.description || "",
           created_year: data.created_year || "",
           dimensions: data.dimensions || "",
           format: data.format || "",
-          starting_price: data.starting_price,
+          starting_price: data.starting_price || 0,
           image_url: data.image_url || "",
-          status: data.status as ArtworkFormData["status"],
-          end_date: data.end_date
-        });
+          status: data.status || "draft",
+          end_date: data.end_date || null
+        };
+        setArtwork(formData);
       }
-    };
-
-    fetchArtwork();
-  }, [id]);
-
-  const onSubmit = async (data: ArtworkFormData) => {
-    setIsLoading(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("No session");
-
-      if (id === "new") {
-        const { error } = await supabase.from("artworks").insert({
-          ...data,
-          created_by: session.user.id,
-        });
-        if (error) throw error;
-        toast.success("Artwork created successfully");
-      } else {
-        const { error } = await supabase
-          .from("artworks")
-          .update(data)
-          .eq("id", id);
-        if (error) throw error;
-        toast.success("Artwork updated successfully");
-      }
-
-      navigate("/admin");
     } catch (error) {
-      toast.error("Error saving artwork");
-      console.error(error);
+      console.error("Error fetching artwork:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch artwork details",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  return (
-    <div className="container py-8 max-w-2xl">
-      <h1 className="text-2xl font-serif mb-8">
-        {id === "new" ? "New Artwork" : "Edit Artwork"}
-      </h1>
+  const handleSubmit = async (formData: ArtworkFormData) => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase
+        .from("artworks")
+        .update(formData)
+        .eq("id", id);
 
-      <ArtworkForm
-        defaultValues={artwork}
-        onSubmit={onSubmit}
-        isLoading={isLoading}
-        onCancel={() => navigate("/admin")}
-      />
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: "Artwork updated successfully",
+      });
+      navigate("/admin");
+    } catch (error) {
+      console.error("Error updating artwork:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update artwork",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">
+        {id ? "Edit Artwork" : "Create New Artwork"}
+      </h1>
+      {artwork && <ArtworkForm defaultValues={artwork} onSubmit={handleSubmit} />}
     </div>
   );
 };
