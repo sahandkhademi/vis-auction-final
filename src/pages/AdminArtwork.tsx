@@ -62,7 +62,8 @@ const AdminArtwork = () => {
           format: data.format || "",
           starting_price: data.starting_price,
           image_url: data.image_url || "",
-          status: data.status as ArtworkFormData["status"] || "draft"
+          status: data.status as ArtworkFormData["status"] || "draft",
+          end_date: data.end_date || null
         };
         setArtwork(formData);
       }
