@@ -2,6 +2,9 @@ import { FeaturedAuction } from "@/components/FeaturedAuction";
 import { AuctionCard } from "@/components/AuctionCard";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Index = () => {
   const featuredAuction = {
@@ -13,48 +16,20 @@ const Index = () => {
     timeLeft: "2d 15h 30m"
   };
 
-  const auctions = [
-    {
-      id: "1",
-      title: "Monumental Composition",
-      artist: "PREDRAG MILOSAVLJEVIC",
-      image: "https://images.unsplash.com/photo-1563089145-599997674d42?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
-      currentBid: 5000,
-      timeLeft: "1d 8h 45m",
-      category: "Contemporary",
-      endDate: "2024-05-01T00:00:00Z"
+  const { data: trendingArtworks, isLoading } = useQuery({
+    queryKey: ["trending-artworks"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("artworks")
+        .select("*")
+        .eq("status", "published")
+        .order("current_price", { ascending: false })
+        .limit(4);
+
+      if (error) throw error;
+      return data;
     },
-    {
-      id: "2",
-      title: "Paris at Night",
-      artist: "KONSTANTIN MAKSIMOV",
-      image: "https://images.unsplash.com/photo-1577083552431-6e5fd01988ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
-      currentBid: 3200,
-      timeLeft: "15h 20m",
-      category: "Modern",
-      endDate: "2024-04-15T00:00:00Z"
-    },
-    {
-      id: "3",
-      title: "Bali",
-      artist: "TENG-HIOK CHIU",
-      image: "https://images.unsplash.com/photo-1574169208507-84376144848b?ixlib=rb-4.0.3&auto=format&fit=crop&w=879&q=80",
-      currentBid: 7500,
-      timeLeft: "3d 12h",
-      category: "Contemporary",
-      endDate: "2024-05-10T00:00:00Z"
-    },
-    {
-      id: "4",
-      title: "Woman picking Flowers",
-      artist: "LE PHO",
-      image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=870&q=80",
-      currentBid: 4200,
-      timeLeft: "2d 5h 15m",
-      category: "Modern",
-      endDate: "2024-04-20T00:00:00Z"
-    }
-  ];
+  });
 
   return (
     <div className="min-h-screen bg-white pt-16">
@@ -77,9 +52,29 @@ const Index = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {auctions.map((auction) => (
-            <AuctionCard key={auction.id} {...auction} />
-          ))}
+          {isLoading ? (
+            // Loading skeleton
+            [...Array(4)].map((_, i) => (
+              <div key={i} className="space-y-4">
+                <Skeleton className="h-[200px] w-full" />
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+              </div>
+            ))
+          ) : (
+            trendingArtworks?.map((artwork) => (
+              <AuctionCard
+                key={artwork.id}
+                id={artwork.id}
+                title={artwork.title}
+                artist={artwork.artist}
+                image={artwork.image_url || ""}
+                currentBid={artwork.current_price || artwork.starting_price}
+                category={artwork.format || ""}
+                endDate={artwork.end_date}
+              />
+            ))
+          )}
         </div>
       </motion.div>
     </div>
