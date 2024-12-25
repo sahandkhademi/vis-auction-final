@@ -20,23 +20,31 @@ const AuctionDetail = () => {
   const { data: artwork, error: artworkError } = useQuery({
     queryKey: ['artwork', id],
     queryFn: async () => {
+      if (!id) throw new Error('No artwork ID provided');
+      
       const { data, error } = await supabase
         .from('artworks')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error('Artwork not found');
       return data;
     },
+    enabled: !!id, // Only run the query if we have an ID
   });
 
   useEffect(() => {
-    fetchCurrentHighestBid();
-    subscribeToNewBids();
+    if (id) {
+      fetchCurrentHighestBid();
+      subscribeToNewBids();
+    }
   }, [id]);
 
   const fetchCurrentHighestBid = async () => {
+    if (!id) return;
+
     const { data, error } = await supabase
       .from('bids')
       .select('amount')
@@ -56,6 +64,8 @@ const AuctionDetail = () => {
   };
 
   const subscribeToNewBids = () => {
+    if (!id) return;
+
     const channel = supabase
       .channel('schema-db-changes')
       .on(
