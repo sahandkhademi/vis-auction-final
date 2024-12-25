@@ -49,6 +49,7 @@ const Auctions = () => {
               currentBid={artwork.current_price || artwork.starting_price}
               category={artwork.format || ""}
               timeLeft="Ongoing"
+              endDate={artwork.end_date}
             />
           ))}
         </div>

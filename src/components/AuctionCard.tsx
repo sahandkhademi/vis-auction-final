@@ -2,18 +2,28 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
+import { CountdownTimer } from "./auction/CountdownTimer";
 
 interface AuctionCardProps {
-  id?: string;  // Changed from number to string to match Supabase UUID
+  id?: string;
   title: string;
   artist: string;
   image: string;
   currentBid: number;
-  timeLeft: string;
+  timeLeft?: string;
   category: string;
+  endDate: string | null;
 }
 
-export const AuctionCard = ({ id = "1", title, artist, image, currentBid, category }: AuctionCardProps) => {
+export const AuctionCard = ({ 
+  id = "1", 
+  title, 
+  artist, 
+  image, 
+  currentBid, 
+  category,
+  endDate 
+}: AuctionCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
@@ -41,6 +51,9 @@ export const AuctionCard = ({ id = "1", title, artist, image, currentBid, catego
             <p className="text-sm text-gray-600 mt-1">{title}</p>
             <div className="mt-2 text-xs text-gray-500">
               <p>Estimate: ${currentBid.toLocaleString()} – ${(currentBid * 1.2).toLocaleString()}</p>
+              <div className="mt-2">
+                <CountdownTimer endDate={endDate} />
+              </div>
             </div>
           </div>
         </Card>

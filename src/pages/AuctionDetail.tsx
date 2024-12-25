@@ -9,6 +9,7 @@ import { BidForm } from "@/components/auction/BidForm";
 import { AuctionInfo } from "@/components/auction/AuctionInfo";
 import { BidHistory } from "@/components/auction/BidHistory";
 import { useQuery } from "@tanstack/react-query";
+import { CountdownTimer } from "@/components/auction/CountdownTimer";
 
 const AuctionDetail = () => {
   const { id } = useParams();
@@ -32,7 +33,7 @@ const AuctionDetail = () => {
       if (!data) throw new Error('Artwork not found');
       return data;
     },
-    enabled: !!id, // Only run the query if we have an ID
+    enabled: !!id,
   });
 
   useEffect(() => {
@@ -149,10 +150,8 @@ const AuctionDetail = () => {
                 </p>
               </div>
               <div className="space-y-1">
-                <p className="text-sm uppercase tracking-wider text-gray-500">Starting Price</p>
-                <p className="text-2xl font-light">
-                  ${artwork.starting_price.toLocaleString()}
-                </p>
+                <p className="text-sm uppercase tracking-wider text-gray-500">Time Remaining</p>
+                <CountdownTimer endDate={artwork.end_date} />
               </div>
             </div>
 
