@@ -37,7 +37,7 @@ export const BidForm = ({
         .eq('auction_id', auctionId)
         .order('amount', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       // Place the new bid
       const { error: bidError } = await supabase

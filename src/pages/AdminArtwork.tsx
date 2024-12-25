@@ -87,6 +87,10 @@ const AdminArtwork = () => {
     }
   };
 
+  const handleCancel = () => {
+    navigate("/admin");
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -96,7 +100,14 @@ const AdminArtwork = () => {
       <h1 className="text-2xl font-bold mb-6">
         {id ? "Edit Artwork" : "Create New Artwork"}
       </h1>
-      {artwork && <ArtworkForm defaultValues={artwork} onSubmit={handleSubmit} />}
+      {artwork && (
+        <ArtworkForm 
+          defaultValues={artwork} 
+          onSubmit={handleSubmit}
+          isLoading={isLoading}
+          onCancel={handleCancel}
+        />
+      )}
     </div>
   );
 };
