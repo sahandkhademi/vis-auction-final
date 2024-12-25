@@ -52,8 +52,7 @@ const AdminArtwork = () => {
       }
 
       if (data) {
-        // Convert the artwork data to match ArtworkFormData type
-        const formData: ArtworkFormData = {
+        setArtwork({
           title: data.title,
           artist: data.artist,
           description: data.description || "",
@@ -62,10 +61,9 @@ const AdminArtwork = () => {
           format: data.format || "",
           starting_price: data.starting_price,
           image_url: data.image_url || "",
-          status: data.status as ArtworkFormData["status"] || "draft",
-          end_date: data.end_date || null
-        };
-        setArtwork(formData);
+          status: data.status as ArtworkFormData["status"],
+          end_date: data.end_date
+        });
       }
     };
 
