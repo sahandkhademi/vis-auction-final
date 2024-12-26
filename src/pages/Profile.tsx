@@ -21,7 +21,7 @@ import {
   ChartBar,
   Bell
 } from "lucide-react";
-import { BidHistory } from "@/components/auction/BidHistory";
+import { UserBidHistory } from "@/components/profile/UserBidHistory";
 import { UserStats } from "@/components/profile/UserStats";
 import { AccountSettings } from "@/components/profile/AccountSettings";
 import { NotificationPreferences } from "@/components/profile/NotificationPreferences";
@@ -171,7 +171,7 @@ const Profile = () => {
                 <CardTitle>Bid History</CardTitle>
               </CardHeader>
               <CardContent>
-                {user && <BidHistory userId={user.id} />}
+                {user && <UserBidHistory userId={user.id} />}
               </CardContent>
             </Card>
           </TabsContent>
