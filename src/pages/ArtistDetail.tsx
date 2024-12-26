@@ -67,7 +67,16 @@ const ArtistDetail = () => {
         {artworks && artworks.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {artworks.map((artwork) => (
-              <AuctionCard key={artwork.id} artwork={artwork} />
+              <AuctionCard
+                key={artwork.id}
+                id={artwork.id}
+                title={artwork.title}
+                artist={artwork.artist}
+                image={artwork.image_url || '/placeholder.svg'}
+                currentBid={artwork.current_price || artwork.starting_price}
+                category={artwork.format || 'Art'}
+                endDate={artwork.end_date}
+              />
             ))}
           </div>
         ) : (
