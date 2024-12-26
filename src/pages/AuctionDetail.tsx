@@ -126,7 +126,7 @@ const AuctionDetail = () => {
             <img
               src={artwork.image_url || '/placeholder.svg'}
               alt={artwork.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover rounded-lg"
             />
           </motion.div>
 
