@@ -9,17 +9,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface Profile {
-  username: string | null;
-}
-
 interface Bid {
   id: string;
   amount: number;
   created_at: string;
   user_id: string;
   auction_id: string;
-  artwork?: {
+  artwork: {
     title: string;
   } | null;
 }
@@ -33,26 +29,31 @@ export const BidHistory = ({ userId }: BidHistoryProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchBids = async () => {
-    const { data: bidsData, error: bidsError } = await supabase
-      .from('bids')
-      .select(`
-        id,
-        amount,
-        created_at,
-        user_id,
-        auction_id,
-        artwork:artworks(title)
-      `)
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+    try {
+      const { data: bidsData, error: bidsError } = await supabase
+        .from('bids')
+        .select(`
+          id,
+          amount,
+          created_at,
+          user_id,
+          auction_id,
+          artwork:artworks!auction_id(title)
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
-    if (bidsError) {
-      console.error('Error fetching bids:', bidsError);
-      return;
+      if (bidsError) {
+        console.error('Error fetching bids:', bidsError);
+        return;
+      }
+
+      setBids(bidsData || []);
+    } catch (error) {
+      console.error('Error in fetchBids:', error);
+    } finally {
+      setIsLoading(false);
     }
-
-    setBids(bidsData || []);
-    setIsLoading(false);
   };
 
   useEffect(() => {
