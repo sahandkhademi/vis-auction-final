@@ -9,37 +9,9 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      artists: {
-        Row: {
-          bio: string | null
-          created_at: string
-          id: string
-          name: string
-          profile_image_url: string | null
-          updated_at: string
-        }
-        Insert: {
-          bio?: string | null
-          created_at?: string
-          id?: string
-          name: string
-          profile_image_url?: string | null
-          updated_at?: string
-        }
-        Update: {
-          bio?: string | null
-          created_at?: string
-          id?: string
-          name?: string
-          profile_image_url?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       artworks: {
         Row: {
           artist: string
-          artist_id: string | null
           created_at: string
           created_by: string | null
           created_year: string | null
@@ -57,7 +29,6 @@ export type Database = {
         }
         Insert: {
           artist: string
-          artist_id?: string | null
           created_at?: string
           created_by?: string | null
           created_year?: string | null
@@ -75,7 +46,6 @@ export type Database = {
         }
         Update: {
           artist?: string
-          artist_id?: string | null
           created_at?: string
           created_by?: string | null
           created_year?: string | null
@@ -91,15 +61,7 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "artworks_artist_id_fkey"
-            columns: ["artist_id"]
-            isOneToOne: false
-            referencedRelation: "artists"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       bids: {
         Row: {
