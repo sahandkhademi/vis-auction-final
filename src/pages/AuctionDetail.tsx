@@ -8,7 +8,6 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { BidForm } from "@/components/auction/BidForm";
 import { AuctionInfo } from "@/components/auction/AuctionInfo";
 import { BidHistory } from "@/components/auction/BidHistory";
-import { ArtistProfile } from "@/components/auction/ArtistProfile";
 import { useQuery } from "@tanstack/react-query";
 import { CountdownTimer } from "@/components/auction/CountdownTimer";
 
@@ -26,15 +25,7 @@ const AuctionDetail = () => {
       
       const { data, error } = await supabase
         .from('artworks')
-        .select(`
-          *,
-          artist:artist_id (
-            id,
-            name,
-            bio,
-            profile_image_url
-          )
-        `)
+        .select('*')
         .eq('id', id)
         .maybeSingle();
 
@@ -182,15 +173,6 @@ const AuctionDetail = () => {
               dimensions={artwork.dimensions || ""}
               format={artwork.format || ""}
             />
-
-            {artwork.artist && (
-              <ArtistProfile
-                id={artwork.artist.id}
-                name={artwork.artist.name}
-                bio={artwork.artist.bio}
-                profileImageUrl={artwork.artist.profile_image_url}
-              />
-            )}
           </motion.div>
         </div>
       </div>

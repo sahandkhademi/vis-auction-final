@@ -11,7 +11,7 @@ interface AuctionCardProps {
   image: string;
   currentBid: number;
   timeLeft?: string;
-  category?: string; // Made optional with ?
+  category: string;
   endDate: string | null;
 }
 
@@ -21,7 +21,7 @@ export const AuctionCard = ({
   artist, 
   image, 
   currentBid, 
-  category = "Artwork", // Added default value
+  category,
   endDate 
 }: AuctionCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
