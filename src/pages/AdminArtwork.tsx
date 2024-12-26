@@ -13,8 +13,23 @@ const AdminArtwork = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (id) {
+    // Only fetch artwork data if we're editing an existing artwork
+    if (id && id !== 'new') {
       fetchArtwork();
+    } else {
+      // Set default values for new artwork
+      setArtwork({
+        title: "",
+        artist: "",
+        description: "",
+        created_year: "",
+        dimensions: "",
+        format: "",
+        starting_price: 0,
+        image_url: "",
+        status: "draft",
+        end_date: null
+      });
     }
   }, [id]);
 
@@ -61,25 +76,40 @@ const AdminArtwork = () => {
   const handleSubmit = async (formData: ArtworkFormData) => {
     try {
       setIsLoading(true);
-      const { error } = await supabase
-        .from("artworks")
-        .update(formData)
-        .eq("id", id);
+      
+      if (id && id !== 'new') {
+        // Update existing artwork
+        const { error } = await supabase
+          .from("artworks")
+          .update(formData)
+          .eq("id", id);
 
-      if (error) {
-        throw error;
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Artwork updated successfully",
+        });
+      } else {
+        // Create new artwork
+        const { error } = await supabase
+          .from("artworks")
+          .insert([formData]);
+
+        if (error) throw error;
+
+        toast({
+          title: "Success",
+          description: "Artwork created successfully",
+        });
       }
-
-      toast({
-        title: "Success",
-        description: "Artwork updated successfully",
-      });
+      
       navigate("/admin");
     } catch (error) {
-      console.error("Error updating artwork:", error);
+      console.error("Error saving artwork:", error);
       toast({
         title: "Error",
-        description: "Failed to update artwork",
+        description: "Failed to save artwork",
         variant: "destructive",
       });
     } finally {
@@ -91,14 +121,14 @@ const AdminArtwork = () => {
     navigate("/admin");
   };
 
-  if (isLoading) {
+  if (isLoading && !artwork) {
     return <div>Loading...</div>;
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">
-        {id ? "Edit Artwork" : "Create New Artwork"}
+        {id && id !== 'new' ? "Edit Artwork" : "Create New Artwork"}
       </h1>
       {artwork && (
         <ArtworkForm 
