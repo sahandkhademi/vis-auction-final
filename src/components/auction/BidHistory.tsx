@@ -21,10 +21,10 @@ interface Bid {
 }
 
 interface BidHistoryProps {
-  userId: string;
+  auctionId: string;
 }
 
-export const BidHistory = ({ userId }: BidHistoryProps) => {
+export const BidHistory = ({ auctionId }: BidHistoryProps) => {
   const [bids, setBids] = useState<Bid[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,7 +40,7 @@ export const BidHistory = ({ userId }: BidHistoryProps) => {
           auction_id,
           artwork:artworks!auction_id(title)
         `)
-        .eq('user_id', userId)
+        .eq('auction_id', auctionId)
         .order('created_at', { ascending: false });
 
       if (bidsError) {
@@ -68,7 +68,7 @@ export const BidHistory = ({ userId }: BidHistoryProps) => {
           event: 'INSERT',
           schema: 'public',
           table: 'bids',
-          filter: `user_id=eq.${userId}`
+          filter: `auction_id=eq.${auctionId}`
         },
         () => {
           fetchBids();
@@ -79,7 +79,7 @@ export const BidHistory = ({ userId }: BidHistoryProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId]);
+  }, [auctionId]);
 
   if (isLoading) {
     return <div className="text-center py-4">Loading bid history...</div>;
