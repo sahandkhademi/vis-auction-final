@@ -16,20 +16,32 @@ const Index = () => {
     timeLeft: "2d 15h 30m"
   };
 
-  const { data: trendingArtworks, isLoading } = useQuery({
+  const { data: trendingArtworks, isLoading, error } = useQuery({
     queryKey: ["trending-artworks"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("artworks")
-        .select("*")
-        .eq("status", "published")
-        .order("current_price", { ascending: false })
-        .limit(4);
+      try {
+        const { data, error } = await supabase
+          .from("artworks")
+          .select("*")
+          .eq("status", "published")
+          .order("current_price", { ascending: false })
+          .limit(4);
 
-      if (error) throw error;
-      return data;
+        if (error) {
+          console.error("Supabase query error:", error);
+          throw error;
+        }
+
+        return data || [];
+      } catch (err) {
+        console.error("Error fetching artworks:", err);
+        return [];
+      }
     },
   });
+
+  // If there's an error, we'll still show the UI but with empty trending artworks
+  const safeArtworks = trendingArtworks || [];
 
   return (
     <div className="min-h-screen bg-white pt-16">
@@ -62,18 +74,23 @@ const Index = () => {
               </div>
             ))
           ) : (
-            trendingArtworks?.map((artwork) => (
+            safeArtworks.map((artwork) => (
               <AuctionCard
                 key={artwork.id}
                 id={artwork.id}
                 title={artwork.title}
                 artist={artwork.artist}
-                image={artwork.image_url || ""}
+                image={artwork.image_url || "/placeholder.svg"}
                 currentBid={artwork.current_price || artwork.starting_price}
-                category={artwork.format || ""}
+                category={artwork.format || "Uncategorized"}
                 endDate={artwork.end_date}
               />
             ))
+          )}
+          {!isLoading && safeArtworks.length === 0 && (
+            <div className="col-span-full text-center py-8 text-gray-500">
+              No active auctions available at the moment.
+            </div>
           )}
         </div>
       </motion.div>
