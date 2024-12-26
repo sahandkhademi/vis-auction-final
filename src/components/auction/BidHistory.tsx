@@ -18,28 +18,32 @@ interface Bid {
   amount: number;
   created_at: string;
   user_id: string;
-  profile?: Profile | null;
+  auction_id: string;
+  artwork?: {
+    title: string;
+  } | null;
 }
 
 interface BidHistoryProps {
-  auctionId: string;
+  userId: string;
 }
 
-export const BidHistory = ({ auctionId }: BidHistoryProps) => {
+export const BidHistory = ({ userId }: BidHistoryProps) => {
   const [bids, setBids] = useState<Bid[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchBids = async () => {
-    // First, fetch bids
     const { data: bidsData, error: bidsError } = await supabase
       .from('bids')
       .select(`
         id,
         amount,
         created_at,
-        user_id
+        user_id,
+        auction_id,
+        artwork:artworks(title)
       `)
-      .eq('auction_id', auctionId)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
     if (bidsError) {
@@ -47,23 +51,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
       return;
     }
 
-    // Then fetch profiles for each bid's user_id
-    const bidsWithProfiles = await Promise.all(
-      (bidsData || []).map(async (bid) => {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('username')
-          .eq('id', bid.user_id)
-          .single();
-
-        return {
-          ...bid,
-          profile: profileData
-        };
-      })
-    );
-
-    setBids(bidsWithProfiles);
+    setBids(bidsData || []);
     setIsLoading(false);
   };
 
@@ -79,7 +67,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
           event: 'INSERT',
           schema: 'public',
           table: 'bids',
-          filter: `auction_id=eq.${auctionId}`
+          filter: `user_id=eq.${userId}`
         },
         () => {
           fetchBids();
@@ -90,7 +78,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [auctionId]);
+  }, [userId]);
 
   if (isLoading) {
     return <div className="text-center py-4">Loading bid history...</div>;
@@ -106,7 +94,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Bidder</TableHead>
+            <TableHead>Artwork</TableHead>
             <TableHead>Amount</TableHead>
             <TableHead>Time</TableHead>
           </TableRow>
@@ -114,7 +102,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         <TableBody>
           {bids.map((bid) => (
             <TableRow key={bid.id}>
-              <TableCell>{bid.profile?.username || 'Anonymous'}</TableCell>
+              <TableCell>{bid.artwork?.title || 'Unknown Artwork'}</TableCell>
               <TableCell>${bid.amount.toLocaleString()}</TableCell>
               <TableCell>
                 {new Date(bid.created_at).toLocaleDateString()} {new Date(bid.created_at).toLocaleTimeString()}

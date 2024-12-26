@@ -171,7 +171,7 @@ const Profile = () => {
                 <CardTitle>Bid History</CardTitle>
               </CardHeader>
               <CardContent>
-                {user && <BidHistory auctionId={user.id} />}
+                {user && <BidHistory userId={user.id} />}
               </CardContent>
             </Card>
           </TabsContent>
