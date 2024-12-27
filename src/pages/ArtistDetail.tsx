@@ -79,7 +79,7 @@ const ArtistDetail = () => {
               id={artwork.id}
               title={artwork.title}
               artist={artwork.artist}
-              imageUrl={artwork.image_url}
+              image_url={artwork.image_url}
               currentPrice={artwork.current_price}
               startingPrice={artwork.starting_price}
               endDate={artwork.end_date}
