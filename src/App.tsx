@@ -9,6 +9,7 @@ import Profile from "@/pages/Profile";
 import AdminDashboard from "@/pages/Admin";
 import AdminArtwork from "@/pages/AdminArtwork";
 import AuctionDetail from "@/pages/AuctionDetail";
+import ArtistDetail from "@/pages/ArtistDetail";
 import About from "@/pages/About";
 import Auctions from "@/pages/Auctions";
 
@@ -27,6 +28,7 @@ function App() {
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/artwork/:id" element={<AdminArtwork />} />
             <Route path="/auction/:id" element={<AuctionDetail />} />
+            <Route path="/artist/:id" element={<ArtistDetail />} />
             <Route path="/auctions" element={<Auctions />} />
             <Route path="/about" element={<About />} />
           </Routes>
