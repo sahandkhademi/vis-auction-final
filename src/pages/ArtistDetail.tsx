@@ -79,9 +79,9 @@ const ArtistDetail = () => {
               id={artwork.id}
               title={artwork.title}
               artist={artwork.artist}
-              image_url={artwork.image_url}
-              currentPrice={artwork.current_price}
-              startingPrice={artwork.starting_price}
+              image={artwork.image_url}
+              currentBid={artwork.current_price || artwork.starting_price}
+              category={artwork.format || ""}
               endDate={artwork.end_date}
             />
           ))}
