@@ -11,6 +11,8 @@ const ArtistDetail = () => {
   const { data: artist, isLoading: isLoadingArtist } = useQuery({
     queryKey: ['artist', id],
     queryFn: async () => {
+      if (!id) throw new Error('Artist ID is required');
+      
       const { data, error } = await supabase
         .from('artists')
         .select('*')
@@ -20,11 +22,14 @@ const ArtistDetail = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !!id, // Only run query if id exists
   });
 
   const { data: artworks, isLoading: isLoadingArtworks } = useQuery({
     queryKey: ['artist-artworks', id],
     queryFn: async () => {
+      if (!id) throw new Error('Artist ID is required');
+      
       const { data, error } = await supabase
         .from('artworks')
         .select('*')
@@ -33,7 +38,12 @@ const ArtistDetail = () => {
       if (error) throw error;
       return data;
     },
+    enabled: !!id, // Only run query if id exists
   });
+
+  if (!id) {
+    return <div className="min-h-screen pt-20 text-center">Artist ID is required</div>;
+  }
 
   if (isLoadingArtist || isLoadingArtworks) {
     return <div className="min-h-screen pt-20 text-center">Loading...</div>;
