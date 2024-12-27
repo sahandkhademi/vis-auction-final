@@ -30,7 +30,8 @@ const AuctionDetail = () => {
         .from('artworks')
         .select(`
           *,
-          artists (
+          artist:artists (
+            id,
             name,
             bio,
             profile_image_url
@@ -113,7 +114,7 @@ const AuctionDetail = () => {
     return <div className="min-h-screen bg-white pt-20 text-center">Loading...</div>;
   }
 
-  const artistData = artwork.artists;
+  const artistData = artwork.artist;
 
   return (
     <div className="min-h-screen bg-white pt-20">
@@ -163,8 +164,8 @@ const AuctionDetail = () => {
 
             <ArtistInfo
               name={artistData?.name || artwork.artist}
-              bio={artistData?.bio}
-              profileImageUrl={artistData?.profile_image_url}
+              bio={artistData?.bio || null}
+              profileImageUrl={artistData?.profile_image_url || null}
             />
 
             <AuctionInfo
