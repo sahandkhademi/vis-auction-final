@@ -42,7 +42,7 @@ const AuctionDetail = () => {
       if (error) throw error;
       if (!data) throw new Error('Artwork not found');
       
-      console.log('Fetched artwork data:', data);
+      console.log('Fetched artwork data:', data); // Debug log
       return data;
     },
     enabled: !!id,
