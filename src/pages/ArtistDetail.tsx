@@ -1,17 +1,29 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "lucide-react";
 import { AuctionCard } from "@/components/AuctionCard";
+import { useEffect } from "react";
+
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const ArtistDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+
+  // Validate ID and redirect if invalid
+  useEffect(() => {
+    if (!id || !UUID_REGEX.test(id)) {
+      navigate("/");
+    }
+  }, [id, navigate]);
 
   const { data: artist, isLoading: isLoadingArtist } = useQuery({
     queryKey: ['artist', id],
     queryFn: async () => {
-      if (!id) throw new Error('Artist ID is required');
+      if (!id || !UUID_REGEX.test(id)) throw new Error('Invalid artist ID');
       
       const { data, error } = await supabase
         .from('artists')
@@ -20,15 +32,16 @@ const ArtistDetail = () => {
         .single();
 
       if (error) throw error;
+      if (!data) throw new Error('Artist not found');
       return data;
     },
-    enabled: !!id,
+    enabled: !!id && UUID_REGEX.test(id),
   });
 
   const { data: artworks, isLoading: isLoadingArtworks } = useQuery({
     queryKey: ['artist-artworks', id],
     queryFn: async () => {
-      if (!id) throw new Error('Artist ID is required');
+      if (!id || !UUID_REGEX.test(id)) throw new Error('Invalid artist ID');
       
       const { data, error } = await supabase
         .from('artworks')
@@ -36,13 +49,13 @@ const ArtistDetail = () => {
         .eq('artist_id', id);
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
-    enabled: !!id,
+    enabled: !!id && UUID_REGEX.test(id),
   });
 
-  if (!id) {
-    return <div className="min-h-screen pt-20 text-center">Artist ID is required</div>;
+  if (!id || !UUID_REGEX.test(id)) {
+    return null; // Will be redirected by useEffect
   }
 
   if (isLoadingArtist || isLoadingArtworks) {
