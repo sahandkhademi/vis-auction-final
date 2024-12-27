@@ -30,7 +30,7 @@ const AuctionDetail = () => {
         .from('artworks')
         .select(`
           *,
-          artist:artists (
+          artist:artists!artworks_artist_id_fkey (
             id,
             name,
             bio,
@@ -40,10 +40,13 @@ const AuctionDetail = () => {
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching artwork:', error);
+        throw error;
+      }
       if (!data) throw new Error('Artwork not found');
       
-      console.log('Fetched artwork data:', data); // Debug log
+      console.log('Fetched artwork data:', data);
       return data;
     },
     enabled: !!id,
@@ -115,6 +118,7 @@ const AuctionDetail = () => {
   }
 
   const artistData = artwork.artist;
+  console.log('Artist data:', artistData);
 
   return (
     <div className="min-h-screen bg-white pt-20">
@@ -164,8 +168,8 @@ const AuctionDetail = () => {
 
             <ArtistInfo
               name={artistData?.name || artwork.artist}
-              bio={artistData?.bio || null}
-              profileImageUrl={artistData?.profile_image_url || null}
+              bio={artistData?.bio}
+              profileImageUrl={artistData?.profile_image_url}
             />
 
             <AuctionInfo
