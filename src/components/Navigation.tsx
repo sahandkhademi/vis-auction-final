@@ -4,6 +4,7 @@ import { Search, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
+import { NotificationBadge } from "./notifications/NotificationBadge";
 import {
   CommandDialog,
   CommandEmpty,
@@ -103,6 +104,7 @@ const Navigation = () => {
             </Button>
             {user ? (
               <div className="flex items-center space-x-4">
+                <NotificationBadge />
                 <Link to="/profile">
                   <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900">
                     <User className="h-5 w-5" />
