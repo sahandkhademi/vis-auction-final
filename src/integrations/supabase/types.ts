@@ -40,6 +40,7 @@ export type Database = {
         Row: {
           artist: string
           artist_id: string | null
+          completion_status: string | null
           created_at: string
           created_by: string | null
           created_year: string | null
@@ -50,14 +51,17 @@ export type Database = {
           format: string | null
           id: string
           image_url: string | null
+          payment_status: string | null
           starting_price: number
           status: string | null
           title: string
           updated_at: string
+          winner_id: string | null
         }
         Insert: {
           artist: string
           artist_id?: string | null
+          completion_status?: string | null
           created_at?: string
           created_by?: string | null
           created_year?: string | null
@@ -68,14 +72,17 @@ export type Database = {
           format?: string | null
           id?: string
           image_url?: string | null
+          payment_status?: string | null
           starting_price: number
           status?: string | null
           title: string
           updated_at?: string
+          winner_id?: string | null
         }
         Update: {
           artist?: string
           artist_id?: string | null
+          completion_status?: string | null
           created_at?: string
           created_by?: string | null
           created_year?: string | null
@@ -86,10 +93,12 @@ export type Database = {
           format?: string | null
           id?: string
           image_url?: string | null
+          payment_status?: string | null
           starting_price?: number
           status?: string | null
           title?: string
           updated_at?: string
+          winner_id?: string | null
         }
         Relationships: [
           {
@@ -219,7 +228,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      handle_auction_completion: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

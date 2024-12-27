@@ -198,17 +198,22 @@ const AuctionDetail = () => {
             <AuctionStatus
               currentBid={currentHighestBid || artwork.starting_price}
               endDate={artwork.end_date}
+              completionStatus={artwork.completion_status}
+              paymentStatus={artwork.payment_status}
+              winnerId={artwork.winner_id}
             />
 
-            <div className="pt-6">
-              <BidForm
-                auctionId={id || ""}
-                currentHighestBid={currentHighestBid}
-                defaultBid={artwork.starting_price}
-                isLoading={isLoading}
-                onBidPlaced={fetchCurrentHighestBid}
-              />
-            </div>
+            {artwork.completion_status === 'ongoing' && (
+              <div className="pt-6">
+                <BidForm
+                  auctionId={id || ""}
+                  currentHighestBid={currentHighestBid}
+                  defaultBid={artwork.starting_price}
+                  isLoading={isLoading}
+                  onBidPlaced={fetchCurrentHighestBid}
+                />
+              </div>
+            )}
 
             <BidHistory auctionId={id || ""} />
 
