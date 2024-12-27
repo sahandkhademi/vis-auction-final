@@ -3,7 +3,7 @@ import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Button } from "@/components/ui/button";
 import { NotificationList } from "./notifications/NotificationList";
 
-export const Navigation = () => {
+const Navigation = () => {
   const session = useSession();
   const supabase = useSupabaseClient();
 
@@ -45,3 +45,5 @@ export const Navigation = () => {
     </nav>
   );
 };
+
+export default Navigation;
