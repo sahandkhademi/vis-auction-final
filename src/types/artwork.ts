@@ -3,6 +3,7 @@ export type ArtworkStatus = "draft" | "published" | "sold" | "archived";
 export interface ArtworkFormData {
   title: string;
   artist: string;
+  artist_id: string;
   description: string;
   created_year: string;
   dimensions: string;
