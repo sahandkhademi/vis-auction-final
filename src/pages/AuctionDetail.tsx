@@ -10,7 +10,9 @@ import { AuctionInfo } from "@/components/auction/AuctionInfo";
 import { BidHistory } from "@/components/auction/BidHistory";
 import { ArtistInfo } from "@/components/auction/ArtistInfo";
 import { useQuery } from "@tanstack/react-query";
-import { CountdownTimer } from "@/components/auction/CountdownTimer";
+import { ArtworkImage } from "@/components/auction/ArtworkImage";
+import { ArtworkHeader } from "@/components/auction/ArtworkHeader";
+import { AuctionStatus } from "@/components/auction/AuctionStatus";
 
 const AuctionDetail = () => {
   const { id } = useParams();
@@ -125,18 +127,10 @@ const AuctionDetail = () => {
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="relative aspect-[4/3]"
-          >
-            <img
-              src={artwork.image_url || '/placeholder.svg'}
-              alt={artwork.title}
-              className="w-full h-full object-cover"
-            />
-          </motion.div>
+          <ArtworkImage 
+            imageUrl={artwork.image_url} 
+            title={artwork.title} 
+          />
 
           <motion.div
             initial={{ opacity: 0 }}
@@ -144,30 +138,16 @@ const AuctionDetail = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="space-y-8"
           >
-            <div className="space-y-2">
-              <p className="text-sm uppercase tracking-wider text-gray-500">
-                {artistData?.name || artwork.artist}
-              </p>
-              <h1 className="text-4xl font-light tracking-tight text-gray-900">
-                {artwork.title}
-              </h1>
-              <p className="text-base text-gray-600 leading-relaxed mt-4">
-                {artwork.description}
-              </p>
-            </div>
+            <ArtworkHeader
+              artistName={artistData?.name || artwork.artist}
+              title={artwork.title}
+              description={artwork.description}
+            />
 
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-1">
-                <p className="text-sm uppercase tracking-wider text-gray-500">Current Bid</p>
-                <p className="text-2xl font-light">
-                  ${(currentHighestBid || artwork.starting_price).toLocaleString()}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm uppercase tracking-wider text-gray-500">Time Remaining</p>
-                <CountdownTimer endDate={artwork.end_date} />
-              </div>
-            </div>
+            <AuctionStatus
+              currentBid={currentHighestBid || artwork.starting_price}
+              endDate={artwork.end_date}
+            />
 
             <div className="pt-6">
               <BidForm
