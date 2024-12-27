@@ -28,7 +28,7 @@ const AuctionDetail = () => {
         .from('artworks')
         .select(`
           *,
-          artist:artists!artworks_artist_id_fkey (
+          artist:artists (
             id,
             name,
             bio,
@@ -36,10 +36,12 @@ const AuctionDetail = () => {
           )
         `)
         .eq('id', id)
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
       if (!data) throw new Error('Artwork not found');
+      
+      console.log('Fetched artwork data:', data); // Debug log
       return data;
     },
     enabled: !!id,
@@ -142,7 +144,9 @@ const AuctionDetail = () => {
             className="space-y-8"
           >
             <div className="space-y-2">
-              <p className="text-sm uppercase tracking-wider text-gray-500">{artwork.artist}</p>
+              <p className="text-sm uppercase tracking-wider text-gray-500">
+                {artwork.artist?.name || artwork.artist}
+              </p>
               <h1 className="text-4xl font-light tracking-tight text-gray-900">
                 {artwork.title}
               </h1>
@@ -177,13 +181,13 @@ const AuctionDetail = () => {
             <BidHistory auctionId={id || ""} />
 
             <ArtistInfo
-              name={artwork.artist?.name || artwork.artist}
+              name={artwork.artist?.name || ""}
               bio={artwork.artist?.bio}
               profileImageUrl={artwork.artist?.profile_image_url}
             />
 
             <AuctionInfo
-              artist={artwork.artist?.name || artwork.artist}
+              artist={artwork.artist?.name || ""}
               createdYear={artwork.created_year || ""}
               dimensions={artwork.dimensions || ""}
               format={artwork.format || ""}
