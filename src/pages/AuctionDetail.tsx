@@ -170,7 +170,6 @@ const AuctionDetail = () => {
               name={artistData?.name || artwork.artist}
               bio={artistData?.bio}
               profileImageUrl={artistData?.profile_image_url}
-              artistId={artistData?.id}
             />
 
             <AuctionInfo
