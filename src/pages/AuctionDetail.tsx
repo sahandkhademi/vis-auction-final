@@ -29,7 +29,6 @@ const AuctionDetail = () => {
         .select(`
           *,
           artists (
-            id,
             name,
             bio,
             profile_image_url
@@ -184,8 +183,8 @@ const AuctionDetail = () => {
 
             <ArtistInfo
               name={artistData?.name || artwork.artist}
-              bio={artistData?.bio || null}
-              profileImageUrl={artistData?.profile_image_url || null}
+              bio={artistData?.bio}
+              profileImageUrl={artistData?.profile_image_url}
             />
 
             <AuctionInfo
