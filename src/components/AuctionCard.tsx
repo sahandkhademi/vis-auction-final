@@ -48,7 +48,7 @@ export const AuctionCard = ({
         className="group cursor-pointer"
       >
         <Card className="overflow-hidden bg-white border-0 shadow-none">
-          <div className="relative aspect-[4/3] overflow-hidden">
+          <div className="relative aspect-square overflow-hidden">
             <div className={`absolute inset-0 bg-gray-100 ${imageLoaded ? 'hidden' : 'block'}`} />
             <img
               src={image}
@@ -73,9 +73,9 @@ export const AuctionCard = ({
             )}
             <div className="mt-2 text-xs text-gray-500">
               {currentBid > 0 ? (
-                <p>Last bid: ${currentBid.toLocaleString()}</p>
+                <p>Last bid: €{currentBid.toLocaleString()}</p>
               ) : (
-                <p>Starting price: ${startingPrice?.toLocaleString()}</p>
+                <p>Starting price: €{startingPrice?.toLocaleString()}</p>
               )}
               <div className="mt-2">
                 <CountdownTimer endDate={endDate} />
