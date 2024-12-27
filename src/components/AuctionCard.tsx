@@ -58,19 +58,19 @@ export const AuctionCard = ({
             />
           </div>
           <div className="p-4">
+            <h2 className="text-base font-semibold text-gray-900">{title}</h2>
             {artist_id ? (
               <button 
                 onClick={handleArtistClick}
                 className="block text-left w-full"
               >
-                <h3 className="text-sm font-medium text-gray-900 uppercase hover:text-primary">{artist}</h3>
+                <p className="text-sm text-gray-600 mt-1 hover:text-primary">{artist}</p>
               </button>
             ) : (
-              <h3 className="text-sm font-medium text-gray-900 uppercase">{artist}</h3>
+              <p className="text-sm text-gray-600 mt-1">{artist}</p>
             )}
-            <p className="text-sm text-gray-600 mt-1">{title}</p>
             <div className="mt-2 text-xs text-gray-500">
-              <p>Estimate: ${currentBid.toLocaleString()} – ${(currentBid * 1.2).toLocaleString()}</p>
+              <p>Last bid: ${currentBid.toLocaleString()}</p>
               <div className="mt-2">
                 <CountdownTimer endDate={endDate} />
               </div>
