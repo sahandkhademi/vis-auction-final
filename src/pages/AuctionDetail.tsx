@@ -8,6 +8,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { BidForm } from "@/components/auction/BidForm";
 import { AuctionInfo } from "@/components/auction/AuctionInfo";
 import { BidHistory } from "@/components/auction/BidHistory";
+import { ArtistInfo } from "@/components/auction/ArtistInfo";
 import { useQuery } from "@tanstack/react-query";
 import { CountdownTimer } from "@/components/auction/CountdownTimer";
 
@@ -25,7 +26,14 @@ const AuctionDetail = () => {
       
       const { data, error } = await supabase
         .from('artworks')
-        .select('*')
+        .select(`
+          *,
+          artist_details:artists!artist_id (
+            name,
+            bio,
+            profile_image_url
+          )
+        `)
         .eq('id', id)
         .maybeSingle();
 
@@ -166,6 +174,12 @@ const AuctionDetail = () => {
             </div>
 
             <BidHistory auctionId={id || ""} />
+
+            <ArtistInfo
+              name={artwork.artist_details?.name || artwork.artist}
+              bio={artwork.artist_details?.bio}
+              profileImageUrl={artwork.artist_details?.profile_image_url}
+            />
 
             <AuctionInfo
               artist={artwork.artist}
