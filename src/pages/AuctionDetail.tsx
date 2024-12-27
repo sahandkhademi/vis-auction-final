@@ -182,13 +182,11 @@ const AuctionDetail = () => {
 
             <BidHistory auctionId={id || ""} />
 
-            {artistData && (
-              <ArtistInfo
-                name={artistData.name}
-                bio={artistData.bio}
-                profileImageUrl={artistData.profile_image_url}
-              />
-            )}
+            <ArtistInfo
+              name={artistData?.name || artwork.artist}
+              bio={artistData?.bio || null}
+              profileImageUrl={artistData?.profile_image_url || null}
+            />
 
             <AuctionInfo
               artist={artistData?.name || artwork.artist}
