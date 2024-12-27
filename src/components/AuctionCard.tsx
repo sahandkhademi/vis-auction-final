@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { CountdownTimer } from "./auction/CountdownTimer";
 
 interface AuctionCardProps {
   id?: string;
   title: string;
   artist: string;
-  artist_id?: string; // Add artist_id to props
+  artist_id?: string;
   image: string;
   currentBid: number;
   timeLeft?: string;
@@ -27,6 +27,15 @@ export const AuctionCard = ({
   endDate 
 }: AuctionCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const navigate = useNavigate();
+
+  const handleArtistClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (artist_id) {
+      navigate(`/artist/${artist_id}`);
+    }
+  };
 
   return (
     <Link to={`/auction/${id}`}>
@@ -50,13 +59,12 @@ export const AuctionCard = ({
           </div>
           <div className="p-4">
             {artist_id ? (
-              <Link 
-                to={`/artist/${artist_id}`}
-                onClick={(e) => e.stopPropagation()} 
-                className="block"
+              <button 
+                onClick={handleArtistClick}
+                className="block text-left w-full"
               >
                 <h3 className="text-sm font-medium text-gray-900 uppercase hover:text-primary">{artist}</h3>
-              </Link>
+              </button>
             ) : (
               <h3 className="text-sm font-medium text-gray-900 uppercase">{artist}</h3>
             )}
