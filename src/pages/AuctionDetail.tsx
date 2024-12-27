@@ -26,7 +26,8 @@ const AuctionDetail = () => {
     queryFn: async () => {
       if (!id) throw new Error('No artwork ID provided');
       
-      const { data, error } = await supabase
+      // First try to get the artwork with its linked artist
+      const { data: artworkWithLinkedArtist, error: linkedError } = await supabase
         .from('artworks')
         .select(`
           *,
@@ -38,16 +39,37 @@ const AuctionDetail = () => {
           )
         `)
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching artwork:', error);
-        throw error;
+      if (linkedError) {
+        console.error('Error fetching artwork:', linkedError);
+        throw linkedError;
       }
-      if (!data) throw new Error('Artwork not found');
-      
-      console.log('Fetched artwork data:', data);
-      return data;
+
+      // If we found the artwork with a linked artist, return it
+      if (artworkWithLinkedArtist?.artist) {
+        console.log('Found artwork with linked artist:', artworkWithLinkedArtist);
+        return artworkWithLinkedArtist;
+      }
+
+      // If no linked artist, try to find the artist by name
+      if (artworkWithLinkedArtist?.artist && artworkWithLinkedArtist.artist !== '') {
+        const { data: artistByName, error: artistError } = await supabase
+          .from('artists')
+          .select('*')
+          .eq('name', artworkWithLinkedArtist.artist)
+          .maybeSingle();
+
+        if (!artistError && artistByName) {
+          return {
+            ...artworkWithLinkedArtist,
+            artist: artistByName
+          };
+        }
+      }
+
+      // If we get here, return the artwork without artist info
+      return artworkWithLinkedArtist;
     },
     enabled: !!id,
   });
@@ -144,7 +166,7 @@ const AuctionDetail = () => {
             className="space-y-8"
           >
             <ArtworkHeader
-              artistName={artistData?.name || artwork.artist}
+              artistName={artistData?.name || artwork.artist || 'Unknown Artist'}
               title={artwork.title}
               description={artwork.description}
             />
@@ -167,14 +189,14 @@ const AuctionDetail = () => {
             <BidHistory auctionId={id || ""} />
 
             <ArtistInfo
-              name={artistData?.name || artwork.artist}
+              name={artistData?.name || artwork.artist || 'Unknown Artist'}
               bio={artistData?.bio}
               profileImageUrl={artistData?.profile_image_url}
               artistId={artistData?.id}
             />
 
             <AuctionInfo
-              artist={artistData?.name || artwork.artist}
+              artist={artistData?.name || artwork.artist || 'Unknown Artist'}
               createdYear={artwork.created_year || ""}
               dimensions={artwork.dimensions || ""}
               format={artwork.format || ""}
