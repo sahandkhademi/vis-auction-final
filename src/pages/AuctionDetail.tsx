@@ -14,6 +14,30 @@ import { ArtworkImage } from "@/components/auction/ArtworkImage";
 import { ArtworkHeader } from "@/components/auction/ArtworkHeader";
 import { AuctionStatus } from "@/components/auction/AuctionStatus";
 
+interface Artist {
+  id: string;
+  name: string;
+  bio: string;
+  profile_image_url: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ArtworkWithArtist {
+  id: string;
+  title: string;
+  artist: string | Artist;
+  description: string | null;
+  created_year: string | null;
+  dimensions: string | null;
+  format: string | null;
+  starting_price: number;
+  current_price: number | null;
+  image_url: string | null;
+  status: string | null;
+  end_date: string | null;
+}
+
 const AuctionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -49,7 +73,7 @@ const AuctionDetail = () => {
       // If we found the artwork with a linked artist, return it
       if (artworkWithLinkedArtist?.artist) {
         console.log('Found artwork with linked artist:', artworkWithLinkedArtist);
-        return artworkWithLinkedArtist;
+        return artworkWithLinkedArtist as ArtworkWithArtist;
       }
 
       // If no linked artist, try to find the artist by name
@@ -64,12 +88,12 @@ const AuctionDetail = () => {
           return {
             ...artworkWithLinkedArtist,
             artist: artistByName
-          };
+          } as ArtworkWithArtist;
         }
       }
 
       // If we get here, return the artwork without artist info
-      return artworkWithLinkedArtist;
+      return artworkWithLinkedArtist as ArtworkWithArtist;
     },
     enabled: !!id,
   });
@@ -139,8 +163,8 @@ const AuctionDetail = () => {
     return <div className="min-h-screen bg-white pt-20 text-center">Loading...</div>;
   }
 
-  const artistData = artwork.artist;
-  console.log('Artist data:', artistData);
+  const artistData = typeof artwork.artist === 'object' ? artwork.artist : null;
+  const artistName = artistData?.name || (typeof artwork.artist === 'string' ? artwork.artist : 'Unknown Artist');
 
   return (
     <div className="min-h-screen bg-white pt-20">
@@ -166,7 +190,7 @@ const AuctionDetail = () => {
             className="space-y-8"
           >
             <ArtworkHeader
-              artistName={artistData?.name || artwork.artist || 'Unknown Artist'}
+              artistName={artistName}
               title={artwork.title}
               description={artwork.description}
             />
@@ -189,14 +213,14 @@ const AuctionDetail = () => {
             <BidHistory auctionId={id || ""} />
 
             <ArtistInfo
-              name={artistData?.name || artwork.artist || 'Unknown Artist'}
+              name={artistName}
               bio={artistData?.bio}
               profileImageUrl={artistData?.profile_image_url}
               artistId={artistData?.id}
             />
 
             <AuctionInfo
-              artist={artistData?.name || artwork.artist || 'Unknown Artist'}
+              artist={artistName}
               createdYear={artwork.created_year || ""}
               dimensions={artwork.dimensions || ""}
               format={artwork.format || ""}
