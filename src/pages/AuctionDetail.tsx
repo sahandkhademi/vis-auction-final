@@ -38,16 +38,13 @@ const AuctionDetail = () => {
           )
         `)
         .eq('id', id)
-        .maybeSingle();
+        .single();
 
       if (error) {
         console.error('Error fetching artwork:', error);
         throw error;
       }
-      
-      if (!data) {
-        throw new Error('Artwork not found');
-      }
+      if (!data) throw new Error('Artwork not found');
       
       console.log('Fetched artwork data:', data);
       return data;
@@ -113,33 +110,11 @@ const AuctionDetail = () => {
 
   if (artworkError) {
     toast.error("Error loading artwork details");
-    return (
-      <div className="min-h-screen bg-white pt-20">
-        <div className="max-w-[1400px] mx-auto px-6">
-          <Button
-            variant="ghost"
-            className="mb-8 text-gray-600 hover:text-gray-900 -ml-4"
-            onClick={() => navigate("/auctions")}
-          >
-            ← Back to Auctions
-          </Button>
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-light text-gray-900">Artwork not found</h2>
-            <p className="mt-2 text-gray-600">The artwork you're looking for might have been removed or doesn't exist.</p>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   if (!artwork) {
-    return (
-      <div className="min-h-screen bg-white pt-20">
-        <div className="max-w-[1400px] mx-auto px-6 text-center">
-          Loading...
-        </div>
-      </div>
-    );
+    return <div className="min-h-screen bg-white pt-20 text-center">Loading...</div>;
   }
 
   const artistData = artwork.artist;
