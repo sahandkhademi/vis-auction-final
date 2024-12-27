@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "lucide-react";
-import AuctionCard from "@/components/AuctionCard";
+import { AuctionCard } from "@/components/AuctionCard";
 
 const ArtistDetail = () => {
   const { id } = useParams();
