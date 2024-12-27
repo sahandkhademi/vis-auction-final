@@ -28,7 +28,8 @@ const AuctionDetail = () => {
         .from('artworks')
         .select(`
           *,
-          artist_details:artists!artist_id (
+          artist:artists!artworks_artist_id_fkey (
+            id,
             name,
             bio,
             profile_image_url
@@ -176,13 +177,13 @@ const AuctionDetail = () => {
             <BidHistory auctionId={id || ""} />
 
             <ArtistInfo
-              name={artwork.artist_details?.name || artwork.artist}
-              bio={artwork.artist_details?.bio}
-              profileImageUrl={artwork.artist_details?.profile_image_url}
+              name={artwork.artist?.name || artwork.artist}
+              bio={artwork.artist?.bio}
+              profileImageUrl={artwork.artist?.profile_image_url}
             />
 
             <AuctionInfo
-              artist={artwork.artist}
+              artist={artwork.artist?.name || artwork.artist}
               createdYear={artwork.created_year || ""}
               dimensions={artwork.dimensions || ""}
               format={artwork.format || ""}
