@@ -13,14 +13,13 @@ const AdminArtwork = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Only fetch artwork data if we're editing an existing artwork
     if (id && id !== 'new') {
       fetchArtwork();
     } else {
-      // Set default values for new artwork
       setArtwork({
         title: "",
         artist: "",
+        artist_id: "",
         description: "",
         created_year: "",
         dimensions: "",
@@ -50,6 +49,7 @@ const AdminArtwork = () => {
         const formData: ArtworkFormData = {
           title: data.title || "",
           artist: data.artist || "",
+          artist_id: data.artist_id || "",
           description: data.description || "",
           created_year: data.created_year || "",
           dimensions: data.dimensions || "",
