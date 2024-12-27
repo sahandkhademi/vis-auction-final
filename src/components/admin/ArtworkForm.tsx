@@ -46,6 +46,7 @@ export const ArtworkForm = ({
     defaultValues: {
       title: "",
       artist: "",
+      artist_id: "",
       description: "",
       created_year: "",
       dimensions: "",
@@ -71,6 +72,14 @@ export const ArtworkForm = ({
     },
   });
 
+  const handleArtistChange = (artistId: string) => {
+    const selectedArtist = artists?.find(artist => artist.id === artistId);
+    if (selectedArtist) {
+      form.setValue("artist", selectedArtist.name);
+      form.setValue("artist_id", selectedArtist.id);
+    }
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -89,12 +98,12 @@ export const ArtworkForm = ({
 
         <FormField
           control={form.control}
-          name="artist"
+          name="artist_id"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Artist</FormLabel>
               <Select
-                onValueChange={field.onChange}
+                onValueChange={handleArtistChange}
                 defaultValue={field.value}
                 disabled={isLoading}
               >
@@ -105,7 +114,7 @@ export const ArtworkForm = ({
                 </FormControl>
                 <SelectContent>
                   {artists?.map((artist) => (
-                    <SelectItem key={artist.id} value={artist.name}>
+                    <SelectItem key={artist.id} value={artist.id}>
                       {artist.name}
                     </SelectItem>
                   ))}
