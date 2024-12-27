@@ -36,9 +36,6 @@ interface ArtworkWithArtist {
   image_url: string | null;
   status: string | null;
   end_date: string | null;
-  completion_status: string | null;
-  payment_status: string | null;
-  winner_id: string | null;
 }
 
 const AuctionDetail = () => {
