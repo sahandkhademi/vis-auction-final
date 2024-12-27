@@ -11,12 +11,12 @@ export const ArtworkImage = ({ imageUrl, title }: ArtworkImageProps) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="relative aspect-[4/3]"
+      className="relative w-full"
     >
       <img
         src={imageUrl || '/placeholder.svg'}
         alt={title}
-        className="w-full h-full object-cover"
+        className="w-full h-auto"
       />
     </motion.div>
   );
