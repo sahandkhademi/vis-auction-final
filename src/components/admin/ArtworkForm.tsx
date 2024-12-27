@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,9 +17,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { ArtworkFormData, ArtworkStatus } from "@/types/artwork";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ArtworkFormProps {
   defaultValues: Partial<ArtworkFormData>;
@@ -49,6 +58,19 @@ export const ArtworkForm = ({
     },
   });
 
+  const { data: artists } = useQuery({
+    queryKey: ["artists"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("artists")
+        .select("id, name")
+        .order("name");
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -71,9 +93,24 @@ export const ArtworkForm = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Artist</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={isLoading}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an artist" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {artists?.map((artist) => (
+                    <SelectItem key={artist.id} value={artist.name}>
+                      {artist.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </FormItem>
           )}
         />
@@ -209,17 +246,23 @@ export const ArtworkForm = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Status</FormLabel>
-              <FormControl>
-                <select
-                  {...field}
-                  className="w-full border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                  <option value="sold">Sold</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </FormControl>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={isLoading}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a status" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="sold">Sold</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                </SelectContent>
+              </Select>
             </FormItem>
           )}
         />
