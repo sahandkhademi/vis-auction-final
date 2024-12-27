@@ -8,6 +8,7 @@ interface AuctionCardProps {
   id?: string;
   title: string;
   artist: string;
+  artist_id?: string; // Add artist_id to props
   image: string;
   currentBid: number;
   timeLeft?: string;
@@ -18,7 +19,8 @@ interface AuctionCardProps {
 export const AuctionCard = ({ 
   id = "1", 
   title, 
-  artist, 
+  artist,
+  artist_id, 
   image, 
   currentBid, 
   category,
@@ -47,7 +49,17 @@ export const AuctionCard = ({
             />
           </div>
           <div className="p-4">
-            <h3 className="text-sm font-medium text-gray-900 uppercase">{artist}</h3>
+            {artist_id ? (
+              <Link 
+                to={`/artist/${artist_id}`}
+                onClick={(e) => e.stopPropagation()} 
+                className="block"
+              >
+                <h3 className="text-sm font-medium text-gray-900 uppercase hover:text-primary">{artist}</h3>
+              </Link>
+            ) : (
+              <h3 className="text-sm font-medium text-gray-900 uppercase">{artist}</h3>
+            )}
             <p className="text-sm text-gray-600 mt-1">{title}</p>
             <div className="mt-2 text-xs text-gray-500">
               <p>Estimate: ${currentBid.toLocaleString()} – ${(currentBid * 1.2).toLocaleString()}</p>

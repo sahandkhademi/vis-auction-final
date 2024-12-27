@@ -22,7 +22,7 @@ const ArtistDetail = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!id, // Only run query if id exists
+    enabled: !!id,
   });
 
   const { data: artworks, isLoading: isLoadingArtworks } = useQuery({
@@ -38,7 +38,7 @@ const ArtistDetail = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!id, // Only run query if id exists
+    enabled: !!id,
   });
 
   if (!id) {
@@ -81,9 +81,10 @@ const ArtistDetail = () => {
                   key={artwork.id}
                   id={artwork.id}
                   title={artwork.title}
-                  artist={artwork.artist}
+                  artist={artist.name}
+                  artist_id={artist.id}
                   image={artwork.image_url}
-                  currentBid={artwork.current_price}
+                  currentBid={artwork.current_price || artwork.starting_price}
                   endDate={artwork.end_date}
                   category="auction"
                 />
