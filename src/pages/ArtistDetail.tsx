@@ -88,7 +88,6 @@ const ArtistDetail = () => {
         </div>
       </div>
     </div>
-  </div>
   );
 };
 

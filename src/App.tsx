@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "@/components/ui/sonner";
 import Home from "./pages/Home";
 import AuctionDetail from "./pages/AuctionDetail";
 import ArtistDetail from "./pages/ArtistDetail";
@@ -13,7 +12,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <ToastContainer />
+        <Toaster />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/auction/:id" element={<AuctionDetail />} />
