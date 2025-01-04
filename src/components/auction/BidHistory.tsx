@@ -51,9 +51,9 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
   useEffect(() => {
     fetchBids();
 
-    // Subscribe to new bids
+    // Subscribe to new bids using schema-db-changes channel
     const channel = supabase
-      .channel('bid-updates')
+      .channel('schema-db-changes')
       .on(
         'postgres_changes',
         {
@@ -64,7 +64,6 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         },
         (payload) => {
           console.log('New bid received:', payload);
-          // Add the new bid to the existing bids array
           setBids(currentBids => [payload.new as Bid, ...currentBids]);
         }
       )
