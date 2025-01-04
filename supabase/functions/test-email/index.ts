@@ -27,6 +27,22 @@ Deno.serve(async (req) => {
 
     console.log('Attempting to send test email to:', email)
 
+    // Get the domain verification status
+    const domainResponse = await fetch('https://api.resend.com/domains', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+      }
+    });
+
+    const domains = await domainResponse.json();
+    const verifiedDomains = domains.data?.filter(d => d.status === 'verified') || [];
+    
+    // Default to onboarding domain if no verified domains
+    const fromEmail = verifiedDomains.length > 0 
+      ? `Art Auction <noreply@${verifiedDomains[0].name}>`
+      : 'Art Auction <onboarding@resend.dev>';
+
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -34,7 +50,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Art Auction <onboarding@resend.dev>',
+        from: fromEmail,
         to: [email],
         subject: 'Test Email from Art Auction',
         html: `
@@ -42,6 +58,12 @@ Deno.serve(async (req) => {
             <h1 style="color: #1a1a1a;">Test Email</h1>
             <p>This is a test email from your Art Auction application.</p>
             <p>If you're receiving this, your email configuration is working correctly!</p>
+            ${!verifiedDomains.length ? `
+              <div style="background-color: #fff3cd; border: 1px solid #ffeeba; padding: 15px; margin: 20px 0; border-radius: 4px;">
+                <strong>Note:</strong> To send emails to any address, please verify a domain at 
+                <a href="https://resend.com/domains">Resend Domains</a>.
+              </div>
+            ` : ''}
             <p style="color: #666; font-size: 14px; margin-top: 20px;">
               Sent at: ${new Date().toLocaleString()}
             </p>
@@ -58,7 +80,11 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ message: 'Test email sent successfully' }),
+      JSON.stringify({ 
+        message: 'Test email sent successfully',
+        fromEmail,
+        verifiedDomains: verifiedDomains.map(d => d.name)
+      }),
       { 
         headers: { 
           ...corsHeaders, 
