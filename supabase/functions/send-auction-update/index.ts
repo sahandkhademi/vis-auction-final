@@ -23,6 +23,11 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    if (!RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not set')
+      throw new Error('RESEND_API_KEY is not set')
+    }
+
     const supabaseAdmin = createClient(
       SUPABASE_URL ?? '',
       SUPABASE_SERVICE_ROLE_KEY ?? '',
@@ -46,6 +51,8 @@ Deno.serve(async (req: Request) => {
       throw new Error('User not found or no email available')
     }
 
+    console.log('Found user email:', user.email)
+
     // Get user's notification preferences
     const { data: preferences, error: prefError } = await supabaseAdmin
       .from('notification_preferences')
@@ -57,6 +64,8 @@ Deno.serve(async (req: Request) => {
       console.error('Error fetching preferences:', prefError)
       throw prefError
     }
+
+    console.log('User preferences:', preferences)
 
     // Get auction details
     const { data: auction, error: auctionError } = await supabaseAdmin
@@ -70,6 +79,8 @@ Deno.serve(async (req: Request) => {
       throw auctionError
     }
 
+    console.log('Found auction:', auction)
+
     let shouldSend = false
     let emailContent = {
       subject: '',
@@ -77,6 +88,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const auctionUrl = `${new URL(req.url).origin.replace('functions.', '')}/auction/${auctionId}`
+    console.log('Auction URL:', auctionUrl)
 
     // Construct email content based on notification type
     switch (type) {
@@ -142,19 +154,16 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!shouldSend) {
+      console.log('Notification type disabled by user preferences')
       return new Response(
         JSON.stringify({ message: 'Notification type disabled by user preferences' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    if (!RESEND_API_KEY) {
-      throw new Error('RESEND_API_KEY is not set')
-    }
-
     // Send email using Resend
     try {
-      console.log('Sending email to:', user.email)
+      console.log('Attempting to send email to:', user.email)
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -169,15 +178,15 @@ Deno.serve(async (req: Request) => {
         })
       })
 
+      const responseText = await response.text()
+      console.log('Resend API response:', response.status, responseText)
+
       if (!response.ok) {
-        const errorText = await response.text()
-        console.error('Failed to send email:', errorText)
-        throw new Error('Failed to send email')
+        console.error('Failed to send email:', responseText)
+        throw new Error(`Failed to send email: ${responseText}`)
       }
 
-      const result = await response.json()
-      console.log('Email sent successfully:', result)
-
+      console.log('Email sent successfully')
       return new Response(
         JSON.stringify({ message: 'Email sent successfully' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
