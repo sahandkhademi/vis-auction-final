@@ -1,10 +1,12 @@
 import { FeaturedAuction } from "@/components/FeaturedAuction";
 import { AuctionCard } from "@/components/AuctionCard";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const Index = () => {
   const featuredAuction = {
@@ -27,70 +29,109 @@ const Index = () => {
           .order("current_price", { ascending: false })
           .limit(4);
 
-        if (error) {
-          console.error("Supabase query error:", error);
-          throw error;
-        }
-
+        if (error) throw error;
         return data || [];
       } catch (err) {
         console.error("Error fetching artworks:", err);
-        return [];
+        throw err;
       }
     },
   });
 
-  // If there's an error, we'll still show the UI but with empty trending artworks
-  const safeArtworks = trendingArtworks || [];
-
   return (
     <div className="min-h-screen bg-white pt-16">
-      <FeaturedAuction {...featuredAuction} />
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <FeaturedAuction {...featuredAuction} />
+        </motion.div>
+      </AnimatePresence>
       
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-[1400px] mx-auto px-6 py-16"
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-16"
       >
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-xl font-medium text-gray-900">Trending lots</h2>
+          <h2 className="text-2xl font-medium text-gray-900">Trending lots</h2>
           <Link 
             to="/auctions" 
-            className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+            className="text-sm text-gray-600 hover:text-gray-900 transition-colors hover:underline"
           >
             View all
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+              Failed to load trending artworks. Please try refreshing the page.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {isLoading ? (
-            // Loading skeleton
             [...Array(4)].map((_, i) => (
-              <div key={i} className="space-y-4">
-                <Skeleton className="h-[200px] w-full" />
+              <motion.div 
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.1 }}
+                className="space-y-4 bg-white p-4 rounded-lg shadow-sm"
+              >
+                <Skeleton className="h-[200px] w-full rounded-lg" />
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-4 w-1/2" />
-              </div>
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="h-4 w-1/3" />
+                </div>
+              </motion.div>
             ))
           ) : (
-            safeArtworks.map((artwork) => (
-              <AuctionCard
-                key={artwork.id}
-                id={artwork.id}
-                title={artwork.title}
-                artist={artwork.artist}
-                image={artwork.image_url || "/placeholder.svg"}
-                currentBid={artwork.current_price || artwork.starting_price}
-                category={artwork.format || "Uncategorized"}
-                endDate={artwork.end_date}
-              />
-            ))
+            <AnimatePresence>
+              {trendingArtworks?.map((artwork, index) => (
+                <motion.div
+                  key={artwork.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  className="transform transition-all duration-200 hover:scale-[1.02]"
+                >
+                  <AuctionCard
+                    id={artwork.id}
+                    title={artwork.title}
+                    artist={artwork.artist}
+                    image={artwork.image_url || "/placeholder.svg"}
+                    currentBid={artwork.current_price || artwork.starting_price}
+                    category={artwork.format || "Uncategorized"}
+                    endDate={artwork.end_date}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           )}
-          {!isLoading && safeArtworks.length === 0 && (
-            <div className="col-span-full text-center py-8 text-gray-500">
-              No active auctions available at the moment.
-            </div>
+          {!isLoading && (!trendingArtworks || trendingArtworks.length === 0) && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="col-span-full text-center py-8"
+            >
+              <p className="text-gray-500">No active auctions available at the moment.</p>
+              <Link 
+                to="/auctions" 
+                className="text-primary hover:text-primary/80 transition-colors mt-2 inline-block"
+              >
+                Browse all auctions
+              </Link>
+            </motion.div>
           )}
         </div>
       </motion.div>
