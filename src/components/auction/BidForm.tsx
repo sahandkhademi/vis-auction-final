@@ -25,7 +25,10 @@ export const BidForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Attempting to place bid:", { auctionId, bidAmount, userId: session?.user?.id });
+
     if (!session?.user) {
+      console.log("No user session found");
       toast({
         title: "Authentication required",
         description: "Please sign in to place a bid",
@@ -35,6 +38,7 @@ export const BidForm = ({
     }
 
     if (bidAmount <= currentBid) {
+      console.log("Bid amount too low:", { bidAmount, currentBid });
       toast({
         title: "Invalid bid amount",
         description: "Your bid must be higher than the current bid",
@@ -46,22 +50,32 @@ export const BidForm = ({
     setIsSubmitting(true);
 
     try {
-      const { error: bidError } = await supabase
+      const { data: bidData, error: bidError } = await supabase
         .from("bids")
         .insert({
           auction_id: auctionId,
           amount: bidAmount,
           user_id: session.user.id,
-        });
+        })
+        .select()
+        .single();
 
-      if (bidError) throw bidError;
+      console.log("Bid insertion result:", { bidData, bidError });
+
+      if (bidError) {
+        console.error("Error inserting bid:", bidError);
+        throw bidError;
+      }
 
       const { error: updateError } = await supabase
         .from("artworks")
         .update({ current_price: bidAmount })
         .eq("id", auctionId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Error updating artwork price:", updateError);
+        throw updateError;
+      }
 
       toast({
         title: "Bid placed successfully",
