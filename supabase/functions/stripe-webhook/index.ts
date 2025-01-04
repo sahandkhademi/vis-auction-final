@@ -22,6 +22,19 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Check for authorization header
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader) {
+    console.error('Missing authorization header');
+    return new Response(
+      JSON.stringify({ error: 'Missing authorization header' }),
+      { 
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
+  }
+
   try {
     const signature = req.headers.get('stripe-signature');
     console.log('Stripe signature received:', signature);
