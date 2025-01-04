@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,11 @@ export const BidForm = ({
   const session = useSession();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Update bid amount when currentBid changes
+  useEffect(() => {
+    setBidAmount(currentBid + 1);
+  }, [currentBid]);
 
   console.log("Current session:", session); // Debug log
 
