@@ -48,15 +48,13 @@ export const BidForm = ({
 
     try {
       // First, insert the bid
-      const { data: bidData, error: bidError } = await supabase
+      const { error: bidError } = await supabase
         .from("bids")
         .insert({
           auction_id: auctionId,
           amount: bidAmount,
           user_id: session.user.id,
-        })
-        .select()
-        .single();
+        });
 
       if (bidError) {
         console.error("Error inserting bid:", bidError);
@@ -80,6 +78,7 @@ export const BidForm = ({
       });
 
       onBidPlaced();
+      setBidAmount(bidAmount + 1);
     } catch (error) {
       console.error("Error placing bid:", error);
       toast({
@@ -104,7 +103,7 @@ export const BidForm = ({
           className="flex-1"
         />
         <Button type="submit" disabled={isSubmitting || isLoading}>
-          Place Bid
+          {isSubmitting ? "Placing bid..." : "Place Bid"}
         </Button>
       </div>
     </form>

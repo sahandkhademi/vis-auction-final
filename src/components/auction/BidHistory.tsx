@@ -38,7 +38,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
           created_at,
           user_id,
           auction_id,
-          artwork:artworks!auction_id(title)
+          artwork:artworks(title)
         `)
         .eq('auction_id', auctionId)
         .order('created_at', { ascending: false });
@@ -70,7 +70,8 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
           table: 'bids',
           filter: `auction_id=eq.${auctionId}`
         },
-        () => {
+        (payload) => {
+          console.log('New bid received:', payload);
           fetchBids();
         }
       )
