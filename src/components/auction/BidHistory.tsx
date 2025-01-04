@@ -27,6 +27,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
   const [bids, setBids] = useState<Bid[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAllBids, setShowAllBids] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const fetchBids = async () => {
     try {
@@ -52,6 +53,13 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
   };
 
   useEffect(() => {
+    // Get current user ID
+    const getCurrentUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setCurrentUserId(session?.user?.id || null);
+    };
+
+    getCurrentUser();
     fetchBids();
 
     const channel = supabase
@@ -112,7 +120,12 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         <TableBody>
           {displayedBids.map((bid) => (
             <TableRow key={bid.id}>
-              <TableCell>€{bid.amount.toLocaleString()}</TableCell>
+              <TableCell>
+                {bid.user_id === currentUserId && (
+                  <span className="text-sm text-blue-600 mr-2">(you)</span>
+                )}
+                €{bid.amount.toLocaleString()}
+              </TableCell>
               <TableCell>
                 {new Date(bid.created_at).toLocaleDateString()} {new Date(bid.created_at).toLocaleTimeString()}
               </TableCell>
