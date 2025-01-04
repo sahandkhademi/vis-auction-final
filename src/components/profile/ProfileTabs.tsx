@@ -16,7 +16,7 @@ interface ProfileTabsProps {
 export const ProfileTabs = ({ user }: ProfileTabsProps) => {
   return (
     <Tabs defaultValue="won" className="w-full">
-      <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto md:h-10">
+      <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto">
         <TabsTrigger value="won" className="flex items-center gap-1 text-xs md:text-sm md:gap-2 h-10">
           <Trophy className="h-3 w-3 md:h-4 md:w-4" />
           <span className="hidden md:inline">Won</span>
