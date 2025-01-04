@@ -115,19 +115,20 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
           <TableRow>
             <TableHead>Amount</TableHead>
             <TableHead>Time</TableHead>
+            <TableHead className="text-right"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {displayedBids.map((bid) => (
             <TableRow key={bid.id}>
-              <TableCell>
-                {bid.user_id === currentUserId && (
-                  <span className="text-sm text-blue-600 mr-2">(you)</span>
-                )}
-                €{bid.amount.toLocaleString()}
-              </TableCell>
+              <TableCell>€{bid.amount.toLocaleString()}</TableCell>
               <TableCell>
                 {new Date(bid.created_at).toLocaleDateString()} {new Date(bid.created_at).toLocaleTimeString()}
+              </TableCell>
+              <TableCell className="text-right">
+                {bid.user_id === currentUserId && (
+                  <span className="text-sm text-blue-600">(Your bid)</span>
+                )}
               </TableCell>
             </TableRow>
           ))}
