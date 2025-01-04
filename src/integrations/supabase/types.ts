@@ -261,6 +261,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_highest_bid: {
+        Args: {
+          auction_id: string
+        }
+        Returns: number
+      }
       handle_abandoned_wins: {
         Args: Record<PropertyKey, never>
         Returns: undefined

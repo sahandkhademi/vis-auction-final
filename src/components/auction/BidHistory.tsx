@@ -15,9 +15,6 @@ interface Bid {
   created_at: string;
   user_id: string;
   auction_id: string;
-  artwork: {
-    title: string;
-  } | null;
 }
 
 interface BidHistoryProps {
@@ -30,16 +27,10 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
 
   const fetchBids = async () => {
     try {
+      console.log("Fetching bids for auction:", auctionId);
       const { data: bidsData, error: bidsError } = await supabase
         .from('bids')
-        .select(`
-          id,
-          amount,
-          created_at,
-          user_id,
-          auction_id,
-          artwork:artworks!bids_auction_id_fkey(title)
-        `)
+        .select('*')
         .eq('auction_id', auctionId)
         .order('created_at', { ascending: false });
 
@@ -60,6 +51,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
   useEffect(() => {
     fetchBids();
 
+    // Subscribe to new bids
     const channel = supabase
       .channel('schema-db-changes')
       .on(
@@ -96,7 +88,6 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Artwork</TableHead>
             <TableHead>Amount</TableHead>
             <TableHead>Time</TableHead>
           </TableRow>
@@ -104,7 +95,6 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         <TableBody>
           {bids.map((bid) => (
             <TableRow key={bid.id}>
-              <TableCell>{bid.artwork?.title || 'Unknown Artwork'}</TableCell>
               <TableCell>€{bid.amount.toLocaleString()}</TableCell>
               <TableCell>
                 {new Date(bid.created_at).toLocaleDateString()} {new Date(bid.created_at).toLocaleTimeString()}
