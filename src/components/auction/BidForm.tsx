@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,7 @@ export const BidForm = ({
   const { toast } = useToast();
   const session = useSession();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,12 +32,8 @@ export const BidForm = ({
 
     if (!session?.user) {
       console.log("No user session found");
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to place a bid",
-        variant: "destructive",
-      });
-      navigate("/auth");
+      const returnUrl = encodeURIComponent(location.pathname);
+      navigate(`/auth?returnUrl=${returnUrl}`);
       return;
     }
 

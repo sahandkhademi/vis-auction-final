@@ -2,20 +2,22 @@ import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnUrl = new URLSearchParams(location.search).get('returnUrl') || '/';
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate("/");
+        navigate(returnUrl);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, returnUrl]);
 
   return (
     <div className="min-h-screen pt-32 bg-white">
