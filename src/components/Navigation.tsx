@@ -1,10 +1,7 @@
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "./ui/button";
-import { Menu, Search, User } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
-import { NotificationBadge } from "./notifications/NotificationBadge";
 import {
   CommandDialog,
   CommandEmpty,
@@ -14,13 +11,14 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useQuery } from "@tanstack/react-query";
-import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import { DesktopNav } from "./navigation/DesktopNav";
+import { MobileNav } from "./navigation/MobileNav";
+import { UserActions } from "./navigation/UserActions";
 
 const Navigation = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [open, setOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -64,13 +62,6 @@ const Navigation = () => {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  const navigationLinks = [
-    { to: "/auctions", label: "Auctions" },
-    { to: "/submit-art", label: "Submit Your Art" },
-    { to: "/faq", label: "FAQ" },
-    { to: "/about", label: "About Us" },
-  ];
-
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
       <div className="max-w-[1400px] mx-auto px-6">
@@ -81,79 +72,13 @@ const Navigation = () => {
             </Link>
           </div>
           
-          <div className="hidden md:flex items-center space-x-8">
-            {navigationLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          <div className="flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-gray-600 hover:text-gray-900 md:flex hidden"
-              onClick={() => setOpen(true)}
-              aria-label="Search"
-            >
-              <Search className="h-5 w-5" />
-            </Button>
-            {user ? (
-              <div className="flex items-center space-x-4">
-                <NotificationBadge />
-                <Link to="/profile">
-                  <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900" aria-label="Profile">
-                    <User className="h-5 w-5" />
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate("/auth")}
-                className="text-sm text-gray-600 hover:text-gray-900"
-              >
-                Sign in
-              </Button>
-            )}
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900 ml-2">
-                  <Menu className="h-[1.25rem] w-[1.25rem]" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[240px] sm:w-[300px]">
-                <div className="flex flex-col gap-4 mt-6">
-                  <Button 
-                    variant="ghost" 
-                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors justify-start"
-                    onClick={() => {
-                      setOpen(true);
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <Search className="h-5 w-5" />
-                    Search
-                  </Button>
-                  {navigationLinks.map((link) => (
-                    <Link
-                      key={link.to}
-                      to={link.to}
-                      className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+          <DesktopNav />
+          <UserActions user={user} setOpen={setOpen} />
+          <MobileNav 
+            mobileMenuOpen={mobileMenuOpen}
+            setMobileMenuOpen={setMobileMenuOpen}
+            setOpen={setOpen}
+          />
         </div>
       </div>
 
