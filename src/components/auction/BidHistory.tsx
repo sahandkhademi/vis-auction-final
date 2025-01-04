@@ -32,7 +32,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         .from('bids')
         .select('*')
         .eq('auction_id', auctionId)
-        .order('amount', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (bidsError) {
         console.error('Error fetching bids:', bidsError);
@@ -57,13 +57,13 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'bids',
           filter: `auction_id=eq.${auctionId}`
         },
         (payload) => {
-          console.log('Bid change received:', payload);
+          console.log('New bid received:', payload);
           fetchBids();
         }
       )
