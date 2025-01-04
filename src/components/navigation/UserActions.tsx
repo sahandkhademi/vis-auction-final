@@ -13,7 +13,7 @@ export const UserActions = ({ user, setOpen }: UserActionsProps) => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex items-center md:space-x-4 space-x-2">
+    <div className="flex items-center space-x-2">
       <Button 
         variant="ghost" 
         size="icon" 
@@ -24,7 +24,7 @@ export const UserActions = ({ user, setOpen }: UserActionsProps) => {
         <Search className="h-5 w-5" />
       </Button>
       {user ? (
-        <div className="flex items-center md:space-x-4 space-x-2">
+        <div className="flex items-center space-x-2">
           <NotificationBadge />
           <Link to="/profile">
             <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900" aria-label="Profile">
