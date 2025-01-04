@@ -1,5 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Toaster } from "sonner";
@@ -20,28 +22,30 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <div className="min-h-screen flex flex-col bg-background">
-          <Navigation />
-          <main className="flex-grow pt-24 pb-16">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/artwork/:id" element={<AdminArtwork />} />
-              <Route path="/auction/:id" element={<AuctionDetail />} />
-              <Route path="/artist/:id" element={<ArtistDetail />} />
-              <Route path="/auctions" element={<Auctions />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/submit-art" element={<SubmitArt />} />
-              <Route path="/faq" element={<FAQ />} />
-            </Routes>
-          </main>
-          <Footer />
-          <Toaster />
-        </div>
-      </BrowserRouter>
+      <SessionContextProvider supabaseClient={supabase}>
+        <BrowserRouter>
+          <div className="min-h-screen flex flex-col bg-background">
+            <Navigation />
+            <main className="flex-grow pt-24 pb-16">
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/artwork/:id" element={<AdminArtwork />} />
+                <Route path="/auction/:id" element={<AuctionDetail />} />
+                <Route path="/artist/:id" element={<ArtistDetail />} />
+                <Route path="/auctions" element={<Auctions />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/submit-art" element={<SubmitArt />} />
+                <Route path="/faq" element={<FAQ />} />
+              </Routes>
+            </main>
+            <Footer />
+            <Toaster />
+          </div>
+        </BrowserRouter>
+      </SessionContextProvider>
     </QueryClientProvider>
   );
 }
