@@ -1,15 +1,14 @@
-import { EmailContent } from './types.ts';
-
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 
-export const sendEmail = async (to: string, content: EmailContent): Promise<Response> => {
+interface EmailContent {
+  subject: string;
+  html: string;
+}
+
+export const sendEmail = async (to: string, content: EmailContent) => {
   if (!RESEND_API_KEY) {
-    console.error('RESEND_API_KEY is not set');
     throw new Error('RESEND_API_KEY is not set');
   }
-
-  console.log('Attempting to send email to:', to);
-  console.log('Email content:', content);
 
   try {
     const response = await fetch('https://api.resend.com/emails', {
@@ -19,26 +18,21 @@ export const sendEmail = async (to: string, content: EmailContent): Promise<Resp
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'VIS Auction <onboarding@resend.dev>', // Update this with your verified domain
+        from: 'notifications@vis-auction.com', // Using your verified domain
         to: [to],
         subject: content.subject,
         html: content.html
       })
     });
 
-    const responseText = await response.text();
-    console.log('Resend API response:', response.status, responseText);
-
     if (!response.ok) {
-      throw new Error(`Failed to send email: ${responseText}`);
+      const error = await response.text();
+      throw new Error(`Failed to send email: ${error}`);
     }
 
-    return new Response(
-      JSON.stringify({ message: 'Email sent successfully' }),
-      { headers: { 'Content-Type': 'application/json' } }
-    );
+    return await response.json();
   } catch (error) {
     console.error('Error sending email:', error);
     throw error;
   }
-};
+}
