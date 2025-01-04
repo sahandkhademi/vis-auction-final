@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="bg-white border-t border-gray-100">
+    <footer className="bg-white border-t border-gray-100 mt-auto">
       <div className="container mx-auto px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
@@ -32,12 +32,12 @@ const Footer = () => {
             <h4 className="text-base font-medium text-gray-900 mb-4">Support</h4>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <Link to="/faq" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                   FAQ
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <a href="mailto:support@visauction.com" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                   Contact Us
                 </a>
               </li>
