@@ -26,9 +26,12 @@ export const BidForm = ({
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Update bid amount when currentBid changes
   useEffect(() => {
     setBidAmount(currentBid + 1);
   }, [currentBid]);
+
+  console.log("Current session:", session); // Debug log
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +42,13 @@ export const BidForm = ({
       navigate(`/auth?returnUrl=${returnUrl}`);
       return;
     }
+
+    console.log("Starting bid submission:", { 
+      auctionId, 
+      bidAmount, 
+      currentBid, 
+      userId: session.user.id 
+    });
 
     if (bidAmount <= currentBid) {
       toast({
@@ -52,6 +62,7 @@ export const BidForm = ({
     setIsSubmitting(true);
 
     try {
+      // Insert the bid
       const { data: bidData, error: bidError } = await supabase
         .from("bids")
         .insert({
@@ -64,17 +75,6 @@ export const BidForm = ({
 
       if (bidError) {
         console.error("Bid insertion error:", bidError);
-        
-        // Check for unique constraint violation
-        if (bidError.code === '23505') {
-          toast({
-            title: "Bid amount already exists",
-            description: "Someone has already placed a bid with this amount. Please choose a different amount.",
-            variant: "destructive",
-          });
-          return;
-        }
-        
         toast({
           title: "Failed to place bid",
           description: bidError.message || "Please try again",
@@ -83,6 +83,9 @@ export const BidForm = ({
         return;
       }
 
+      console.log("Bid inserted successfully:", bidData);
+
+      // Update the artwork's current price
       const { error: updateError } = await supabase
         .from("artworks")
         .update({ current_price: bidAmount })
@@ -97,6 +100,8 @@ export const BidForm = ({
         });
         return;
       }
+
+      console.log("Artwork price updated successfully");
       
       toast({
         title: "Bid placed successfully!",
