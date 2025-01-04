@@ -47,7 +47,6 @@ export const BidForm = ({
     setIsSubmitting(true);
 
     try {
-      // First, insert the bid
       const { error: bidError } = await supabase
         .from("bids")
         .insert({
@@ -61,7 +60,6 @@ export const BidForm = ({
         throw bidError;
       }
 
-      // Then, update the artwork's current price
       const { error: updateError } = await supabase
         .from("artworks")
         .update({ current_price: bidAmount })

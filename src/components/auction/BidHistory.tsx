@@ -38,7 +38,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
           created_at,
           user_id,
           auction_id,
-          artwork:artworks(title)
+          artwork:artworks!bids_auction_id_fkey(title)
         `)
         .eq('auction_id', auctionId)
         .order('created_at', { ascending: false });
@@ -48,6 +48,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         return;
       }
 
+      console.log('Fetched bids:', bidsData);
       setBids(bidsData || []);
     } catch (error) {
       console.error('Error in fetchBids:', error);
@@ -59,7 +60,6 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
   useEffect(() => {
     fetchBids();
 
-    // Subscribe to new bids
     const channel = supabase
       .channel('schema-db-changes')
       .on(
@@ -105,7 +105,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
           {bids.map((bid) => (
             <TableRow key={bid.id}>
               <TableCell>{bid.artwork?.title || 'Unknown Artwork'}</TableCell>
-              <TableCell>${bid.amount.toLocaleString()}</TableCell>
+              <TableCell>€{bid.amount.toLocaleString()}</TableCell>
               <TableCell>
                 {new Date(bid.created_at).toLocaleDateString()} {new Date(bid.created_at).toLocaleTimeString()}
               </TableCell>
