@@ -1,12 +1,11 @@
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const [view, setView] = useState<"sign_in" | "sign_up">("sign_in");
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -22,7 +21,7 @@ const AuthPage = () => {
     <div className="min-h-screen pt-32 bg-white">
       <div className="max-w-md mx-auto px-4">
         <h1 className="text-2xl font-light mb-8 text-center">
-          {view === "sign_in" ? "Sign in" : "Sign up"}
+          Sign in
         </h1>
         <Auth
           supabaseClient={supabase}
@@ -43,7 +42,6 @@ const AuthPage = () => {
             },
           }}
           providers={[]}
-          view={view}
           localization={{
             variables: {
               sign_in: {
@@ -56,7 +54,6 @@ const AuthPage = () => {
               },
             },
           }}
-          onViewChange={setView}
         />
       </div>
     </div>
