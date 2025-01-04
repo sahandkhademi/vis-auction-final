@@ -51,7 +51,6 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
   useEffect(() => {
     fetchBids();
 
-    // Subscribe to new bids using schema-db-changes channel
     const channel = supabase
       .channel('schema-db-changes')
       .on(
@@ -64,12 +63,24 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         },
         (payload) => {
           console.log('New bid received:', payload);
-          setBids(currentBids => [payload.new as Bid, ...currentBids]);
+          const newBid = payload.new as Bid;
+          setBids(currentBids => {
+            // Check if the bid already exists to prevent duplicates
+            const exists = currentBids.some(bid => bid.id === newBid.id);
+            if (exists) {
+              return currentBids;
+            }
+            // Add new bid at the beginning of the array
+            return [newBid, ...currentBids];
+          });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
+      console.log('Cleaning up subscription');
       supabase.removeChannel(channel);
     };
   }, [auctionId]);
