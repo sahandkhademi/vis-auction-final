@@ -33,7 +33,6 @@ const AuthPage = () => {
                 },
                 radii: {
                   borderRadiusButton: '0',
-                  buttonBorderRadius: '0',
                   inputBorderRadius: '0',
                 },
               },
