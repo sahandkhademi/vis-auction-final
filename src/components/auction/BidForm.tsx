@@ -27,7 +27,7 @@ export const BidForm = ({
   const location = useLocation();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent form submission from refreshing the page
     
     if (!session?.user) {
       const returnUrl = encodeURIComponent(location.pathname);
@@ -48,6 +48,7 @@ export const BidForm = ({
     console.log('Submitting bid:', { auctionId, amount: bidAmount, userId: session.user.id });
 
     try {
+      // Insert the bid
       const { error: bidError } = await supabase
         .from("bids")
         .insert({
@@ -61,6 +62,7 @@ export const BidForm = ({
         throw bidError;
       }
 
+      // Update the artwork's current price
       const { error: updateError } = await supabase
         .from("artworks")
         .update({ current_price: bidAmount })
