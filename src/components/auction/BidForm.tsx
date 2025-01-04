@@ -45,6 +45,7 @@ export const BidForm = ({
     }
 
     setIsSubmitting(true);
+    console.log('Submitting bid:', { auctionId, amount: bidAmount, userId: session.user.id });
 
     try {
       const { error: bidError } = await supabase
