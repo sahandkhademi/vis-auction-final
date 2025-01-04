@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
   try {
     if (!RESEND_API_KEY) {
       console.error('RESEND_API_KEY is not set')
-      throw new Error('RESEND_API_KEY is not set')
+      throw new Error('Email service is not configured properly. Please set RESEND_API_KEY.')
     }
 
     const { email } = await req.json()
@@ -50,21 +50,29 @@ Deno.serve(async (req) => {
       })
     })
 
-    const responseText = await response.text()
-    console.log('Resend API response:', response.status, responseText)
+    const responseData = await response.text()
+    console.log('Resend API response:', response.status, responseData)
 
     if (!response.ok) {
-      throw new Error(`Failed to send email: ${responseText}`)
+      throw new Error(`Failed to send email: ${responseData}`)
     }
 
     return new Response(
       JSON.stringify({ message: 'Test email sent successfully' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
     )
   } catch (error) {
     console.error('Error sending test email:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: 'Check the Edge Function logs for more details'
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
