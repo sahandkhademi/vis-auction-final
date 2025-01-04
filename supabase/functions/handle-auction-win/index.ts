@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       .single()
 
     if (preferences?.auction_won_notifications) {
-      // Create notification
+      // Create in-app notification
       await supabaseClient
         .from('notifications')
         .insert({
@@ -46,18 +46,28 @@ Deno.serve(async (req) => {
           type: 'auction_won'
         })
 
-      console.log(`Notification sent to user ${auction.winner_id} for auction ${auctionId}`)
+      // Send email notification
+      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-winner-email`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ auctionId }),
+      })
+
+      console.log(`Notifications sent to user ${auction.winner_id} for auction ${auctionId}`)
     }
 
     return new Response(
-      JSON.stringify({ message: 'Notification sent successfully' }),
+      JSON.stringify({ message: 'Notifications sent successfully' }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     )
   } catch (error) {
-    console.error('Error sending notification:', error)
+    console.error('Error sending notifications:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       {
