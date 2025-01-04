@@ -19,7 +19,7 @@ export const sendEmail = async (to: string, content: EmailContent): Promise<Resp
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'onboarding@resend.dev',
+        from: 'VIS Auction <onboarding@resend.dev>', // Update this with your verified domain
         to: [to],
         subject: content.subject,
         html: content.html
