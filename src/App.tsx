@@ -29,16 +29,30 @@ const reducedPaddingRoutes = [
   '/faq'
 ];
 
+// Pages that need more padding for content
+const contentPaddingRoutes = [
+  '/auctions'
+];
+
 function AppContent() {
   const location = useLocation();
   const needsReducedPadding = reducedPaddingRoutes.some(route => 
     location.pathname.startsWith(route)
   );
+  const needsContentPadding = contentPaddingRoutes.some(route =>
+    location.pathname.startsWith(route)
+  );
+
+  const getPaddingClass = () => {
+    if (needsReducedPadding) return 'pt-6';
+    if (needsContentPadding) return 'pt-32 px-8';
+    return 'pt-24';
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
-      <main className={`flex-grow ${needsReducedPadding ? 'pt-6' : 'pt-24'} pb-16`}>
+      <main className={`flex-grow ${getPaddingClass()} pb-16`}>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
