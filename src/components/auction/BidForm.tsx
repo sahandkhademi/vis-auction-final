@@ -28,7 +28,7 @@ export const BidForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting bid:", { auctionId, bidAmount, currentBid });
+    console.log("Starting bid submission:", { auctionId, bidAmount, currentBid, userId: session?.user?.id });
 
     if (!session?.user) {
       const returnUrl = encodeURIComponent(location.pathname);
@@ -48,21 +48,25 @@ export const BidForm = ({
     setIsSubmitting(true);
 
     try {
-      // Insert the bid first
-      const { error: bidError } = await supabase
+      // Insert the bid
+      const { data: bidData, error: bidError } = await supabase
         .from("bids")
         .insert({
           auction_id: auctionId,
           amount: bidAmount,
           user_id: session.user.id
-        });
+        })
+        .select()
+        .single();
 
       if (bidError) {
         console.error("Bid insertion error:", bidError);
         throw bidError;
       }
 
-      // Then update the artwork's current price
+      console.log("Bid inserted successfully:", bidData);
+
+      // Update the artwork's current price
       const { error: updateError } = await supabase
         .from("artworks")
         .update({ current_price: bidAmount })
@@ -73,7 +77,7 @@ export const BidForm = ({
         throw updateError;
       }
 
-      console.log("Bid placed successfully for amount:", bidAmount);
+      console.log("Artwork price updated successfully");
       
       toast({
         title: "Bid placed successfully!",
