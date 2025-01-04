@@ -91,6 +91,7 @@ const Navigation = () => {
               size="icon" 
               className="text-gray-600 hover:text-gray-900"
               onClick={() => setOpen(true)}
+              aria-label="Search"
             >
               <Search className="h-5 w-5" />
             </Button>
@@ -98,7 +99,7 @@ const Navigation = () => {
               <div className="flex items-center space-x-4">
                 <NotificationBadge />
                 <Link to="/profile">
-                  <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900">
+                  <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900" aria-label="Profile">
                     <User className="h-5 w-5" />
                   </Button>
                 </Link>
@@ -116,9 +117,16 @@ const Navigation = () => {
         </div>
       </div>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Search artworks and artists..." />
-        <CommandList>
+      <CommandDialog 
+        open={open} 
+        onOpenChange={setOpen}
+        aria-label="Search dialog"
+      >
+        <CommandInput 
+          placeholder="Search artworks and artists..." 
+          aria-label="Search input"
+        />
+        <CommandList aria-label="Search results">
           <CommandEmpty>No results found.</CommandEmpty>
           {searchResults?.artworks && searchResults.artworks.length > 0 && (
             <CommandGroup heading="Artworks">
@@ -129,6 +137,7 @@ const Navigation = () => {
                     navigate(`/auctions/${artwork.id}`);
                     setOpen(false);
                   }}
+                  role="option"
                 >
                   {artwork.title} by {artwork.artist}
                 </CommandItem>
@@ -144,6 +153,7 @@ const Navigation = () => {
                     navigate(`/artists/${artist.id}`);
                     setOpen(false);
                   }}
+                  role="option"
                 >
                   {artist.name}
                 </CommandItem>
