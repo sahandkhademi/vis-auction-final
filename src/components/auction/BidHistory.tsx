@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { useSession } from "@supabase/auth-helpers-react";
 
 interface Bid {
   id: string;
@@ -28,25 +27,22 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
   const [bids, setBids] = useState<Bid[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAllBids, setShowAllBids] = useState(false);
-  const session = useSession();
 
   const fetchBids = async () => {
     try {
-      console.log("Starting bid fetch for auction:", auctionId);
-      console.log("Current session:", session);
-
+      console.log("Fetching bids for auction:", auctionId);
       const { data: bidsData, error: bidsError } = await supabase
         .from('bids')
         .select('*')
         .eq('auction_id', auctionId)
-        .order('amount', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (bidsError) {
         console.error('Error fetching bids:', bidsError);
         return;
       }
 
-      console.log('Raw bids data:', bidsData);
+      console.log('Fetched bids:', bidsData);
       setBids(bidsData || []);
     } catch (error) {
       console.error('Error in fetchBids:', error);
@@ -56,7 +52,6 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
   };
 
   useEffect(() => {
-    console.log("BidHistory component mounted with auctionId:", auctionId);
     fetchBids();
 
     const channel = supabase
@@ -73,10 +68,12 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
           console.log('New bid received:', payload);
           const newBid = payload.new as Bid;
           setBids(currentBids => {
+            // Check if the bid already exists to prevent duplicates
             const exists = currentBids.some(bid => bid.id === newBid.id);
             if (exists) {
               return currentBids;
             }
+            // Add new bid at the beginning of the array
             return [newBid, ...currentBids];
           });
         }
@@ -113,34 +110,14 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {displayedBids.map((bid) => {
-            const isUserBid = session?.user?.id === bid.user_id;
-            console.log("Bid row comparison:", {
-              bid,
-              sessionUserId: session?.user?.id,
-              isUserBid
-            });
-
-            return (
-              <TableRow 
-                key={bid.id}
-                className={isUserBid ? 
-                  "bg-blue-200 hover:bg-blue-300 transition-colors" : 
-                  "hover:bg-gray-50"
-                }
-              >
-                <TableCell className="font-medium">
-                  €{bid.amount.toLocaleString()}
-                  {isUserBid && (
-                    <span className="ml-2 text-blue-800 font-bold">(Your bid)</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {new Date(bid.created_at).toLocaleDateString()} {new Date(bid.created_at).toLocaleTimeString()}
-                </TableCell>
-              </TableRow>
-            );
-          })}
+          {displayedBids.map((bid) => (
+            <TableRow key={bid.id}>
+              <TableCell>€{bid.amount.toLocaleString()}</TableCell>
+              <TableCell>
+                {new Date(bid.created_at).toLocaleDateString()} {new Date(bid.created_at).toLocaleTimeString()}
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
       
