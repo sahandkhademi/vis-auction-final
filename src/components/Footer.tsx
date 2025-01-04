@@ -6,7 +6,14 @@ const Footer = () => {
       <div className="container mx-auto px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-xl font-serif text-gray-900 mb-4">VIS Auction</h3>
+            <div className="flex items-center space-x-3 mb-4">
+              <img 
+                src="/lovable-uploads/2de68225-dd98-4916-a4cd-6ee65b7f8a37.png" 
+                alt="VIS Auction Logo" 
+                className="h-8 w-8"
+              />
+              <h3 className="text-xl font-serif text-gray-900">VIS Auction</h3>
+            </div>
             <p className="text-sm text-gray-600">
               Your premier destination for digital art auctions and collectibles.
             </p>

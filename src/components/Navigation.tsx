@@ -67,9 +67,16 @@ const Navigation = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
       <div className="max-w-[1400px] mx-auto px-6">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-4">
-            <Link to="/" className="text-xl font-serif text-gray-900">
-              VIS Auction
+          <div className="flex items-center space-x-3">
+            <Link to="/" className="flex items-center space-x-3">
+              <img 
+                src="/lovable-uploads/2de68225-dd98-4916-a4cd-6ee65b7f8a37.png" 
+                alt="VIS Auction Logo" 
+                className="h-8 w-8 hidden md:block"
+              />
+              <span className="text-xl font-serif text-gray-900">
+                VIS Auction
+              </span>
             </Link>
           </div>
           
