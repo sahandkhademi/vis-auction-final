@@ -82,7 +82,7 @@ serve(async (req) => {
         metadata: session.metadata
       });
       
-      const { auction_id } = session.metadata || {};
+      const { auction_id, user_id } = session.metadata || {};
       if (!auction_id) {
         console.error('No auction ID found in session metadata');
         throw new Error('No auction ID found in session metadata');
@@ -90,6 +90,29 @@ serve(async (req) => {
 
       console.log('Updating payment status for auction:', auction_id);
 
+      // First, verify the auction exists and belongs to the user
+      const { data: auction, error: auctionError } = await supabaseClient
+        .from('artworks')
+        .select('id, winner_id, title')
+        .eq('id', auction_id)
+        .single();
+
+      if (auctionError) {
+        console.error('Error fetching auction:', auctionError);
+        throw auctionError;
+      }
+
+      if (!auction) {
+        console.error('Auction not found:', auction_id);
+        throw new Error('Auction not found');
+      }
+
+      if (auction.winner_id !== user_id) {
+        console.error('User is not the winner of this auction');
+        throw new Error('User is not the winner of this auction');
+      }
+
+      // Update the payment status
       const { error: updateError } = await supabaseClient
         .from('artworks')
         .update({ 
@@ -105,30 +128,35 @@ serve(async (req) => {
 
       console.log('Successfully updated payment status for auction:', auction_id);
 
-      // Create a notification for the seller
-      const { data: artwork, error: artworkError } = await supabaseClient
-        .from('artworks')
-        .select('title, created_by')
-        .eq('id', auction_id)
-        .single();
-
-      if (artworkError) {
-        console.error('Error fetching artwork details:', artworkError);
-      } else if (artwork?.created_by) {
-        const { error: notificationError } = await supabaseClient
-          .from('notifications')
-          .insert({
-            user_id: artwork.created_by,
-            title: 'Payment Received',
-            message: `Payment has been completed for your artwork "${artwork.title}"`,
-            type: 'payment_received'
-          });
-
-        if (notificationError) {
-          console.error('Error creating notification:', notificationError);
-        } else {
-          console.log('Successfully created notification for seller');
+      // Create notifications for both buyer and seller
+      const notifications = [
+        {
+          user_id: user_id,
+          title: 'Payment Successful',
+          message: `Your payment for "${auction.title}" has been completed. Thank you for your purchase!`,
+          type: 'payment_completed'
         }
+      ];
+
+      // Add seller notification if the auction has a creator
+      if (auction.created_by) {
+        notifications.push({
+          user_id: auction.created_by,
+          title: 'Payment Received',
+          message: `Payment has been completed for your artwork "${auction.title}"`,
+          type: 'payment_received'
+        });
+      }
+
+      const { error: notificationError } = await supabaseClient
+        .from('notifications')
+        .insert(notifications);
+
+      if (notificationError) {
+        console.error('Error creating notifications:', notificationError);
+        // Don't throw here, as the payment processing was successful
+      } else {
+        console.log('Successfully created notifications');
       }
     }
 
