@@ -12,6 +12,7 @@ import AuctionDetail from "@/pages/AuctionDetail";
 import ArtistDetail from "@/pages/ArtistDetail";
 import About from "@/pages/About";
 import Auctions from "@/pages/Auctions";
+import SubmitArt from "@/pages/SubmitArt";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ function App() {
             <Route path="/artist/:id" element={<ArtistDetail />} />
             <Route path="/auctions" element={<Auctions />} />
             <Route path="/about" element={<About />} />
+            <Route path="/submit-art" element={<SubmitArt />} />
           </Routes>
           <Footer />
           <Toaster />

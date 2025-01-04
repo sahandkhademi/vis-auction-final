@@ -75,7 +75,7 @@ const Navigation = () => {
               Auctions
             </Link>
             <Link to="/submit-art" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              Submit your art
+              Submit Your Art
             </Link>
             <Link to="/faq" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
               FAQ
