@@ -8,7 +8,7 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
 };
 
 serve(async (req) => {
@@ -28,13 +28,25 @@ serve(async (req) => {
 
     if (!signature) {
       console.error('No Stripe signature found in headers');
-      throw new Error('No Stripe signature found');
+      return new Response(
+        JSON.stringify({ error: 'No Stripe signature found' }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
     if (!webhookSecret) {
       console.error('Stripe webhook secret not configured');
-      throw new Error('Stripe webhook secret not configured');
+      return new Response(
+        JSON.stringify({ error: 'Webhook secret not configured' }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     console.log('Webhook secret configured:', webhookSecret.substring(0, 4) + '...');
@@ -58,7 +70,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: `Webhook signature verification failed: ${err.message}` }),
         { 
-          status: 400,
+          status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
@@ -93,7 +105,7 @@ serve(async (req) => {
       // First, verify the auction exists and belongs to the user
       const { data: auction, error: auctionError } = await supabaseClient
         .from('artworks')
-        .select('id, winner_id, title')
+        .select('id, winner_id, title, created_by')
         .eq('id', auction_id)
         .single();
 
