@@ -16,33 +16,33 @@ interface ProfileTabsProps {
 export const ProfileTabs = ({ user }: ProfileTabsProps) => {
   return (
     <Tabs defaultValue="won" className="w-full">
-      <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
-        <TabsTrigger value="won" className="flex items-center gap-1 text-xs md:text-sm md:gap-2">
+      <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto md:h-10">
+        <TabsTrigger value="won" className="flex items-center gap-1 text-xs md:text-sm md:gap-2 h-10">
           <Trophy className="h-3 w-3 md:h-4 md:w-4" />
           <span className="hidden md:inline">Won</span>
           <span className="md:hidden">Won</span>
         </TabsTrigger>
-        <TabsTrigger value="activity" className="flex items-center gap-1 text-xs md:text-sm md:gap-2">
+        <TabsTrigger value="activity" className="flex items-center gap-1 text-xs md:text-sm md:gap-2 h-10">
           <History className="h-3 w-3 md:h-4 md:w-4" />
           <span className="hidden md:inline">Activity</span>
           <span className="md:hidden">Bids</span>
         </TabsTrigger>
-        <TabsTrigger value="participation" className="flex items-center gap-1 text-xs md:text-sm md:gap-2">
+        <TabsTrigger value="participation" className="flex items-center gap-1 text-xs md:text-sm md:gap-2 h-10">
           <ChartBar className="h-3 w-3 md:h-4 md:w-4" />
           <span className="hidden md:inline">Participation</span>
           <span className="md:hidden">Part.</span>
         </TabsTrigger>
-        <TabsTrigger value="stats" className="flex items-center gap-1 text-xs md:text-sm md:gap-2">
+        <TabsTrigger value="stats" className="flex items-center gap-1 text-xs md:text-sm md:gap-2 h-10">
           <ChartBar className="h-3 w-3 md:h-4 md:w-4" />
           <span className="hidden md:inline">Statistics</span>
           <span className="md:hidden">Stats</span>
         </TabsTrigger>
-        <TabsTrigger value="notifications" className="flex items-center gap-1 text-xs md:text-sm md:gap-2">
+        <TabsTrigger value="notifications" className="flex items-center gap-1 text-xs md:text-sm md:gap-2 h-10">
           <Bell className="h-3 w-3 md:h-4 md:w-4" />
           <span className="hidden md:inline">Notifications</span>
           <span className="md:hidden">Notif.</span>
         </TabsTrigger>
-        <TabsTrigger value="settings" className="flex items-center gap-1 text-xs md:text-sm md:gap-2">
+        <TabsTrigger value="settings" className="flex items-center gap-1 text-xs md:text-sm md:gap-2 h-10">
           <Settings className="h-3 w-3 md:h-4 md:w-4" />
           <span className="hidden md:inline">Settings</span>
           <span className="md:hidden">Set.</span>
