@@ -39,6 +39,7 @@ export const BidForm = ({
     setIsSubmitting(true);
 
     try {
+      console.log('Fetching current highest bid...');
       // Get the current highest bid and user
       const { data: currentBids, error: bidError } = await supabase
         .from('bids')
@@ -52,8 +53,10 @@ export const BidForm = ({
         throw bidError;
       }
 
+      console.log('Current highest bid:', currentBids?.[0]);
       const previousHighestBid = currentBids?.[0];
 
+      console.log('Placing new bid...');
       // Place the new bid
       const { error: newBidError } = await supabase
         .from('bids')
@@ -64,6 +67,7 @@ export const BidForm = ({
         });
 
       if (newBidError) {
+        console.error('Error placing bid:', newBidError);
         if (newBidError.code === '23505') {
           toast.error("This bid amount has already been placed. Please enter a different amount.");
         } else {
@@ -74,6 +78,7 @@ export const BidForm = ({
 
       // If there was a previous highest bidder, notify them
       if (previousHighestBid && previousHighestBid.user_id !== session.user.id) {
+        console.log('Creating notification for outbid user:', previousHighestBid.user_id);
         // Create notification for the outbid user
         const { error: notificationError } = await supabase
           .from('notifications')
@@ -86,6 +91,8 @@ export const BidForm = ({
 
         if (notificationError) {
           console.error('Error creating outbid notification:', notificationError);
+        } else {
+          console.log('Notification created successfully');
         }
       }
 
