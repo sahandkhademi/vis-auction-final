@@ -26,8 +26,9 @@ export const BidForm = ({
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Check authentication before form submission
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent form submission from refreshing the page
+    e.preventDefault();
     console.log('Form submission started');
     
     if (!session?.user) {
