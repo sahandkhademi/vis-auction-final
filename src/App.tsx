@@ -38,7 +38,7 @@ function AppContent() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
-      <main className={`flex-grow ${needsReducedPadding ? 'pt-12' : 'pt-24'} pb-16`}>
+      <main className={`flex-grow ${needsReducedPadding ? 'pt-8' : 'pt-24'} pb-16`}>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
