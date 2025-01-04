@@ -74,12 +74,14 @@ const Navigation = () => {
           </div>
           
           <DesktopNav />
-          <UserActions user={user} setOpen={setOpen} />
-          <MobileNav 
-            mobileMenuOpen={mobileMenuOpen}
-            setMobileMenuOpen={setMobileMenuOpen}
-            setOpen={setOpen}
-          />
+          <div className="flex items-center space-x-2">
+            <UserActions user={user} setOpen={setOpen} />
+            <MobileNav 
+              mobileMenuOpen={mobileMenuOpen}
+              setMobileMenuOpen={setMobileMenuOpen}
+              setOpen={setOpen}
+            />
+          </div>
         </div>
       </div>
 
