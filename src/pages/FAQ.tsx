@@ -1,65 +1,67 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const FAQ = () => {
   return (
-    <div className="container max-w-3xl mx-auto py-12 px-4">
-      <h1 className="text-4xl font-bold mb-8 text-center">Frequently Asked Questions</h1>
+    <div className="container max-w-4xl mx-auto px-4">
+      <h1 className="text-4xl font-serif mb-6">Frequently Asked Questions</h1>
       
-      <Accordion type="single" collapsible className="w-full space-y-4">
-        <AccordionItem value="item-1" className="border rounded-lg p-4">
-          <AccordionTrigger className="text-lg font-semibold">
-            How do I participate in auctions?
-          </AccordionTrigger>
-          <AccordionContent className="pt-4 text-gray-600">
-            To participate in auctions, you need to create an account and sign in. Once signed in, you can browse active auctions and place bids on artworks that interest you. Make sure to review the artwork details and bidding history before placing your bid.
-          </AccordionContent>
-        </AccordionItem>
+      <div className="bg-white rounded-lg shadow-sm border p-8">
+        <Accordion type="single" collapsible className="space-y-4">
+          <AccordionItem value="item-1" className="border-none">
+            <AccordionTrigger className="text-lg font-medium hover:no-underline">
+              How do I participate in auctions?
+            </AccordionTrigger>
+            <AccordionContent className="text-gray-700">
+              To participate in auctions, you need to create an account and verify your email address. Once logged in, you can browse active auctions and place bids on artworks that interest you.
+            </AccordionContent>
+          </AccordionItem>
 
-        <AccordionItem value="item-2" className="border rounded-lg p-4">
-          <AccordionTrigger className="text-lg font-semibold">
-            How do I submit my artwork?
-          </AccordionTrigger>
-          <AccordionContent className="pt-4 text-gray-600">
-            To submit your artwork, please email us at support@visauction.com with high-quality images of your work, your artist biography, and details about each piece. Our team will review your submission and get back to you within 2-3 business days.
-          </AccordionContent>
-        </AccordionItem>
+          <AccordionItem value="item-2" className="border-none">
+            <AccordionTrigger className="text-lg font-medium hover:no-underline">
+              What payment methods do you accept?
+            </AccordionTrigger>
+            <AccordionContent className="text-gray-700">
+              We accept major credit cards, debit cards, and various digital payment methods. All payments are processed securely through our payment provider.
+            </AccordionContent>
+          </AccordionItem>
 
-        <AccordionItem value="item-3" className="border rounded-lg p-4">
-          <AccordionTrigger className="text-lg font-semibold">
-            What happens after I win an auction?
-          </AccordionTrigger>
-          <AccordionContent className="pt-4 text-gray-600">
-            After winning an auction, you'll receive a notification with payment instructions. You have 48 hours to complete the payment. Once payment is confirmed, we'll coordinate with you regarding shipping arrangements for your artwork.
-          </AccordionContent>
-        </AccordionItem>
+          <AccordionItem value="item-3" className="border-none">
+            <AccordionTrigger className="text-lg font-medium hover:no-underline">
+              How do I submit my artwork?
+            </AccordionTrigger>
+            <AccordionContent className="text-gray-700">
+              Artists can submit their work through our submission form. We review all submissions carefully and will contact you within 2-3 business days regarding your artwork.
+            </AccordionContent>
+          </AccordionItem>
 
-        <AccordionItem value="item-4" className="border rounded-lg p-4">
-          <AccordionTrigger className="text-lg font-semibold">
-            What payment methods do you accept?
-          </AccordionTrigger>
-          <AccordionContent className="pt-4 text-gray-600">
-            We accept major credit cards (Visa, MasterCard, American Express) and secure online payments through our payment processor. All transactions are encrypted and secure.
-          </AccordionContent>
-        </AccordionItem>
+          <AccordionItem value="item-4" className="border-none">
+            <AccordionTrigger className="text-lg font-medium hover:no-underline">
+              What happens after I win an auction?
+            </AccordionTrigger>
+            <AccordionContent className="text-gray-700">
+              After winning an auction, you'll receive a notification with payment instructions. Once payment is completed, we'll coordinate the delivery of your artwork.
+            </AccordionContent>
+          </AccordionItem>
 
-        <AccordionItem value="item-5" className="border rounded-lg p-4">
-          <AccordionTrigger className="text-lg font-semibold">
-            What is your shipping policy?
-          </AccordionTrigger>
-          <AccordionContent className="pt-4 text-gray-600">
-            All artworks are carefully packaged and shipped via insured carriers. Shipping costs vary based on the size of the artwork and destination. Detailed shipping information will be provided after winning an auction.
-          </AccordionContent>
-        </AccordionItem>
+          <AccordionItem value="item-5" className="border-none">
+            <AccordionTrigger className="text-lg font-medium hover:no-underline">
+              What is your shipping policy?
+            </AccordionTrigger>
+            <AccordionContent className="text-gray-700">
+              We work with professional art handlers to ensure safe delivery. Shipping costs vary based on size, weight, and destination. Detailed shipping information is provided after auction completion.
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
 
-        <AccordionItem value="item-6" className="border rounded-lg p-4">
-          <AccordionTrigger className="text-lg font-semibold">
-            Can I cancel my bid?
-          </AccordionTrigger>
-          <AccordionContent className="pt-4 text-gray-600">
-            Once placed, bids cannot be cancelled or retracted. Please make sure you're certain about your bid amount before submitting it. If you have any concerns, contact our support team immediately.
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+      <p className="text-sm text-muted-foreground text-center mt-6">
+        Still have questions? Contact our support team for assistance.
+      </p>
     </div>
   );
 };
