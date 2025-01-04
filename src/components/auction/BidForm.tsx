@@ -98,6 +98,17 @@ export const BidForm = ({
 
       console.log('New bid placed successfully:', newBid);
 
+      // Update artwork current price
+      const { error: updateError } = await supabase
+        .from('artworks')
+        .update({ current_price: numericBid })
+        .eq('id', auctionId);
+
+      if (updateError) {
+        console.error('Error updating artwork price:', updateError);
+        throw updateError;
+      }
+
       // If there was a previous highest bidder, notify them
       if (previousHighestBid && previousHighestBid.user_id !== session.user.id) {
         console.log('Creating notification for outbid user:', previousHighestBid.user_id);

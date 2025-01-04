@@ -65,11 +65,11 @@ Deno.serve(async (req) => {
         if (preferences.outbid_notifications) {
           shouldSend = true
           emailContent = {
-            subject: "You Have Been Outbid!",
+            subject: "You've Been Outbid!",
             html: `
               <h1>Someone has placed a higher bid</h1>
               <p>A new bid of €${newBidAmount?.toLocaleString()} has been placed on "${auction.title}".</p>
-              <p>Do not miss out - place a new bid now!</p>
+              <p>Don't miss out - place a new bid now!</p>
             `
           }
         }
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
               <h1>Time is running out!</h1>
               <p>The auction for "${auction.title}" is ending soon.</p>
               <p>Current bid: €${auction.current_price}</p>
-              <p>Do not miss your chance to win this piece!</p>
+              <p>Don't miss your chance to win this piece!</p>
             `
           }
         }
@@ -106,6 +106,7 @@ Deno.serve(async (req) => {
     }
 
     if (shouldSend && userData.email) {
+      console.log(`Sending ${type} email to ${userData.email}`)
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -121,10 +122,12 @@ Deno.serve(async (req) => {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to send email')
+        const error = await response.text()
+        console.error('Resend API error:', error)
+        throw new Error(`Failed to send email: ${error}`)
       }
 
-      console.log(`Email sent successfully to ${userData.email} for ${type} notification`)
+      console.log(`Successfully sent ${type} email to ${userData.email}`)
     }
 
     return new Response(
