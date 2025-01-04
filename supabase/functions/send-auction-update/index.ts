@@ -1,6 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,27 +22,31 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    const supabaseAdmin = createClient(
+      SUPABASE_URL ?? '',
+      SUPABASE_SERVICE_ROLE_KEY ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     )
 
     const { userId, auctionId, type, newBidAmount } = await req.json() as EmailData
 
-    // First get the user's email from auth.users directly using admin privileges
-    const { data: { user }, error: userError } = await supabaseClient.auth.admin.getUserById(userId)
+    console.log('Processing email notification:', { userId, auctionId, type, newBidAmount })
 
-    if (userError) {
+    // Get the user's email using the admin API
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId)
+
+    if (userError || !user?.email) {
       console.error('Error fetching user:', userError)
-      throw userError
-    }
-
-    if (!user?.email) {
-      throw new Error('User email not found')
+      throw new Error('User not found or no email available')
     }
 
     // Get user's notification preferences
-    const { data: preferences, error: prefError } = await supabaseClient
+    const { data: preferences, error: prefError } = await supabaseAdmin
       .from('notification_preferences')
       .select('*')
       .eq('user_id', userId)
@@ -52,7 +58,7 @@ Deno.serve(async (req) => {
     }
 
     // Get auction details
-    const { data: auction, error: auctionError } = await supabaseClient
+    const { data: auction, error: auctionError } = await supabaseAdmin
       .from('artworks')
       .select('*')
       .eq('id', auctionId)
@@ -75,11 +81,27 @@ Deno.serve(async (req) => {
         if (preferences.outbid_notifications) {
           shouldSend = true
           emailContent = {
-            subject: "You Have Been Outbid!",
+            subject: "You've Been Outbid!",
             html: `
-              <h1>Someone has placed a higher bid</h1>
-              <p>A new bid of €${newBidAmount?.toLocaleString()} has been placed on "${auction.title}".</p>
-              <p>Don't miss out - place a new bid now!</p>
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h1 style="color: #1a1a1a;">New Bid Alert</h1>
+                <p>Someone has placed a higher bid on "${auction.title}".</p>
+                <p style="font-size: 18px; margin: 20px 0;">
+                  New Highest Bid: <strong>€${newBidAmount?.toLocaleString()}</strong>
+                </p>
+                <p>Don't miss out - place a new bid now to stay in the running!</p>
+                <div style="margin: 30px 0;">
+                  <a href="${SUPABASE_URL}/auction/${auctionId}" 
+                     style="background-color: #0066cc; color: white; padding: 12px 24px; 
+                            text-decoration: none; border-radius: 4px;">
+                    View Auction
+                  </a>
+                </div>
+                <p style="color: #666; font-size: 14px;">
+                  You're receiving this email because you enabled outbid notifications. 
+                  You can manage your notification preferences in your account settings.
+                </p>
+              </div>
             `
           }
         }
@@ -133,6 +155,8 @@ Deno.serve(async (req) => {
       })
 
       if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Failed to send email:', errorText)
         throw new Error('Failed to send email')
       }
 
