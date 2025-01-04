@@ -14,25 +14,25 @@ const AuthPage = () => {
       if (event === 'SIGNED_IN' && session) {
         navigate("/");
       }
-      if (event === 'USER_DELETED' || event === 'SIGNED_OUT') {
+      if (event === 'SIGNED_OUT') {
         navigate("/auth");
       }
     });
 
-    // Listen for auth errors
-    const authListener = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'AUTH_ERROR') {
-        toast({
-          title: "Authentication Error",
-          description: "Invalid email or password. Please try again.",
-          variant: "destructive",
-        });
-      }
-    });
+    // Listen for auth errors and show toast
+    const handleAuthError = () => {
+      toast({
+        title: "Authentication Error",
+        description: "Invalid email or password. Please try again.",
+        variant: "destructive",
+      });
+    };
+
+    // Add event listener for auth error
+    supabase.auth.onAuthError(handleAuthError);
 
     return () => {
       subscription.unsubscribe();
-      authListener.data.subscription.unsubscribe();
     };
   }, [navigate, toast]);
 
