@@ -17,19 +17,14 @@ const AuthPage = () => {
       if (event === 'SIGNED_OUT') {
         navigate("/auth");
       }
+      if (event === 'PASSWORD_RECOVERY_ERROR' || event === 'USER_NOT_FOUND' || event === 'INVALID_CREDENTIALS') {
+        toast({
+          title: "Authentication Error",
+          description: "Invalid email or password. Please try again.",
+          variant: "destructive",
+        });
+      }
     });
-
-    // Listen for auth errors and show toast
-    const handleAuthError = () => {
-      toast({
-        title: "Authentication Error",
-        description: "Invalid email or password. Please try again.",
-        variant: "destructive",
-      });
-    };
-
-    // Add event listener for auth error
-    supabase.auth.onAuthError(handleAuthError);
 
     return () => {
       subscription.unsubscribe();
