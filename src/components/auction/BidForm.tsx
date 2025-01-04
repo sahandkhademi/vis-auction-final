@@ -42,6 +42,26 @@ export const BidForm = ({
     setIsSubmitting(true);
 
     try {
+      // First check if this exact bid amount already exists
+      const { data: existingBids, error: checkError } = await supabase
+        .from('bids')
+        .select('amount')
+        .eq('auction_id', auctionId)
+        .eq('amount', numericBid)
+        .single();
+
+      if (existingBids) {
+        console.log('Duplicate bid amount detected:', numericBid);
+        toast.error("This bid amount has already been placed. Please enter a different amount.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows returned
+        console.error('Error checking existing bids:', checkError);
+        throw checkError;
+      }
+
       console.log('Fetching current highest bid...');
       const { data: currentBids, error: bidError } = await supabase
         .from('bids')
