@@ -8,6 +8,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface Bid {
   id: string;
@@ -24,6 +26,7 @@ interface BidHistoryProps {
 export const BidHistory = ({ auctionId }: BidHistoryProps) => {
   const [bids, setBids] = useState<Bid[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAllBids, setShowAllBids] = useState(false);
 
   const fetchBids = async () => {
     try {
@@ -93,6 +96,9 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
     return <div className="text-center py-4 text-gray-500">No bids yet</div>;
   }
 
+  const displayedBids = showAllBids ? bids : bids.slice(0, 4);
+  const hasMoreBids = bids.length > 4;
+
   return (
     <div className="mt-8">
       <h3 className="text-lg font-medium mb-4">Bid History</h3>
@@ -104,7 +110,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {bids.map((bid) => (
+          {displayedBids.map((bid) => (
             <TableRow key={bid.id}>
               <TableCell>€{bid.amount.toLocaleString()}</TableCell>
               <TableCell>
@@ -114,6 +120,24 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
           ))}
         </TableBody>
       </Table>
+      
+      {hasMoreBids && (
+        <Button
+          variant="ghost"
+          className="w-full mt-4 text-gray-600 hover:text-gray-900"
+          onClick={() => setShowAllBids(!showAllBids)}
+        >
+          {showAllBids ? (
+            <>
+              Show Less <ChevronUp className="ml-2 h-4 w-4" />
+            </>
+          ) : (
+            <>
+              Show All Bids <ChevronDown className="ml-2 h-4 w-4" />
+            </>
+          )}
+        </Button>
+      )}
     </div>
   );
 };
