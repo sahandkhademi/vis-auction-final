@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Search, User } from "lucide-react";
+import { Menu, Search, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
@@ -14,10 +14,12 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useQuery } from "@tanstack/react-query";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 
 const Navigation = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [open, setOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -62,6 +64,13 @@ const Navigation = () => {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
+  const navigationLinks = [
+    { to: "/auctions", label: "Auctions" },
+    { to: "/submit-art", label: "Submit Your Art" },
+    { to: "/faq", label: "FAQ" },
+    { to: "/about", label: "About Us" },
+  ];
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
       <div className="max-w-[1400px] mx-auto px-6">
@@ -71,21 +80,40 @@ const Navigation = () => {
           </Link>
           
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/auctions" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              Auctions
-            </Link>
-            <Link to="/submit-art" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              Submit Your Art
-            </Link>
-            <Link to="/faq" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              FAQ
-            </Link>
-            <Link to="/about" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              About Us
-            </Link>
+            {navigationLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
 
           <div className="flex items-center space-x-4">
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild className="md:hidden">
+                <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[240px] sm:w-[300px]">
+                <div className="flex flex-col gap-4 mt-6">
+                  {navigationLinks.map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              </SheetContent>
+            </Sheet>
+
             <Button 
               variant="ghost" 
               size="icon" 
