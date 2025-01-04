@@ -19,7 +19,7 @@ export const sendEmail = async (to: string, content: EmailContent): Promise<Resp
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'VIS Auction <sahandkhademi@icloud.com>',
+        from: 'sahandkhademi@icloud.com',
         to: [to],
         subject: content.subject,
         html: content.html
