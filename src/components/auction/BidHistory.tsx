@@ -99,6 +99,9 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
   const displayedBids = showAllBids ? bids : bids.slice(0, 4);
   const hasMoreBids = bids.length > 4;
 
+  // Debug log to check session and user ID
+  console.log("Current session user ID:", session?.user?.id);
+
   return (
     <div className="mt-8">
       <h3 className="text-lg font-medium mb-4">Bid History</h3>
@@ -110,25 +113,35 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {displayedBids.map((bid) => (
-            <TableRow 
-              key={bid.id}
-              className={session?.user?.id === bid.user_id ? 
-                "bg-blue-200 hover:bg-blue-300 transition-colors" : 
-                "hover:bg-gray-50"
-              }
-            >
-              <TableCell className="font-medium">
-                €{bid.amount.toLocaleString()}
-                {session?.user?.id === bid.user_id && (
-                  <span className="ml-2 text-blue-800 font-bold">(Your bid)</span>
-                )}
-              </TableCell>
-              <TableCell>
-                {new Date(bid.created_at).toLocaleDateString()} {new Date(bid.created_at).toLocaleTimeString()}
-              </TableCell>
-            </TableRow>
-          ))}
+          {displayedBids.map((bid) => {
+            // Debug log for each bid comparison
+            const isUserBid = session?.user?.id === bid.user_id;
+            console.log("Bid comparison:", {
+              bidUserId: bid.user_id,
+              sessionUserId: session?.user?.id,
+              isUserBid
+            });
+
+            return (
+              <TableRow 
+                key={bid.id}
+                className={isUserBid ? 
+                  "bg-blue-200 hover:bg-blue-300 transition-colors" : 
+                  "hover:bg-gray-50"
+                }
+              >
+                <TableCell className="font-medium">
+                  €{bid.amount.toLocaleString()}
+                  {isUserBid && (
+                    <span className="ml-2 text-blue-800 font-bold">(Your bid)</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {new Date(bid.created_at).toLocaleDateString()} {new Date(bid.created_at).toLocaleTimeString()}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
       
