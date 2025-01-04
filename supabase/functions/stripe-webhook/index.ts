@@ -12,7 +12,11 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log('Received webhook request');
+  console.log('Webhook request received:', {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers)
+  });
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -20,20 +24,24 @@ serve(async (req) => {
 
   try {
     const signature = req.headers.get('stripe-signature');
+    console.log('Stripe signature received:', signature);
+
     if (!signature) {
-      console.error('No Stripe signature found in headers:', Object.fromEntries(req.headers));
+      console.error('No Stripe signature found in headers');
       throw new Error('No Stripe signature found');
     }
 
-    const body = await req.text();
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
     if (!webhookSecret) {
-      console.error('Stripe webhook secret not configured in environment');
+      console.error('Stripe webhook secret not configured');
       throw new Error('Stripe webhook secret not configured');
     }
 
-    console.log('Constructing Stripe event with signature:', signature.substring(0, 20) + '...');
-    
+    console.log('Webhook secret configured:', webhookSecret.substring(0, 4) + '...');
+
+    const body = await req.text();
+    console.log('Request body received:', body.substring(0, 100) + '...');
+
     let event;
     try {
       event = stripe.webhooks.constructEvent(
@@ -42,7 +50,11 @@ serve(async (req) => {
         webhookSecret
       );
     } catch (err) {
-      console.error('Error constructing event:', err.message);
+      console.error('Error constructing event:', {
+        error: err.message,
+        signature: signature,
+        bodyPreview: body.substring(0, 100)
+      });
       return new Response(
         JSON.stringify({ error: `Webhook signature verification failed: ${err.message}` }),
         { 
@@ -54,7 +66,6 @@ serve(async (req) => {
 
     console.log('Successfully constructed Stripe event:', {
       type: event.type,
-      mode: event.livemode ? 'live' : 'test',
       id: event.id
     });
 
@@ -72,15 +83,9 @@ serve(async (req) => {
       });
       
       const { auction_id } = session.metadata || {};
-
       if (!auction_id) {
         console.error('No auction ID found in session metadata');
         throw new Error('No auction ID found in session metadata');
-      }
-
-      if (session.payment_status !== 'paid') {
-        console.error('Payment not completed:', session.payment_status);
-        throw new Error('Payment not completed');
       }
 
       console.log('Updating payment status for auction:', auction_id);
@@ -125,8 +130,6 @@ serve(async (req) => {
           console.log('Successfully created notification for seller');
         }
       }
-
-      console.log('Payment completed successfully for auction:', auction_id);
     }
 
     return new Response(JSON.stringify({ received: true }), {
@@ -140,10 +143,7 @@ serve(async (req) => {
     });
     
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: error.stack 
-      }),
+      JSON.stringify({ error: error.message }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
