@@ -27,6 +27,7 @@ const AuthPage = () => {
         </h1>
         <Auth
           supabaseClient={supabase}
+          view={view}
           appearance={{
             theme: ThemeSupa,
             variables: {
@@ -44,7 +45,6 @@ const AuthPage = () => {
             },
           }}
           providers={[]}
-          view={view}
           localization={{
             variables: {
               sign_in: {
@@ -57,7 +57,6 @@ const AuthPage = () => {
               },
             },
           }}
-          onViewChange={(viewType) => setView(viewType)}
         />
       </div>
     </div>
