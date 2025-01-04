@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, Clock } from "lucide-react";
 
 type BackupLog = {
   id: string;
@@ -53,11 +53,25 @@ export const BackupMonitoring = () => {
           <CardTitle>Backup Monitoring</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-red-600">Error loading backup logs. Please try again later.</p>
+          <div className="flex items-center gap-2 text-red-600">
+            <AlertCircle className="h-5 w-5" />
+            <p>Error loading backup logs. Please try again later.</p>
+          </div>
         </CardContent>
       </Card>
     );
   }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "completed":
+        return <CheckCircle2 className="h-5 w-5 text-green-600" />;
+      case "failed":
+        return <AlertCircle className="h-5 w-5 text-red-600" />;
+      default:
+        return <Clock className="h-5 w-5 text-yellow-600" />;
+    }
+  };
 
   return (
     <Card>
@@ -75,18 +89,21 @@ export const BackupMonitoring = () => {
               {backupLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="p-4 border rounded-lg"
+                  className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-medium">{log.backup_type}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Status: <span className={`font-medium ${
-                          log.status === "completed" ? "text-green-600" :
-                          log.status === "failed" ? "text-red-600" :
-                          "text-yellow-600"
-                        }`}>{log.status}</span>
-                      </p>
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(log.status)}
+                      <div>
+                        <h3 className="font-medium">{log.backup_type}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Status: <span className={`font-medium ${
+                            log.status === "completed" ? "text-green-600" :
+                            log.status === "failed" ? "text-red-600" :
+                            "text-yellow-600"
+                          }`}>{log.status}</span>
+                        </p>
+                      </div>
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {format(new Date(log.started_at), "PPp")}
