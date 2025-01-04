@@ -1,47 +1,30 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7'
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
     if (!RESEND_API_KEY) {
-      console.error('RESEND_API_KEY is not set')
-      throw new Error('Email service is not configured properly. Please set RESEND_API_KEY.')
+      throw new Error('RESEND_API_KEY is not set');
     }
 
-    const { email } = await req.json()
-    
+    const { email } = await req.json();
+
     if (!email) {
-      throw new Error('Email address is required')
+      throw new Error('Email is required');
     }
 
-    console.log('Attempting to send test email to:', email)
-
-    // Get the domain verification status
-    const domainResponse = await fetch('https://api.resend.com/domains', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-      }
-    });
-
-    const domains = await domainResponse.json();
-    const verifiedDomains = domains.data?.filter(d => d.status === 'verified') || [];
-    
-    // Default to onboarding domain if no verified domains
-    const fromEmail = verifiedDomains.length > 0 
-      ? `Art Auction <noreply@${verifiedDomains[0].name}>`
-      : 'Art Auction <onboarding@resend.dev>';
+    console.log('Attempting to send test email to:', email);
 
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -50,7 +33,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: fromEmail,
+        from: 'VIS Auction <sahandkhademi@icloud.com>',
         to: [email],
         subject: 'Test Email from Art Auction',
         html: `
@@ -58,51 +41,39 @@ Deno.serve(async (req) => {
             <h1 style="color: #1a1a1a;">Test Email</h1>
             <p>This is a test email from your Art Auction application.</p>
             <p>If you're receiving this, your email configuration is working correctly!</p>
-            ${!verifiedDomains.length ? `
-              <div style="background-color: #fff3cd; border: 1px solid #ffeeba; padding: 15px; margin: 20px 0; border-radius: 4px;">
-                <strong>Note:</strong> To send emails to any address, please verify a domain at 
-                <a href="https://resend.com/domains">Resend Domains</a>.
-              </div>
-            ` : ''}
             <p style="color: #666; font-size: 14px; margin-top: 20px;">
               Sent at: ${new Date().toLocaleString()}
             </p>
           </div>
         `
       })
-    })
+    });
 
-    const responseData = await response.text()
-    console.log('Resend API response:', response.status, responseData)
+    const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(`Failed to send email: ${responseData}`)
+      throw new Error(`Failed to send email: ${JSON.stringify(result)}`);
     }
 
     return new Response(
-      JSON.stringify({ 
-        message: 'Test email sent successfully',
-        fromEmail,
-        verifiedDomains: verifiedDomains.map(d => d.name)
-      }),
+      JSON.stringify({ message: 'Test email sent successfully' }),
       { 
         headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        },
+        status: 200
       }
-    )
+    );
+
   } catch (error) {
-    console.error('Error sending test email:', error)
+    console.error('Error in test-email function:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: 'Check the Edge Function logs for more details'
-      }),
+      JSON.stringify({ error: error.message }),
       { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
       }
-    )
+    );
   }
-})
+});
