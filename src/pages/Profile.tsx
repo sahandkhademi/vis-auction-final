@@ -19,12 +19,15 @@ import {
   History, 
   Settings,
   ChartBar,
-  Bell
+  Bell,
+  Trophy
 } from "lucide-react";
 import { UserBidHistory } from "@/components/profile/UserBidHistory";
 import { UserStats } from "@/components/profile/UserStats";
 import { AccountSettings } from "@/components/profile/AccountSettings";
 import { NotificationPreferences } from "@/components/profile/NotificationPreferences";
+import { WonAuctions } from "@/components/profile/WonAuctions";
+import { AuctionParticipation } from "@/components/profile/AuctionParticipation";
 
 interface Profile {
   username: string | null;
@@ -145,11 +148,19 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="activity" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="won" className="w-full">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="won" className="flex items-center gap-2">
+              <Trophy className="h-4 w-4" />
+              Won
+            </TabsTrigger>
             <TabsTrigger value="activity" className="flex items-center gap-2">
               <History className="h-4 w-4" />
               Activity
+            </TabsTrigger>
+            <TabsTrigger value="participation" className="flex items-center gap-2">
+              <ChartBar className="h-4 w-4" />
+              Participation
             </TabsTrigger>
             <TabsTrigger value="stats" className="flex items-center gap-2">
               <ChartBar className="h-4 w-4" />
@@ -165,6 +176,17 @@ const Profile = () => {
             </TabsTrigger>
           </TabsList>
           
+          <TabsContent value="won">
+            <Card>
+              <CardHeader>
+                <CardTitle>Won Auctions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {user && <WonAuctions userId={user.id} />}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="activity">
             <Card>
               <CardHeader>
@@ -172,6 +194,17 @@ const Profile = () => {
               </CardHeader>
               <CardContent>
                 {user && <UserBidHistory userId={user.id} />}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="participation">
+            <Card>
+              <CardHeader>
+                <CardTitle>Auction Participation</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {user && <AuctionParticipation userId={user.id} />}
               </CardContent>
             </Card>
           </TabsContent>
