@@ -3,33 +3,19 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
+      if (session) {
         navigate("/");
-      }
-      if (event === 'SIGNED_OUT') {
-        navigate("/auth");
-      }
-      if (event === 'PASSWORD_RECOVERY_ERROR' || event === 'USER_NOT_FOUND' || event === 'INVALID_CREDENTIALS') {
-        toast({
-          title: "Authentication Error",
-          description: "Invalid email or password. Please try again.",
-          variant: "destructive",
-        });
       }
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate, toast]);
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   return (
     <div className="min-h-screen pt-32 bg-white">
@@ -47,6 +33,7 @@ const AuthPage = () => {
                 },
                 radii: {
                   borderRadiusButton: '0',
+                  buttonBorderRadius: '0',
                   inputBorderRadius: '0',
                 },
               },
