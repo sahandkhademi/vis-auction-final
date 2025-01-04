@@ -66,8 +66,8 @@ export const WonAuctions = ({ userId }: { userId: string }) => {
                   Final Price: €{auction.current_price.toLocaleString()}
                 </p>
                 <Badge
-                  variant={auction.payment_status === "completed" ? "success" : "destructive"}
-                  className="mt-2"
+                  variant={auction.payment_status === "completed" ? "default" : "destructive"}
+                  className={`mt-2 ${auction.payment_status === "completed" ? "bg-green-500 hover:bg-green-600" : ""}`}
                 >
                   {auction.payment_status === "completed" ? "Paid" : "Payment Required"}
                 </Badge>
