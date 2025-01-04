@@ -2,32 +2,14 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/use-toast";
-import { 
-  UserRound, 
-  History, 
-  Settings,
-  ChartBar,
-  Bell,
-  Trophy
-} from "lucide-react";
-import { UserBidHistory } from "@/components/profile/UserBidHistory";
-import { UserStats } from "@/components/profile/UserStats";
-import { AccountSettings } from "@/components/profile/AccountSettings";
-import { NotificationPreferences } from "@/components/profile/NotificationPreferences";
-import { WonAuctions } from "@/components/profile/WonAuctions";
-import { AuctionParticipation } from "@/components/profile/AuctionParticipation";
+import { UserRound } from "lucide-react";
+import { ProfileTabs } from "@/components/profile/ProfileTabs";
 
 interface Profile {
   username: string | null;
@@ -148,79 +130,7 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="won" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="won" className="flex items-center gap-2">
-              <Trophy className="h-4 w-4" />
-              Won
-            </TabsTrigger>
-            <TabsTrigger value="activity" className="flex items-center gap-2">
-              <History className="h-4 w-4" />
-              Activity
-            </TabsTrigger>
-            <TabsTrigger value="participation" className="flex items-center gap-2">
-              <ChartBar className="h-4 w-4" />
-              Participation
-            </TabsTrigger>
-            <TabsTrigger value="stats" className="flex items-center gap-2">
-              <ChartBar className="h-4 w-4" />
-              Statistics
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center gap-2">
-              <Bell className="h-4 w-4" />
-              Notifications
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Settings
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="won">
-            <Card>
-              <CardHeader>
-                <CardTitle>Won Auctions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {user && <WonAuctions userId={user.id} />}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="activity">
-            <Card>
-              <CardHeader>
-                <CardTitle>Bid History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {user && <UserBidHistory userId={user.id} />}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="participation">
-            <Card>
-              <CardHeader>
-                <CardTitle>Auction Participation</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {user && <AuctionParticipation userId={user.id} />}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="stats">
-            <UserStats userId={user?.id} />
-          </TabsContent>
-
-          <TabsContent value="notifications">
-            <NotificationPreferences user={user} />
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <AccountSettings user={user} />
-          </TabsContent>
-        </Tabs>
+        <ProfileTabs user={user} />
       </div>
     </div>
   );
