@@ -11,6 +11,7 @@ interface EmailData {
   userId: string;
   auctionId: string;
   type: 'outbid' | 'ending_soon' | 'won';
+  newBidAmount?: number;
 }
 
 Deno.serve(async (req) => {
@@ -24,7 +25,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { userId, auctionId, type } = await req.json() as EmailData
+    const { userId, auctionId, type, newBidAmount } = await req.json() as EmailData
 
     // Get user's email and notification preferences
     const { data: userData, error: userError } = await supabaseClient
@@ -67,8 +68,8 @@ Deno.serve(async (req) => {
             subject: "You Have Been Outbid!",
             html: `
               <h1>Someone has placed a higher bid</h1>
-              <p>A new bid of €${auction.current_price} has been placed on "${auction.title}".</p>
-              <p>Do not miss out - place a new bid now!</p>
+              <p>A new bid of €${newBidAmount?.toLocaleString()} has been placed on "${auction.title}".</p>
+              <p>Don't miss out - place a new bid now!</p>
             `
           }
         }
@@ -82,8 +83,8 @@ Deno.serve(async (req) => {
             html: `
               <h1>Time is running out!</h1>
               <p>The auction for "${auction.title}" is ending soon.</p>
-              <p>Current bid: €${auction.current_price}</p>
-              <p>Do not miss your chance to win this piece!</p>
+              <p>Current bid: €${auction.current_price?.toLocaleString()}</p>
+              <p>Don't miss your chance to win this piece!</p>
             `
           }
         }
@@ -96,7 +97,7 @@ Deno.serve(async (req) => {
             subject: "Congratulations! You Won the Auction!",
             html: `
               <h1>You have won!</h1>
-              <p>Congratulations! You have won the auction for "${auction.title}" with a bid of €${auction.current_price}.</p>
+              <p>Congratulations! You have won the auction for "${auction.title}" with a bid of €${auction.current_price?.toLocaleString()}.</p>
               <p>Please complete your payment to claim your artwork.</p>
             `
           }
@@ -104,7 +105,9 @@ Deno.serve(async (req) => {
         break
     }
 
-    if (shouldSend) {
+    if (shouldSend && userData.email) {
+      console.log(`Sending ${type} email to ${userData.email}`);
+      
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
