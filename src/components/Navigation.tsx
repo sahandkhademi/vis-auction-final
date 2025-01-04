@@ -62,11 +62,6 @@ const Navigation = () => {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
-
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
       <div className="max-w-[1400px] mx-auto px-6">
@@ -79,17 +74,14 @@ const Navigation = () => {
             <Link to="/auctions" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
               Auctions
             </Link>
-            <Link to="/buy-selling" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              Buy/Selling
+            <Link to="/submit-art" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+              Submit your art
             </Link>
-            <Link to="/private-sales" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              Private sales
-            </Link>
-            <Link to="/services" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              Services
+            <Link to="/faq" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+              FAQ
             </Link>
             <Link to="/about" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              About
+              About Us
             </Link>
           </div>
 
@@ -110,13 +102,6 @@ const Navigation = () => {
                     <User className="h-5 w-5" />
                   </Button>
                 </Link>
-                <Button 
-                  variant="ghost" 
-                  onClick={handleSignOut}
-                  className="text-sm text-gray-600 hover:text-gray-900"
-                >
-                  Sign out
-                </Button>
               </div>
             ) : (
               <Button 
