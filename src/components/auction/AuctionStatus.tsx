@@ -5,6 +5,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -24,6 +25,7 @@ export const AuctionStatus = ({
   auctionId
 }: AuctionStatusProps) => {
   const session = useSession();
+  const navigate = useNavigate();
   const isWinner = session?.user?.id === winnerId;
   const showPaymentButton = isWinner && 
     completionStatus === 'completed' && 
@@ -35,7 +37,6 @@ export const AuctionStatus = ({
       const now = new Date().getTime();
       const timeRemaining = endDateTime - now;
       
-      // If less than 1 hour remaining, send notification
       if (timeRemaining > 0 && timeRemaining <= 3600000) {
         const notifyEndingSoon = async () => {
           try {
@@ -47,7 +48,6 @@ export const AuctionStatus = ({
 
             if (!bids) return;
 
-            // Notify all unique bidders
             const uniqueBidders = [...new Set(bids.map(bid => bid.user_id))];
             
             for (const userId of uniqueBidders) {
@@ -96,12 +96,14 @@ export const AuctionStatus = ({
             }
           }
 
-          // Show toast when payment is completed
+          // Show toast and redirect when payment is completed
           if (newData.payment_status === 'completed' && paymentStatus === 'pending') {
             if (isWinner) {
               toast.success("Payment completed successfully!", {
                 description: "Thank you for your purchase."
               });
+              // Redirect to profile page after successful payment
+              navigate('/profile');
             }
           }
         }
@@ -111,7 +113,7 @@ export const AuctionStatus = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [auctionId, completionStatus, paymentStatus, isWinner]);
+  }, [auctionId, completionStatus, paymentStatus, isWinner, navigate]);
 
   return (
     <div className="space-y-6">
