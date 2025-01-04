@@ -27,21 +27,16 @@ Deno.serve(async (req) => {
 
     const { userId, auctionId, type, newBidAmount } = await req.json() as EmailData
 
-    // Get user's email from profiles and auth.users
-    const { data: userData, error: userError } = await supabaseClient
-      .from('profiles')
-      .select('id, auth_users:auth.users!inner(email)')
-      .eq('id', userId)
-      .single();
+    // First get the user's email from auth.users directly using admin privileges
+    const { data: { user }, error: userError } = await supabaseClient.auth.admin.getUserById(userId)
 
     if (userError) {
-      console.error('Error fetching user data:', userError);
-      throw userError;
+      console.error('Error fetching user:', userError)
+      throw userError
     }
 
-    const userEmail = userData?.auth_users?.email;
-    if (!userEmail) {
-      throw new Error('User email not found');
+    if (!user?.email) {
+      throw new Error('User email not found')
     }
 
     // Get user's notification preferences
@@ -49,11 +44,11 @@ Deno.serve(async (req) => {
       .from('notification_preferences')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .single()
 
     if (prefError) {
-      console.error('Error fetching preferences:', prefError);
-      throw prefError;
+      console.error('Error fetching preferences:', prefError)
+      throw prefError
     }
 
     // Get auction details
@@ -61,24 +56,24 @@ Deno.serve(async (req) => {
       .from('artworks')
       .select('*')
       .eq('id', auctionId)
-      .single();
+      .single()
 
     if (auctionError) {
-      console.error('Error fetching auction:', auctionError);
-      throw auctionError;
+      console.error('Error fetching auction:', auctionError)
+      throw auctionError
     }
 
     // Check if user wants this type of notification
-    let shouldSend = false;
+    let shouldSend = false
     let emailContent = {
       subject: '',
       html: ''
-    };
+    }
 
     switch (type) {
       case 'outbid':
         if (preferences.outbid_notifications) {
-          shouldSend = true;
+          shouldSend = true
           emailContent = {
             subject: "You Have Been Outbid!",
             html: `
@@ -86,13 +81,13 @@ Deno.serve(async (req) => {
               <p>A new bid of €${newBidAmount?.toLocaleString()} has been placed on "${auction.title}".</p>
               <p>Don't miss out - place a new bid now!</p>
             `
-          };
+          }
         }
-        break;
+        break
       
       case 'ending_soon':
         if (preferences.auction_ending_notifications) {
-          shouldSend = true;
+          shouldSend = true
           emailContent = {
             subject: "Auction Ending Soon!",
             html: `
@@ -101,13 +96,13 @@ Deno.serve(async (req) => {
               <p>Current bid: €${auction.current_price?.toLocaleString()}</p>
               <p>Don't miss your chance to win this piece!</p>
             `
-          };
+          }
         }
-        break;
+        break
       
       case 'won':
         if (preferences.auction_won_notifications) {
-          shouldSend = true;
+          shouldSend = true
           emailContent = {
             subject: "Congratulations! You Won the Auction!",
             html: `
@@ -115,13 +110,13 @@ Deno.serve(async (req) => {
               <p>Congratulations! You have won the auction for "${auction.title}" with a bid of €${auction.current_price?.toLocaleString()}.</p>
               <p>Please complete your payment to claim your artwork.</p>
             `
-          };
+          }
         }
-        break;
+        break
     }
 
-    if (shouldSend && userEmail) {
-      console.log(`Sending ${type} email to ${userEmail}`);
+    if (shouldSend && user.email) {
+      console.log(`Sending ${type} email to ${user.email}`)
       
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -131,17 +126,17 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           from: 'Mosaic Auctions <onboarding@resend.dev>',
-          to: [userEmail],
+          to: [user.email],
           subject: emailContent.subject,
           html: emailContent.html,
         }),
-      });
+      })
 
       if (!response.ok) {
-        throw new Error('Failed to send email');
+        throw new Error('Failed to send email')
       }
 
-      console.log(`Email sent successfully to ${userEmail} for ${type} notification`);
+      console.log(`Email sent successfully to ${user.email} for ${type} notification`)
     }
 
     return new Response(
@@ -150,15 +145,15 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
-    );
+    )
   } catch (error) {
-    console.error('Error processing notification:', error);
+    console.error('Error processing notification:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       }
-    );
+    )
   }
 })
