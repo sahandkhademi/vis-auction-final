@@ -18,7 +18,7 @@ export const sendEmail = async (to: string, content: EmailContent) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'notifications@vis-auction.com', // Using your verified domain
+        from: 'VIS Auction <notifications@vis-auction.com>', // Added display name
         to: [to],
         subject: content.subject,
         html: content.html
