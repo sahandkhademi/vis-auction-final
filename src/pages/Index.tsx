@@ -39,7 +39,7 @@ const Index = () => {
   });
 
   return (
-    <div className="min-h-screen bg-white pt-16">
+    <div className="min-h-screen bg-white">
       <AnimatePresence>
         <motion.div
           initial={{ opacity: 0, y: 20 }}

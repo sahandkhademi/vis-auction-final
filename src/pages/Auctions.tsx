@@ -20,7 +20,7 @@ const Auctions = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-[1400px] mx-auto px-6 py-16">
+      <div className="max-w-[1400px] mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="space-y-4">
@@ -35,8 +35,8 @@ const Auctions = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white pt-16">
-      <div className="max-w-[1400px] mx-auto px-6 py-16">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-[1400px] mx-auto px-6">
         <h1 className="text-2xl font-medium text-gray-900 mb-8">All Auctions</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {artworks?.map((artwork) => (
