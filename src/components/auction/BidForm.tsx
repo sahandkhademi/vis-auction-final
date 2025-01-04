@@ -24,14 +24,17 @@ export const BidForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Starting bid submission process...');
     
     if (!session) {
+      console.log('No session found, user must be logged in');
       toast.error("Please sign in to place a bid");
       return;
     }
 
     const numericBid = parseFloat(bidAmount);
     if (isNaN(numericBid) || numericBid <= currentBid) {
+      console.log('Invalid bid amount:', { numericBid, currentBid });
       toast.error(`Bid must be higher than €${currentBid.toLocaleString()}`);
       return;
     }
@@ -40,7 +43,6 @@ export const BidForm = ({
 
     try {
       console.log('Fetching current highest bid...');
-      // Get the current highest bid and user
       const { data: currentBids, error: bidError } = await supabase
         .from('bids')
         .select('user_id, amount')
@@ -53,18 +55,19 @@ export const BidForm = ({
         throw bidError;
       }
 
-      console.log('Current highest bid:', currentBids?.[0]);
+      console.log('Current highest bid data:', currentBids);
       const previousHighestBid = currentBids?.[0];
 
       console.log('Placing new bid...');
-      // Place the new bid
-      const { error: newBidError } = await supabase
+      const { data: newBid, error: newBidError } = await supabase
         .from('bids')
         .insert({
           auction_id: auctionId,
           user_id: session.user.id,
           amount: numericBid
-        });
+        })
+        .select()
+        .single();
 
       if (newBidError) {
         console.error('Error placing bid:', newBidError);
@@ -76,18 +79,25 @@ export const BidForm = ({
         return;
       }
 
+      console.log('New bid placed successfully:', newBid);
+
       // If there was a previous highest bidder, notify them
       if (previousHighestBid && previousHighestBid.user_id !== session.user.id) {
-        console.log('Creating notification for outbid user:', previousHighestBid.user_id);
+        console.log('Creating notification for outbid user:', {
+          previousBidder: previousHighestBid.user_id,
+          currentBidder: session.user.id,
+          newAmount: numericBid
+        });
+
         const notificationData = {
           user_id: previousHighestBid.user_id,
           title: "You've Been Outbid!",
           message: `Someone has placed a higher bid of €${numericBid.toLocaleString()} on an auction you were winning.`,
           type: 'outbid'
         };
-        console.log('Notification data:', notificationData);
+
+        console.log('Attempting to create notification with data:', notificationData);
         
-        // Create notification for the outbid user
         const { data: notificationResult, error: notificationError } = await supabase
           .from('notifications')
           .insert(notificationData)
@@ -99,7 +109,8 @@ export const BidForm = ({
           console.error('Full error details:', {
             message: notificationError.message,
             details: notificationError.details,
-            hint: notificationError.hint
+            hint: notificationError.hint,
+            code: notificationError.code
           });
         } else {
           console.log('Notification created successfully:', notificationResult);
@@ -115,7 +126,7 @@ export const BidForm = ({
       setBidAmount("");
       onBidPlaced();
     } catch (error) {
-      console.error('Error in bid placement:', error);
+      console.error('Unexpected error in bid placement:', error);
       toast.error("Error placing bid. Please try again.");
     } finally {
       setIsSubmitting(false);
