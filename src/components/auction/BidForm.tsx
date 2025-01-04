@@ -48,28 +48,24 @@ export const BidForm = ({
     setIsSubmitting(true);
 
     try {
-      // Insert the new bid
-      const { data: bidData, error: bidError } = await supabase
-        .from("bids")
-        .insert({
-          auction_id: auctionId,
-          amount: bidAmount,
-          user_id: session.user.id
-        })
-        .select()
-        .single();
-
-      if (bidError) throw bidError;
-
-      console.log("Bid placed successfully:", bidData);
-
-      // Update the artwork's current price
+      // First, update the artwork's current price
       const { error: updateError } = await supabase
         .from("artworks")
         .update({ current_price: bidAmount })
         .eq("id", auctionId);
 
       if (updateError) throw updateError;
+
+      // Then insert the bid
+      const { error: bidError } = await supabase
+        .from("bids")
+        .insert({
+          auction_id: auctionId,
+          amount: bidAmount,
+          user_id: session.user.id
+        });
+
+      if (bidError) throw bidError;
 
       toast({
         title: "Bid placed successfully!",
