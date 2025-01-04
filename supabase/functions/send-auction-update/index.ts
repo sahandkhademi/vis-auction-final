@@ -64,11 +64,11 @@ Deno.serve(async (req) => {
         if (preferences.outbid_notifications) {
           shouldSend = true
           emailContent = {
-            subject: 'You've Been Outbid!',
+            subject: "You Have Been Outbid!",
             html: `
               <h1>Someone has placed a higher bid</h1>
               <p>A new bid of €${auction.current_price} has been placed on "${auction.title}".</p>
-              <p>Don't miss out - place a new bid now!</p>
+              <p>Do not miss out - place a new bid now!</p>
             `
           }
         }
@@ -78,12 +78,12 @@ Deno.serve(async (req) => {
         if (preferences.auction_ending_notifications) {
           shouldSend = true
           emailContent = {
-            subject: 'Auction Ending Soon!',
+            subject: "Auction Ending Soon!",
             html: `
               <h1>Time is running out!</h1>
               <p>The auction for "${auction.title}" is ending soon.</p>
               <p>Current bid: €${auction.current_price}</p>
-              <p>Don't miss your chance to win this piece!</p>
+              <p>Do not miss your chance to win this piece!</p>
             `
           }
         }
@@ -93,10 +93,10 @@ Deno.serve(async (req) => {
         if (preferences.auction_won_notifications) {
           shouldSend = true
           emailContent = {
-            subject: 'Congratulations! You Won the Auction!',
+            subject: "Congratulations! You Won the Auction!",
             html: `
-              <h1>You've won!</h1>
-              <p>Congratulations! You've won the auction for "${auction.title}" with a bid of €${auction.current_price}.</p>
+              <h1>You have won!</h1>
+              <p>Congratulations! You have won the auction for "${auction.title}" with a bid of €${auction.current_price}.</p>
               <p>Please complete your payment to claim your artwork.</p>
             `
           }

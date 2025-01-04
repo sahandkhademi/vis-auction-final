@@ -42,14 +42,14 @@ export const AuctionDetails = ({
         completionStatus={artwork.completion_status}
         paymentStatus={artwork.payment_status}
         winnerId={artwork.winner_id}
+        auctionId={artwork.id}
       />
 
       {artwork.completion_status === 'ongoing' && (
         <div className="pt-6">
           <BidForm
             auctionId={artwork.id}
-            currentHighestBid={currentHighestBid}
-            defaultBid={artwork.starting_price}
+            currentBid={currentHighestBid || artwork.starting_price}
             isLoading={isLoading}
             onBidPlaced={onBidPlaced}
           />

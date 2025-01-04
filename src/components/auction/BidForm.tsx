@@ -9,14 +9,14 @@ interface BidFormProps {
   auctionId: string;
   currentBid: number;
   onBidPlaced: () => void;
-  previousBidUserId?: string;
+  isLoading?: boolean;
 }
 
 export const BidForm = ({ 
   auctionId, 
   currentBid, 
   onBidPlaced,
-  previousBidUserId 
+  isLoading = false
 }: BidFormProps) => {
   const [bidAmount, setBidAmount] = useState<number>(currentBid + 100);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,17 +63,6 @@ export const BidForm = ({
 
       if (updateError) throw updateError;
 
-      // Send outbid notification email if there was a previous bidder
-      if (previousBidUserId) {
-        await supabase.functions.invoke('send-auction-update', {
-          body: {
-            userId: previousBidUserId,
-            auctionId,
-            type: 'outbid'
-          }
-        });
-      }
-
       toast({
         title: "Bid placed successfully",
         description: `Your bid of €${bidAmount.toLocaleString()} has been placed`,
@@ -103,7 +92,7 @@ export const BidForm = ({
           placeholder="Enter bid amount"
           className="flex-1"
         />
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting || isLoading}>
           Place Bid
         </Button>
       </div>
