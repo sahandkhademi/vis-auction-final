@@ -72,7 +72,7 @@ const Navigation = () => {
       <div className="max-w-[1400px] mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="text-xl font-serif text-gray-900">
-            MOSAIC
+            VIS Auction
           </Link>
           
           <div className="hidden md:flex items-center space-x-8">

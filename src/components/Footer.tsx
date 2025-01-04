@@ -6,7 +6,7 @@ const Footer = () => {
       <div className="container mx-auto px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-xl font-serif text-gray-900 mb-4">MOSAIC</h3>
+            <h3 className="text-xl font-serif text-gray-900 mb-4">VIS Auction</h3>
             <p className="text-sm text-gray-600">
               Your premier destination for digital art auctions and collectibles.
             </p>
@@ -51,7 +51,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-gray-100 mt-8 pt-8 text-sm text-center text-gray-600">
-          <p>&copy; {new Date().getFullYear()} MOSAIC. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} VIS Auction. All rights reserved.</p>
         </div>
       </div>
     </footer>
