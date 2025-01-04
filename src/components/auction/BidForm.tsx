@@ -40,17 +40,22 @@ export const BidForm = ({
 
     try {
       // Get the current highest bid and user
-      const { data: currentBids } = await supabase
+      const { data: currentBids, error: bidError } = await supabase
         .from('bids')
         .select('user_id, amount')
         .eq('auction_id', auctionId)
         .order('amount', { ascending: false })
         .limit(1);
 
+      if (bidError) {
+        console.error('Error fetching current bids:', bidError);
+        throw bidError;
+      }
+
       const previousHighestBid = currentBids?.[0];
 
       // Place the new bid
-      const { error: bidError } = await supabase
+      const { error: newBidError } = await supabase
         .from('bids')
         .insert({
           auction_id: auctionId,
@@ -58,8 +63,8 @@ export const BidForm = ({
           amount: numericBid
         });
 
-      if (bidError) {
-        if (bidError.code === '23505') {
+      if (newBidError) {
+        if (newBidError.code === '23505') {
           toast.error("This bid amount has already been placed. Please enter a different amount.");
         } else {
           toast.error("Error placing bid. Please try again.");
@@ -69,22 +74,18 @@ export const BidForm = ({
 
       // If there was a previous highest bidder, notify them
       if (previousHighestBid && previousHighestBid.user_id !== session.user.id) {
-        // Check if the user has outbid notifications enabled
-        const { data: preferences } = await supabase
-          .from('notification_preferences')
-          .select('outbid_notifications')
-          .eq('user_id', previousHighestBid.user_id)
-          .single();
+        // Create notification for the outbid user
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: previousHighestBid.user_id,
+            title: "You've Been Outbid!",
+            message: `Someone has placed a higher bid of €${numericBid.toLocaleString()} on an auction you were winning.`,
+            type: 'outbid'
+          });
 
-        if (preferences?.outbid_notifications) {
-          await supabase
-            .from('notifications')
-            .insert({
-              user_id: previousHighestBid.user_id,
-              title: "You've Been Outbid!",
-              message: `Someone has placed a higher bid of €${numericBid.toLocaleString()} on an auction you were winning.`,
-              type: 'outbid'
-            });
+        if (notificationError) {
+          console.error('Error creating outbid notification:', notificationError);
         }
       }
 
