@@ -62,31 +62,26 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
     getCurrentUser();
     fetchBids();
 
+    // Set up real-time subscription
     const channel = supabase
       .channel('schema-db-changes')
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'bids',
           filter: `auction_id=eq.${auctionId}`
         },
-        (payload) => {
-          console.log('New bid received:', payload);
-          const newBid = payload.new as Bid;
-          setBids(currentBids => {
-            // Check if the bid already exists to prevent duplicates
-            const exists = currentBids.some(bid => bid.id === newBid.id);
-            if (exists) {
-              return currentBids;
-            }
-            // Add new bid at the beginning of the array
-            return [newBid, ...currentBids];
-          });
+        async (payload) => {
+          console.log('Bid change received:', payload);
+          // Refetch all bids to ensure consistent state
+          await fetchBids();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
       console.log('Cleaning up subscription');
