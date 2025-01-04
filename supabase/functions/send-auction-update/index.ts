@@ -16,7 +16,7 @@ interface EmailData {
   newBidAmount?: number
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -76,12 +76,13 @@ serve(async (req: Request) => {
       html: ''
     }
 
+    const auctionUrl = `${new URL(req.url).origin.replace('functions.', '')}/auction/${auctionId}`
+
     // Construct email content based on notification type
     switch (type) {
       case 'outbid':
         if (preferences.outbid_notifications) {
           shouldSend = true
-          const auctionUrl = `${new URL(req.url).origin.replace('functions.', '')}/auctions/${auctionId}`
           emailContent = {
             subject: "You've Been Outbid!",
             html: `
@@ -147,8 +148,13 @@ serve(async (req: Request) => {
       )
     }
 
+    if (!RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY is not set')
+    }
+
     // Send email using Resend
     try {
+      console.log('Sending email to:', user.email)
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
