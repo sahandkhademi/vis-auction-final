@@ -111,7 +111,7 @@ export const BulkArtworkManager = () => {
                     artworks?.length === selectedArtworks.length &&
                     artworks?.length > 0
                   }
-                  onCheckedChange={handleSelectAll}
+                  onCheckedChange={(checked: boolean) => handleSelectAll(checked)}
                 />
               </TableHead>
               <TableHead>Title</TableHead>
@@ -127,7 +127,7 @@ export const BulkArtworkManager = () => {
                 <TableCell>
                   <Checkbox
                     checked={selectedArtworks.includes(artwork.id)}
-                    onCheckedChange={(checked) =>
+                    onCheckedChange={(checked: boolean) =>
                       handleSelectArtwork(artwork.id, checked)
                     }
                   />
