@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface Bid {
   id: string;
@@ -27,6 +28,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
   const [bids, setBids] = useState<Bid[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAllBids, setShowAllBids] = useState(false);
+  const session = useSession();
 
   const fetchBids = async () => {
     try {
@@ -68,12 +70,10 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
           console.log('New bid received:', payload);
           const newBid = payload.new as Bid;
           setBids(currentBids => {
-            // Check if the bid already exists to prevent duplicates
             const exists = currentBids.some(bid => bid.id === newBid.id);
             if (exists) {
               return currentBids;
             }
-            // Add new bid at the beginning of the array
             return [newBid, ...currentBids];
           });
         }
@@ -111,8 +111,16 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         </TableHeader>
         <TableBody>
           {displayedBids.map((bid) => (
-            <TableRow key={bid.id}>
-              <TableCell>€{bid.amount.toLocaleString()}</TableCell>
+            <TableRow 
+              key={bid.id}
+              className={session?.user?.id === bid.user_id ? "bg-blue-50" : ""}
+            >
+              <TableCell>
+                €{bid.amount.toLocaleString()}
+                {session?.user?.id === bid.user_id && (
+                  <span className="ml-2 text-sm text-blue-600">(Your bid)</span>
+                )}
+              </TableCell>
               <TableCell>
                 {new Date(bid.created_at).toLocaleDateString()} {new Date(bid.created_at).toLocaleTimeString()}
               </TableCell>
