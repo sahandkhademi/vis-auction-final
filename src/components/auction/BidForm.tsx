@@ -57,11 +57,12 @@ export const BidForm = ({
         return;
       }
 
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows returned
+      if (checkError && checkError.code !== 'PGRST116') {
         console.error('Error checking existing bids:', checkError);
         throw checkError;
       }
 
+      // Get the current highest bidder before placing new bid
       console.log('Fetching current highest bid...');
       const { data: currentBids, error: bidError } = await supabase
         .from('bids')
@@ -75,9 +76,10 @@ export const BidForm = ({
         throw bidError;
       }
 
-      console.log('Current highest bid data:', currentBids);
       const previousHighestBid = currentBids?.[0];
+      console.log('Previous highest bid:', previousHighestBid);
 
+      // Place the new bid
       console.log('Placing new bid...');
       const { data: newBid, error: newBidError } = await supabase
         .from('bids')
@@ -91,55 +93,42 @@ export const BidForm = ({
 
       if (newBidError) {
         console.error('Error placing bid:', newBidError);
-        if (newBidError.code === '23505') {
-          toast.error("This bid amount has already been placed. Please enter a different amount.");
-        } else {
-          toast.error("Error placing bid. Please try again.");
-        }
-        return;
+        throw newBidError;
       }
 
       console.log('New bid placed successfully:', newBid);
 
       // If there was a previous highest bidder, notify them
       if (previousHighestBid && previousHighestBid.user_id !== session.user.id) {
-        console.log('Creating notification for outbid user:', {
-          previousBidder: previousHighestBid.user_id,
-          currentBidder: session.user.id,
-          newAmount: numericBid
-        });
+        console.log('Creating notification for outbid user:', previousHighestBid.user_id);
 
-        const notificationData = {
-          user_id: previousHighestBid.user_id,
-          title: "You've Been Outbid!",
-          message: `Someone has placed a higher bid of €${numericBid.toLocaleString()} on an auction you were winning.`,
-          type: 'outbid'
-        };
-
-        console.log('Attempting to create notification with data:', notificationData);
-        
-        const { data: notificationResult, error: notificationError } = await supabase
+        // Create in-app notification
+        const { error: notificationError } = await supabase
           .from('notifications')
-          .insert(notificationData)
-          .select()
-          .single();
+          .insert({
+            user_id: previousHighestBid.user_id,
+            title: "You've Been Outbid!",
+            message: `Someone has placed a higher bid of €${numericBid.toLocaleString()} on an auction you were winning.`,
+            type: 'outbid'
+          });
 
         if (notificationError) {
-          console.error('Error creating outbid notification:', notificationError);
-          console.error('Full error details:', {
-            message: notificationError.message,
-            details: notificationError.details,
-            hint: notificationError.hint,
-            code: notificationError.code
-          });
-        } else {
-          console.log('Notification created successfully:', notificationResult);
+          console.error('Error creating in-app notification:', notificationError);
         }
-      } else {
-        console.log('No notification needed:', {
-          hasPreviousBid: !!previousHighestBid,
-          isSameUser: previousHighestBid?.user_id === session.user.id
+
+        // Send email notification via edge function
+        const { error: emailError } = await supabase.functions.invoke('send-auction-update', {
+          body: {
+            userId: previousHighestBid.user_id,
+            auctionId,
+            type: 'outbid',
+            newBidAmount: numericBid
+          }
         });
+
+        if (emailError) {
+          console.error('Error sending email notification:', emailError);
+        }
       }
 
       toast.success("Bid placed successfully!");
