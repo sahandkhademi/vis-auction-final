@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu, Search } from "lucide-react";
-import { NavigationLinks } from "./NavigationLinks";
+import { navigationLinks } from "./NavigationLinks";
 
 interface MobileNavProps {
   mobileMenuOpen: boolean;
@@ -31,14 +31,14 @@ export const MobileNav = ({ mobileMenuOpen, setMobileMenuOpen, setOpen }: Mobile
             <Search className="h-5 w-5" />
             Search
           </Button>
-          {NavigationLinks.map((link) => (
+          {navigationLinks.map((link) => (
             <Link
-              key={link.to}
-              to={link.to}
+              key={link.href}
+              to={link.href}
               className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              {link.label}
+              {link.name}
             </Link>
           ))}
         </div>
