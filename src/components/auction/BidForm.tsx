@@ -28,17 +28,14 @@ export const BidForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Attempting to place bid:", { auctionId, bidAmount, userId: session?.user?.id });
-
+    
     if (!session?.user) {
-      console.log("No user session found");
       const returnUrl = encodeURIComponent(location.pathname);
       navigate(`/auth?returnUrl=${returnUrl}`);
       return;
     }
 
     if (bidAmount <= currentBid) {
-      console.log("Bid amount too low:", { bidAmount, currentBid });
       toast({
         title: "Invalid bid amount",
         description: "Your bid must be higher than the current bid",
@@ -50,6 +47,7 @@ export const BidForm = ({
     setIsSubmitting(true);
 
     try {
+      // First, insert the bid
       const { data: bidData, error: bidError } = await supabase
         .from("bids")
         .insert({
@@ -60,13 +58,12 @@ export const BidForm = ({
         .select()
         .single();
 
-      console.log("Bid insertion result:", { bidData, bidError });
-
       if (bidError) {
         console.error("Error inserting bid:", bidError);
         throw bidError;
       }
 
+      // Then, update the artwork's current price
       const { error: updateError } = await supabase
         .from("artworks")
         .update({ current_price: bidAmount })
