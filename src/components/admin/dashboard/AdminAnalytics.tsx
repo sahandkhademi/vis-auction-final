@@ -1,12 +1,5 @@
 import { EmailTester } from "../EmailTester";
 import { motion } from "framer-motion";
-import { ArtworkWithArtist } from "@/types/auction";
-import { ArtworkHeader } from "./ArtworkHeader";
-import { AuctionStatus } from "./AuctionStatus";
-import { BidForm } from "./BidForm";
-import { BidHistory } from "./BidHistory";
-import { ArtistInfo } from "./ArtistInfo";
-import { AuctionInfo } from "./AuctionInfo";
 
 export const AdminAnalytics = () => {
   return (
