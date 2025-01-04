@@ -1,141 +1,133 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
+import { toast } from "sonner";
 
 interface BidFormProps {
   auctionId: string;
   currentBid: number;
+  isLoading: boolean;
   onBidPlaced: () => void;
-  isLoading?: boolean;
 }
 
 export const BidForm = ({ 
   auctionId, 
   currentBid, 
-  onBidPlaced,
-  isLoading = false
+  isLoading,
+  onBidPlaced 
 }: BidFormProps) => {
-  const [bidAmount, setBidAmount] = useState<number>(currentBid + 1);
+  const [bidAmount, setBidAmount] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
   const session = useSession();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    setBidAmount(currentBid + 1);
-  }, [currentBid]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!session?.user?.id) {
-      console.log("No authenticated user found");
-      const returnUrl = encodeURIComponent(location.pathname);
-      navigate(`/auth?returnUrl=${returnUrl}`);
+    
+    if (!session) {
+      toast.error("Please sign in to place a bid");
       return;
     }
 
-    if (bidAmount <= currentBid) {
-      toast({
-        title: "Invalid bid amount",
-        description: "Your bid must be higher than the current bid",
-        variant: "destructive",
-      });
+    const numericBid = parseFloat(bidAmount);
+    if (isNaN(numericBid) || numericBid <= currentBid) {
+      toast.error(`Bid must be higher than €${currentBid.toLocaleString()}`);
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const { data: bidData, error: bidError } = await supabase
-        .from("bids")
+      // Get the current highest bid and user
+      const { data: currentBids } = await supabase
+        .from('bids')
+        .select('user_id, amount')
+        .eq('auction_id', auctionId)
+        .order('amount', { ascending: false })
+        .limit(1);
+
+      const previousHighestBid = currentBids?.[0];
+
+      // Place the new bid
+      const { error: bidError } = await supabase
+        .from('bids')
         .insert({
           auction_id: auctionId,
-          amount: bidAmount,
-          user_id: session.user.id
-        })
-        .select()
-        .single();
+          user_id: session.user.id,
+          amount: numericBid
+        });
 
       if (bidError) {
-        console.error("Bid insertion error:", bidError);
-        
-        // Check for unique constraint violation
         if (bidError.code === '23505') {
-          toast({
-            title: "Bid amount already exists",
-            description: "Someone has already placed a bid with this amount. Please choose a different amount.",
-            variant: "destructive",
-          });
-          return;
+          toast.error("This bid amount has already been placed. Please enter a different amount.");
+        } else {
+          toast.error("Error placing bid. Please try again.");
         }
-        
-        toast({
-          title: "Failed to place bid",
-          description: bidError.message || "Please try again",
-          variant: "destructive",
-        });
         return;
       }
 
-      const { error: updateError } = await supabase
-        .from("artworks")
-        .update({ current_price: bidAmount })
-        .eq("id", auctionId);
+      // If there was a previous highest bidder, notify them
+      if (previousHighestBid && previousHighestBid.user_id !== session.user.id) {
+        // Check if the user has outbid notifications enabled
+        const { data: preferences } = await supabase
+          .from('notification_preferences')
+          .select('outbid_notifications')
+          .eq('user_id', previousHighestBid.user_id)
+          .single();
 
-      if (updateError) {
-        console.error("Artwork update error:", updateError);
-        toast({
-          title: "Bid placed but price not updated",
-          description: "Please refresh the page",
-          variant: "destructive",
-        });
-        return;
+        if (preferences?.outbid_notifications) {
+          await supabase
+            .from('notifications')
+            .insert({
+              user_id: previousHighestBid.user_id,
+              title: "You've Been Outbid!",
+              message: `Someone has placed a higher bid of €${numericBid.toLocaleString()} on an auction you were winning.`,
+              type: 'outbid'
+            });
+        }
       }
-      
-      toast({
-        title: "Bid placed successfully!",
-        description: `Your bid of €${bidAmount.toLocaleString()} has been placed`,
-      });
 
+      toast.success("Bid placed successfully!");
+      setBidAmount("");
       onBidPlaced();
-      setBidAmount(bidAmount + 1);
-    } catch (error: any) {
-      console.error("Error placing bid:", error);
-      toast({
-        title: "Failed to place bid",
-        description: error.message || "Please try again",
-        variant: "destructive",
-      });
+    } catch (error) {
+      console.error('Error in bid placement:', error);
+      toast.error("Error placing bid. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (!session) {
+    return (
+      <div className="text-center p-4 bg-gray-50 rounded-lg">
+        <p className="text-gray-600">Please sign in to place a bid</p>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex space-x-2">
+      <div>
         <Input
           type="number"
-          min={currentBid + 1}
+          step="0.01"
+          min={currentBid + 0.01}
           value={bidAmount}
-          onChange={(e) => setBidAmount(Number(e.target.value))}
-          placeholder="Enter bid amount"
-          className="flex-1"
-          disabled={isSubmitting || isLoading}
+          onChange={(e) => setBidAmount(e.target.value)}
+          placeholder={`Enter bid amount higher than €${currentBid.toLocaleString()}`}
+          disabled={isLoading || isSubmitting}
+          className="w-full"
         />
-        <Button 
-          type="submit" 
-          disabled={isSubmitting || isLoading || !session?.user}
-        >
-          {isSubmitting ? "Placing bid..." : "Place Bid"}
-        </Button>
       </div>
+      <Button 
+        type="submit" 
+        disabled={isLoading || isSubmitting || !bidAmount}
+        className="w-full"
+      >
+        {isSubmitting ? "Placing Bid..." : "Place Bid"}
+      </Button>
     </form>
   );
 };
