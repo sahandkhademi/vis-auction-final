@@ -125,7 +125,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
               </TableCell>
               <TableCell className="text-right">
                 {bid.user_id === currentUserId && (
-                  <span className="text-sm" style={{ color: "#52B5DF" }}>(Your's)</span>
+                  <span className="text-sm" style={{ color: "#00337F" }}>(You)</span>
                 )}
               </TableCell>
             </TableRow>
@@ -136,7 +136,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
       {hasMoreBids && (
         <Button
           variant="ghost"
-          className="w-full mt-4 text-[#52B5DF] hover:text-[#52B5DF]"
+          className="w-full mt-4 text-gray-600 hover:text-gray-900"
           onClick={() => setShowAllBids(!showAllBids)}
         >
           {showAllBids ? (
