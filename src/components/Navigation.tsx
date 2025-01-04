@@ -97,7 +97,7 @@ const Navigation = () => {
             <Button 
               variant="ghost" 
               size="icon" 
-              className="text-gray-600 hover:text-gray-900"
+              className="text-gray-600 hover:text-gray-900 md:flex hidden"
               onClick={() => setOpen(true)}
               aria-label="Search"
             >
@@ -129,6 +129,17 @@ const Navigation = () => {
               </SheetTrigger>
               <SheetContent side="left" className="w-[240px] sm:w-[300px]">
                 <div className="flex flex-col gap-4 mt-6">
+                  <Button 
+                    variant="ghost" 
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors justify-start"
+                    onClick={() => {
+                      setOpen(true);
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <Search className="h-5 w-5" />
+                    Search
+                  </Button>
                   {navigationLinks.map((link) => (
                     <Link
                       key={link.to}
