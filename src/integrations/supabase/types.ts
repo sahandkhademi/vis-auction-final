@@ -228,6 +228,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      handle_abandoned_wins: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       handle_auction_completion: {
         Args: Record<PropertyKey, never>
         Returns: undefined
