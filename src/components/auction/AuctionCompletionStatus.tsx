@@ -23,12 +23,12 @@ export const AuctionCompletionStatus = ({
     if (isWinner) {
       return (
         <div className="space-y-2">
-          <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-            You won! 🎉
+          <Badge variant="default" className="bg-gold hover:bg-gold-dark">
+            Auction Won
           </Badge>
           {paymentStatus === 'pending' && (
-            <Badge variant="destructive">
-              Payment required
+            <Badge variant="outline" className="text-gold border-gold">
+              Payment Required
             </Badge>
           )}
         </div>
