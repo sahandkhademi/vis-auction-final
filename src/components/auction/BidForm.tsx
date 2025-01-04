@@ -24,17 +24,14 @@ export const BidForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Starting bid submission process...');
     
     if (!session) {
-      console.log('No session found, user must be logged in');
       toast.error("Please sign in to place a bid");
       return;
     }
 
     const numericBid = parseFloat(bidAmount);
     if (isNaN(numericBid) || numericBid <= currentBid) {
-      console.log('Invalid bid amount:', { numericBid, currentBid });
       toast.error(`Bid must be higher than €${currentBid.toLocaleString()}`);
       return;
     }
@@ -42,28 +39,7 @@ export const BidForm = ({
     setIsSubmitting(true);
 
     try {
-      // First check if this exact bid amount already exists
-      const { data: existingBids, error: checkError } = await supabase
-        .from('bids')
-        .select('amount')
-        .eq('auction_id', auctionId)
-        .eq('amount', numericBid)
-        .single();
-
-      if (existingBids) {
-        console.log('Duplicate bid amount detected:', numericBid);
-        toast.error("This bid amount has already been placed. Please enter a different amount.");
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking existing bids:', checkError);
-        throw checkError;
-      }
-
-      // Get the current highest bidder before placing new bid
-      console.log('Fetching current highest bid...');
+      // Get the current highest bid and user
       const { data: currentBids, error: bidError } = await supabase
         .from('bids')
         .select('user_id, amount')
@@ -77,32 +53,28 @@ export const BidForm = ({
       }
 
       const previousHighestBid = currentBids?.[0];
-      console.log('Previous highest bid:', previousHighestBid);
 
       // Place the new bid
-      console.log('Placing new bid...');
-      const { data: newBid, error: newBidError } = await supabase
+      const { error: newBidError } = await supabase
         .from('bids')
         .insert({
           auction_id: auctionId,
           user_id: session.user.id,
           amount: numericBid
-        })
-        .select()
-        .single();
+        });
 
       if (newBidError) {
-        console.error('Error placing bid:', newBidError);
-        throw newBidError;
+        if (newBidError.code === '23505') {
+          toast.error("This bid amount has already been placed. Please enter a different amount.");
+        } else {
+          toast.error("Error placing bid. Please try again.");
+        }
+        return;
       }
-
-      console.log('New bid placed successfully:', newBid);
 
       // If there was a previous highest bidder, notify them
       if (previousHighestBid && previousHighestBid.user_id !== session.user.id) {
-        console.log('Creating notification for outbid user:', previousHighestBid.user_id);
-
-        // Create in-app notification
+        // Create notification for the outbid user
         const { error: notificationError } = await supabase
           .from('notifications')
           .insert({
@@ -113,21 +85,7 @@ export const BidForm = ({
           });
 
         if (notificationError) {
-          console.error('Error creating in-app notification:', notificationError);
-        }
-
-        // Send email notification via edge function
-        const { error: emailError } = await supabase.functions.invoke('send-auction-update', {
-          body: {
-            userId: previousHighestBid.user_id,
-            auctionId,
-            type: 'outbid',
-            newBidAmount: numericBid
-          }
-        });
-
-        if (emailError) {
-          console.error('Error sending email notification:', emailError);
+          console.error('Error creating outbid notification:', notificationError);
         }
       }
 
@@ -135,7 +93,7 @@ export const BidForm = ({
       setBidAmount("");
       onBidPlaced();
     } catch (error) {
-      console.error('Unexpected error in bid placement:', error);
+      console.error('Error in bid placement:', error);
       toast.error("Error placing bid. Please try again.");
     } finally {
       setIsSubmitting(false);

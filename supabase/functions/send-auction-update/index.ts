@@ -11,7 +11,6 @@ interface EmailData {
   userId: string;
   auctionId: string;
   type: 'outbid' | 'ending_soon' | 'won';
-  newBidAmount?: number;
 }
 
 Deno.serve(async (req) => {
@@ -25,7 +24,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { userId, auctionId, type, newBidAmount } = await req.json() as EmailData
+    const { userId, auctionId, type } = await req.json() as EmailData
 
     // Get user's email and notification preferences
     const { data: userData, error: userError } = await supabaseClient
@@ -68,7 +67,7 @@ Deno.serve(async (req) => {
             subject: "You Have Been Outbid!",
             html: `
               <h1>Someone has placed a higher bid</h1>
-              <p>A new bid of €${newBidAmount?.toLocaleString()} has been placed on "${auction.title}".</p>
+              <p>A new bid of €${auction.current_price} has been placed on "${auction.title}".</p>
               <p>Do not miss out - place a new bid now!</p>
             `
           }
@@ -105,7 +104,7 @@ Deno.serve(async (req) => {
         break
     }
 
-    if (shouldSend && userData.email) {
+    if (shouldSend) {
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
