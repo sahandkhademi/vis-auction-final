@@ -26,6 +26,8 @@ export const BidForm = ({
   const navigate = useNavigate();
   const location = useLocation();
 
+  console.log("Current session:", session); // Debug log
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -129,7 +131,7 @@ export const BidForm = ({
         />
         <Button 
           type="submit" 
-          disabled={isSubmitting || isLoading || !session}
+          disabled={isSubmitting || isLoading || !session?.user}
         >
           {isSubmitting ? "Placing bid..." : "Place Bid"}
         </Button>
