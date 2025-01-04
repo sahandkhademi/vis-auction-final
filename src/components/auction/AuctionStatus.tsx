@@ -1,5 +1,6 @@
 import { CountdownTimer } from "./CountdownTimer";
 import { AuctionCompletionStatus } from "./AuctionCompletionStatus";
+import { PaymentButton } from "./PaymentButton";
 import { useSession } from "@supabase/auth-helpers-react";
 
 interface AuctionStatusProps {
@@ -19,6 +20,9 @@ export const AuctionStatus = ({
 }: AuctionStatusProps) => {
   const session = useSession();
   const isWinner = session?.user?.id === winnerId;
+  const showPaymentButton = isWinner && 
+    completionStatus === 'completed' && 
+    paymentStatus === 'pending';
 
   return (
     <div className="space-y-6">
@@ -35,12 +39,16 @@ export const AuctionStatus = ({
         </div>
       </div>
       
-      <div className="pt-2">
+      <div className="pt-2 space-y-4">
         <AuctionCompletionStatus 
           status={completionStatus}
           paymentStatus={paymentStatus}
           isWinner={isWinner}
         />
+        
+        {showPaymentButton && (
+          <PaymentButton auctionId={winnerId || ''} />
+        )}
       </div>
     </div>
   );
