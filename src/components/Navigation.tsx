@@ -70,7 +70,7 @@ const Navigation = () => {
           <div className="flex items-center space-x-3">
             <Link to="/" className="flex items-center space-x-3">
               <img 
-                src="/lovable-uploads/2de68225-dd98-4916-a4cd-6ee65b7f8a37.png" 
+                src="/lovable-uploads/48e1bd0c-6d7a-461c-a150-3037fa8f5f59.png" 
                 alt="VIS Auction Logo" 
                 className="h-8 w-8 hidden md:block"
               />
