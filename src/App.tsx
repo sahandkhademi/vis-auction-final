@@ -26,7 +26,7 @@ function App() {
         <BrowserRouter>
           <div className="min-h-screen flex flex-col bg-background">
             <Navigation />
-            <main className="flex-grow pt-24 pb-16">
+            <main className={`flex-grow ${location.pathname.startsWith('/auction/') ? 'pt-6' : 'pt-24'} pb-16`}>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
