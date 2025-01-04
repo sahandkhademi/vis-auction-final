@@ -28,13 +28,20 @@ export const BidForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Starting bid submission:", { auctionId, bidAmount, currentBid, userId: session?.user?.id });
 
-    if (!session?.user) {
+    if (!session?.user?.id) {
+      console.log("No authenticated user found");
       const returnUrl = encodeURIComponent(location.pathname);
       navigate(`/auth?returnUrl=${returnUrl}`);
       return;
     }
+
+    console.log("Starting bid submission:", { 
+      auctionId, 
+      bidAmount, 
+      currentBid, 
+      userId: session.user.id 
+    });
 
     if (bidAmount <= currentBid) {
       toast({
@@ -61,7 +68,12 @@ export const BidForm = ({
 
       if (bidError) {
         console.error("Bid insertion error:", bidError);
-        throw bidError;
+        toast({
+          title: "Failed to place bid",
+          description: bidError.message || "Please try again",
+          variant: "destructive",
+        });
+        return;
       }
 
       console.log("Bid inserted successfully:", bidData);
@@ -74,7 +86,12 @@ export const BidForm = ({
 
       if (updateError) {
         console.error("Artwork update error:", updateError);
-        throw updateError;
+        toast({
+          title: "Bid placed but price not updated",
+          description: "Please refresh the page",
+          variant: "destructive",
+        });
+        return;
       }
 
       console.log("Artwork price updated successfully");
@@ -112,7 +129,7 @@ export const BidForm = ({
         />
         <Button 
           type="submit" 
-          disabled={isSubmitting || isLoading}
+          disabled={isSubmitting || isLoading || !session?.user}
         >
           {isSubmitting ? "Placing bid..." : "Place Bid"}
         </Button>
