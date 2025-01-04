@@ -1,11 +1,12 @@
-import { CountdownTimer } from "./CountdownTimer";
-import { AuctionCompletionStatus } from "./AuctionCompletionStatus";
-import { PaymentButton } from "./PaymentButton";
+import { motion } from "framer-motion";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { CountdownTimer } from "./CountdownTimer";
+import { AuctionCompletionStatus } from "./AuctionCompletionStatus";
+import { PaymentButton } from "./PaymentButton";
 
 interface AuctionStatusProps {
   currentBid: number;

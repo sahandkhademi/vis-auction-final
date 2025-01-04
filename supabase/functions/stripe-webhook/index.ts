@@ -49,6 +49,8 @@ serve(async (req) => {
         throw new Error('No auction ID found in session metadata');
       }
 
+      console.log('Updating payment status for auction:', auction_id);
+
       // Update auction payment status
       const { error: updateError } = await supabaseClient
         .from('artworks')
@@ -59,6 +61,7 @@ serve(async (req) => {
         .eq('id', auction_id);
 
       if (updateError) {
+        console.error('Error updating payment status:', updateError);
         throw updateError;
       }
 
@@ -80,7 +83,7 @@ serve(async (req) => {
           });
       }
 
-      console.log(`Payment completed for auction ${auction_id}`);
+      console.log('Payment completed successfully for auction:', auction_id);
     }
 
     return new Response(JSON.stringify({ received: true }), {
