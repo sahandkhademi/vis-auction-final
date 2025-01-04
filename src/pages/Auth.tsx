@@ -57,6 +57,7 @@ const AuthPage = () => {
               },
             },
           }}
+          onViewChange={setView}
         />
       </div>
     </div>
