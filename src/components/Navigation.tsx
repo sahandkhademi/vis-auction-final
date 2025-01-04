@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
@@ -16,6 +16,7 @@ import { MobileNav } from "./navigation/MobileNav";
 import { UserActions } from "./navigation/UserActions";
 
 const Navigation = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [open, setOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
