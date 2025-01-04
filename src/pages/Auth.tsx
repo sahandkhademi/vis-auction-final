@@ -3,10 +3,11 @@ import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ViewType } from "@supabase/auth-ui-shared";
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const [view, setView] = useState<"sign_in" | "sign_up">("sign_in");
+  const [view, setView] = useState<ViewType>("sign_in");
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -56,7 +57,7 @@ const AuthPage = () => {
               },
             },
           }}
-          onViewChange={({ view }) => setView(view)}
+          onViewChange={(viewType) => setView(viewType)}
         />
       </div>
     </div>
