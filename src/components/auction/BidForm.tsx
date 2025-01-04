@@ -79,21 +79,36 @@ export const BidForm = ({
       // If there was a previous highest bidder, notify them
       if (previousHighestBid && previousHighestBid.user_id !== session.user.id) {
         console.log('Creating notification for outbid user:', previousHighestBid.user_id);
+        const notificationData = {
+          user_id: previousHighestBid.user_id,
+          title: "You've Been Outbid!",
+          message: `Someone has placed a higher bid of €${numericBid.toLocaleString()} on an auction you were winning.`,
+          type: 'outbid'
+        };
+        console.log('Notification data:', notificationData);
+        
         // Create notification for the outbid user
-        const { error: notificationError } = await supabase
+        const { data: notificationResult, error: notificationError } = await supabase
           .from('notifications')
-          .insert({
-            user_id: previousHighestBid.user_id,
-            title: "You've Been Outbid!",
-            message: `Someone has placed a higher bid of €${numericBid.toLocaleString()} on an auction you were winning.`,
-            type: 'outbid'
-          });
+          .insert(notificationData)
+          .select()
+          .single();
 
         if (notificationError) {
           console.error('Error creating outbid notification:', notificationError);
+          console.error('Full error details:', {
+            message: notificationError.message,
+            details: notificationError.details,
+            hint: notificationError.hint
+          });
         } else {
-          console.log('Notification created successfully');
+          console.log('Notification created successfully:', notificationResult);
         }
+      } else {
+        console.log('No notification needed:', {
+          hasPreviousBid: !!previousHighestBid,
+          isSameUser: previousHighestBid?.user_id === session.user.id
+        });
       }
 
       toast.success("Bid placed successfully!");
