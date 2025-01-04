@@ -57,14 +57,7 @@ const AuthPage = () => {
               },
             },
           }}
-          viewProps={{
-            sign_in: {
-              onChange: (view: ViewType) => setView(view),
-            },
-            sign_up: {
-              onChange: (view: ViewType) => setView(view),
-            },
-          }}
+          onChange={(view) => setView(view)}
         />
       </div>
     </div>
