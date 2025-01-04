@@ -28,14 +28,17 @@ export const BidForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); // Prevent form submission from refreshing the page
+    console.log('Form submission started');
     
     if (!session?.user) {
+      console.log('No session found, redirecting to auth');
       const returnUrl = encodeURIComponent(location.pathname);
       navigate(`/auth?returnUrl=${returnUrl}`);
       return;
     }
 
     if (bidAmount <= currentBid) {
+      console.log('Invalid bid amount:', bidAmount, 'current bid:', currentBid);
       toast({
         title: "Invalid bid amount",
         description: "Your bid must be higher than the current bid",
@@ -45,22 +48,31 @@ export const BidForm = ({
     }
 
     setIsSubmitting(true);
-    console.log('Submitting bid:', { auctionId, amount: bidAmount, userId: session.user.id });
+    console.log('Starting bid submission:', { 
+      auctionId, 
+      amount: bidAmount, 
+      userId: session.user.id,
+      currentBid
+    });
 
     try {
       // Insert the bid
-      const { error: bidError } = await supabase
+      const { data: bidData, error: bidError } = await supabase
         .from("bids")
         .insert({
           auction_id: auctionId,
           amount: bidAmount,
           user_id: session.user.id,
-        });
+        })
+        .select()
+        .single();
 
       if (bidError) {
         console.error("Error inserting bid:", bidError);
         throw bidError;
       }
+
+      console.log('Bid inserted successfully:', bidData);
 
       // Update the artwork's current price
       const { error: updateError } = await supabase
@@ -72,6 +84,8 @@ export const BidForm = ({
         console.error("Error updating artwork price:", updateError);
         throw updateError;
       }
+
+      console.log('Artwork price updated successfully');
 
       toast({
         title: "Bid placed successfully",
