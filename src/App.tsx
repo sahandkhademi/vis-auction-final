@@ -29,9 +29,11 @@ const reducedPaddingRoutes = [
   '/faq'
 ];
 
-// Pages that need more padding for content
+// Pages that need more padding for content-heavy layouts
 const contentPaddingRoutes = [
-  '/auctions'
+  '/auctions',
+  '/about',  // About page might have a grid of team members or content sections
+  '/'        // Homepage with featured auctions and grid layouts
 ];
 
 function AppContent() {
@@ -45,7 +47,7 @@ function AppContent() {
 
   const getPaddingClass = () => {
     if (needsReducedPadding) return 'pt-6';
-    if (needsContentPadding) return 'pt-32 px-8';
+    if (needsContentPadding) return 'pt-32 px-8 md:px-12 lg:px-16';
     return 'pt-24';
   };
 
