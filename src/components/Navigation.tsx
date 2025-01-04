@@ -75,22 +75,6 @@ const Navigation = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
       <div className="max-w-[1400px] mx-auto px-6">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="text-xl font-serif text-gray-900">
-            VIS Auction
-          </Link>
-          
-          <div className="hidden md:flex items-center space-x-8">
-            {navigationLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
           <div className="flex items-center space-x-4">
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild className="md:hidden">
@@ -113,7 +97,24 @@ const Navigation = () => {
                 </div>
               </SheetContent>
             </Sheet>
+            <Link to="/" className="text-xl font-serif text-gray-900">
+              VIS Auction
+            </Link>
+          </div>
+          
+          <div className="hidden md:flex items-center space-x-8">
+            {navigationLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
 
+          <div className="flex items-center space-x-4">
             <Button 
               variant="ghost" 
               size="icon" 
