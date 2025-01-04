@@ -20,7 +20,7 @@ const AuthPage = () => {
   return (
     <div className="min-h-screen pt-32 bg-white">
       <div className="max-w-md mx-auto px-4">
-        <h1 className="text-2xl font-light mb-8 text-center">Sign in to Digital Bid Bazaar</h1>
+        <h1 className="text-2xl font-light mb-8 text-center">Sign in</h1>
         <Auth
           supabaseClient={supabase}
           appearance={{
