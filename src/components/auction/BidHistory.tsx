@@ -31,7 +31,6 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
 
   const fetchBids = async () => {
     try {
-      console.log("Fetching bids for auction:", auctionId);
       const { data: bidsData, error: bidsError } = await supabase
         .from('bids')
         .select('*')
@@ -43,7 +42,6 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         return;
       }
 
-      console.log('Fetched bids:', bidsData);
       setBids(bidsData || []);
     } catch (error) {
       console.error('Error in fetchBids:', error);
@@ -64,19 +62,18 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
 
     // Set up real-time subscription
     const channel = supabase
-      .channel('schema-db-changes')
+      .channel('bid-updates')
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: 'bids',
           filter: `auction_id=eq.${auctionId}`
         },
-        async (payload) => {
-          console.log('Bid change received:', payload);
-          // Refetch all bids to ensure consistent state
-          await fetchBids();
+        (payload) => {
+          console.log('Received bid update:', payload);
+          fetchBids(); // Refresh the bids when we receive an update
         }
       )
       .subscribe((status) => {
@@ -84,7 +81,6 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
       });
 
     return () => {
-      console.log('Cleaning up subscription');
       supabase.removeChannel(channel);
     };
   }, [auctionId]);
