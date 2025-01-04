@@ -53,7 +53,7 @@ export const BidForm = ({
           userId: previousBidUserId,
           auctionId,
           type: 'outbid',
-          newBidAmount: bidAmount
+          newBidAmount: bidAmount // Make sure we pass the new bid amount
         }
       });
 
