@@ -1,14 +1,15 @@
-import { createClient } from '@supabase/supabase-js';
-import { EmailData } from './types';
-import { getEmailContent } from './email-templates';
-import { sendEmail } from './email-service';
+import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
+import { EmailData } from './types.ts';
+import { getEmailContent } from './email-templates.ts';
+import { sendEmail } from './email-service.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-Deno.serve(async (req: Request) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }

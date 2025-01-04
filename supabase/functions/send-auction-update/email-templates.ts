@@ -1,4 +1,4 @@
-import { EmailContent, AuctionData } from './types';
+import { EmailContent, AuctionData } from './types.ts';
 
 export const getEmailContent = (
   type: 'outbid' | 'ending_soon' | 'auction_won',
