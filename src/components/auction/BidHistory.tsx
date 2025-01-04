@@ -114,14 +114,14 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
             <TableRow 
               key={bid.id}
               className={session?.user?.id === bid.user_id ? 
-                "bg-blue-100 hover:bg-blue-200 transition-colors" : 
+                "bg-blue-200 hover:bg-blue-300 transition-colors" : 
                 "hover:bg-gray-50"
               }
             >
               <TableCell className="font-medium">
                 €{bid.amount.toLocaleString()}
                 {session?.user?.id === bid.user_id && (
-                  <span className="ml-2 text-blue-700 font-semibold">(Your bid)</span>
+                  <span className="ml-2 text-blue-800 font-bold">(Your bid)</span>
                 )}
               </TableCell>
               <TableCell>
