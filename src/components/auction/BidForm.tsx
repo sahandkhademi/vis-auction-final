@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,21 +19,36 @@ export const BidForm = ({
   onBidPlaced,
   isLoading = false
 }: BidFormProps) => {
-  const [bidAmount, setBidAmount] = useState<number>(currentBid + 100);
+  const [bidAmount, setBidAmount] = useState<number>(currentBid + 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const session = useSession();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Update bid amount when currentBid changes
+  useEffect(() => {
+    setBidAmount(currentBid + 1);
+  }, [currentBid]);
+
+  console.log("Current session:", session); // Debug log
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session?.user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to place a bid",
-        variant: "destructive",
-      });
+
+    if (!session?.user?.id) {
+      console.log("No authenticated user found");
+      const returnUrl = encodeURIComponent(location.pathname);
+      navigate(`/auth?returnUrl=${returnUrl}`);
       return;
     }
+
+    console.log("Starting bid submission:", { 
+      auctionId, 
+      bidAmount, 
+      currentBid, 
+      userId: session.user.id 
+    });
 
     if (bidAmount <= currentBid) {
       toast({
@@ -46,34 +62,59 @@ export const BidForm = ({
     setIsSubmitting(true);
 
     try {
-      const { error: bidError } = await supabase
+      // Insert the bid
+      const { data: bidData, error: bidError } = await supabase
         .from("bids")
         .insert({
           auction_id: auctionId,
           amount: bidAmount,
-          user_id: session.user.id,
+          user_id: session.user.id
+        })
+        .select()
+        .single();
+
+      if (bidError) {
+        console.error("Bid insertion error:", bidError);
+        toast({
+          title: "Failed to place bid",
+          description: bidError.message || "Please try again",
+          variant: "destructive",
         });
+        return;
+      }
 
-      if (bidError) throw bidError;
+      console.log("Bid inserted successfully:", bidData);
 
+      // Update the artwork's current price
       const { error: updateError } = await supabase
         .from("artworks")
         .update({ current_price: bidAmount })
         .eq("id", auctionId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Artwork update error:", updateError);
+        toast({
+          title: "Bid placed but price not updated",
+          description: "Please refresh the page",
+          variant: "destructive",
+        });
+        return;
+      }
 
+      console.log("Artwork price updated successfully");
+      
       toast({
-        title: "Bid placed successfully",
+        title: "Bid placed successfully!",
         description: `Your bid of €${bidAmount.toLocaleString()} has been placed`,
       });
 
       onBidPlaced();
-    } catch (error) {
+      setBidAmount(bidAmount + 1);
+    } catch (error: any) {
       console.error("Error placing bid:", error);
       toast({
-        title: "Error",
-        description: "Failed to place bid. Please try again.",
+        title: "Failed to place bid",
+        description: error.message || "Please try again",
         variant: "destructive",
       });
     } finally {
@@ -91,9 +132,13 @@ export const BidForm = ({
           onChange={(e) => setBidAmount(Number(e.target.value))}
           placeholder="Enter bid amount"
           className="flex-1"
+          disabled={isSubmitting || isLoading}
         />
-        <Button type="submit" disabled={isSubmitting || isLoading}>
-          Place Bid
+        <Button 
+          type="submit" 
+          disabled={isSubmitting || isLoading || !session?.user}
+        >
+          {isSubmitting ? "Placing bid..." : "Place Bid"}
         </Button>
       </div>
     </form>

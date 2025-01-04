@@ -23,6 +23,8 @@ export const AuctionDetails = ({
   const artistData = typeof artwork.artist === 'object' ? artwork.artist : null;
   const artistName = artistData?.name || (typeof artwork.artist === 'string' ? artwork.artist : 'Unknown Artist');
 
+  const currentPrice = currentHighestBid || artwork.starting_price;
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -37,7 +39,7 @@ export const AuctionDetails = ({
       />
 
       <AuctionStatus
-        currentBid={currentHighestBid || artwork.starting_price}
+        currentBid={currentPrice}
         endDate={artwork.end_date}
         completionStatus={artwork.completion_status}
         paymentStatus={artwork.payment_status}
@@ -49,7 +51,7 @@ export const AuctionDetails = ({
         <div className="pt-6">
           <BidForm
             auctionId={artwork.id}
-            currentBid={currentHighestBid || artwork.starting_price}
+            currentBid={currentPrice}
             isLoading={isLoading}
             onBidPlaced={onBidPlaced}
           />
