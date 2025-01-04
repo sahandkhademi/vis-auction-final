@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,7 @@ export const BidForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const session = useSession();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +36,7 @@ export const BidForm = ({
         description: "Please sign in to place a bid",
         variant: "destructive",
       });
+      navigate("/auth");
       return;
     }
 
