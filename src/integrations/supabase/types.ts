@@ -110,6 +110,39 @@ export type Database = {
           },
         ]
       }
+      backup_logs: {
+        Row: {
+          backup_type: string
+          completed_at: string | null
+          error_message: string | null
+          file_name: string | null
+          file_size: number | null
+          id: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          backup_type: string
+          completed_at?: string | null
+          error_message?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          started_at?: string | null
+          status: string
+        }
+        Update: {
+          backup_type?: string
+          completed_at?: string | null
+          error_message?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          id?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       bids: {
         Row: {
           amount: number
@@ -235,6 +268,16 @@ export type Database = {
       handle_auction_completion: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      log_backup_operation: {
+        Args: {
+          p_backup_type: string
+          p_status: string
+          p_file_name?: string
+          p_file_size?: number
+          p_error_message?: string
+        }
+        Returns: string
       }
     }
     Enums: {

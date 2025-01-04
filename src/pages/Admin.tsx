@@ -10,6 +10,7 @@ import { ArtworkList } from "@/components/admin/ArtworkList";
 import { AdminAnalytics } from "@/components/admin/dashboard/AdminAnalytics";
 import { BulkArtworkManager } from "@/components/admin/dashboard/BulkArtworkManager";
 import { UserManagement } from "@/components/admin/dashboard/UserManagement";
+import { BackupMonitoring } from "@/components/admin/dashboard/BackupMonitoring";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ const AdminDashboard = () => {
       <div>
         <h1 className="text-3xl font-serif mb-2">Admin Dashboard</h1>
         <p className="text-muted-foreground">
-          Manage your artworks, artists, and users
+          Manage your artworks, artists, users, and system backups
         </p>
       </div>
 
@@ -53,6 +54,7 @@ const AdminDashboard = () => {
           <TabsTrigger value="bulk-manager">Bulk Manager</TabsTrigger>
           <TabsTrigger value="artists">Artists</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="backups">Backups</TabsTrigger>
         </TabsList>
 
         <TabsContent value="analytics" className="mt-6">
@@ -78,6 +80,10 @@ const AdminDashboard = () => {
 
         <TabsContent value="users" className="mt-6">
           <UserManagement />
+        </TabsContent>
+
+        <TabsContent value="backups" className="mt-6">
+          <BackupMonitoring />
         </TabsContent>
       </Tabs>
     </div>
