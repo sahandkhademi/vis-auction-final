@@ -19,22 +19,25 @@ serve(async (req) => {
   try {
     const signature = req.headers.get('stripe-signature');
     if (!signature) {
+      console.error('No Stripe signature found');
       throw new Error('No Stripe signature found');
     }
 
     const body = await req.text();
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
     if (!webhookSecret) {
+      console.error('Stripe webhook secret not configured');
       throw new Error('Stripe webhook secret not configured');
     }
 
+    console.log('Constructing Stripe event...');
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
       webhookSecret
     );
 
-    console.log('Processing Stripe webhook event:', event.type);
+    console.log('Processing Stripe webhook event:', event.type, 'Mode:', event.livemode ? 'live' : 'test');
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -43,10 +46,19 @@ serve(async (req) => {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
+      console.log('Checkout session completed:', session.id, 'Payment status:', session.payment_status);
+      
       const { auction_id } = session.metadata || {};
 
       if (!auction_id) {
+        console.error('No auction ID found in session metadata');
         throw new Error('No auction ID found in session metadata');
+      }
+
+      // Verify the payment was successful
+      if (session.payment_status !== 'paid') {
+        console.error('Payment not completed:', session.payment_status);
+        throw new Error('Payment not completed');
       }
 
       console.log('Updating payment status for auction:', auction_id);
