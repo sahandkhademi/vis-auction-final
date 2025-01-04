@@ -2,6 +2,8 @@ import { CountdownTimer } from "./CountdownTimer";
 import { AuctionCompletionStatus } from "./AuctionCompletionStatus";
 import { PaymentButton } from "./PaymentButton";
 import { useSession } from "@supabase/auth-helpers-react";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -9,6 +11,7 @@ interface AuctionStatusProps {
   completionStatus?: string;
   paymentStatus?: string;
   winnerId?: string | null;
+  auctionId: string;
 }
 
 export const AuctionStatus = ({ 
@@ -16,13 +19,48 @@ export const AuctionStatus = ({
   endDate,
   completionStatus = 'ongoing',
   paymentStatus = 'pending',
-  winnerId
+  winnerId,
+  auctionId
 }: AuctionStatusProps) => {
   const session = useSession();
   const isWinner = session?.user?.id === winnerId;
   const showPaymentButton = isWinner && 
     completionStatus === 'completed' && 
     paymentStatus === 'pending';
+
+  useEffect(() => {
+    if (endDate) {
+      const endDateTime = new Date(endDate).getTime();
+      const now = new Date().getTime();
+      const timeRemaining = endDateTime - now;
+      
+      // If less than 1 hour remaining, send notification
+      if (timeRemaining > 0 && timeRemaining <= 3600000) {
+        const notifyEndingSoon = async () => {
+          const { data: bids } = await supabase
+            .from('bids')
+            .select('user_id')
+            .eq('auction_id', auctionId)
+            .order('created_at', { ascending: false });
+
+          // Notify all unique bidders
+          const uniqueBidders = [...new Set(bids?.map(bid => bid.user_id))];
+          
+          for (const userId of uniqueBidders) {
+            await supabase.functions.invoke('send-auction-update', {
+              body: {
+                userId,
+                auctionId,
+                type: 'ending_soon'
+              }
+            });
+          }
+        };
+
+        notifyEndingSoon();
+      }
+    }
+  }, [endDate, auctionId]);
 
   return (
     <div className="space-y-6">
@@ -47,7 +85,7 @@ export const AuctionStatus = ({
         />
         
         {showPaymentButton && (
-          <PaymentButton auctionId={winnerId || ''} />
+          <PaymentButton auctionId={auctionId} />
         )}
       </div>
     </div>

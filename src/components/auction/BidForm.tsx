@@ -1,74 +1,87 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface BidFormProps {
   auctionId: string;
-  currentHighestBid: number | null;
-  defaultBid: number;
-  isLoading?: boolean;
-  onBidPlaced?: () => void;
+  currentBid: number;
+  onBidPlaced: () => void;
+  previousBidUserId?: string;
 }
 
-export const BidForm = ({
-  auctionId,
-  currentHighestBid,
-  defaultBid,
-  isLoading,
+export const BidForm = ({ 
+  auctionId, 
+  currentBid, 
   onBidPlaced,
+  previousBidUserId 
 }: BidFormProps) => {
-  const [bidAmount, setBidAmount] = useState(
-    (currentHighestBid ? currentHighestBid + 10 : defaultBid).toString()
-  );
+  const [bidAmount, setBidAmount] = useState<number>(currentBid + 100);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const session = useSession();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!session?.user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to place a bid",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (bidAmount <= currentBid) {
+      toast({
+        title: "Invalid bid amount",
+        description: "Your bid must be higher than the current bid",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Get the current highest bid and its user
-      const { data: currentBid } = await supabase
-        .from('bids')
-        .select('user_id, amount')
-        .eq('auction_id', auctionId)
-        .order('amount', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      // Place the new bid
       const { error: bidError } = await supabase
-        .from('bids')
+        .from("bids")
         .insert({
           auction_id: auctionId,
-          amount: parseFloat(bidAmount),
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          amount: bidAmount,
+          user_id: session.user.id,
         });
 
       if (bidError) throw bidError;
 
-      // If there was a previous bid, notify that user they've been outbid
-      if (currentBid) {
-        await supabase.functions.invoke('handle-outbid', {
+      const { error: updateError } = await supabase
+        .from("artworks")
+        .update({ current_price: bidAmount })
+        .eq("id", auctionId);
+
+      if (updateError) throw updateError;
+
+      // Send outbid notification email if there was a previous bidder
+      if (previousBidUserId) {
+        await supabase.functions.invoke('send-auction-update', {
           body: {
-            previousBidUserId: currentBid.user_id,
+            userId: previousBidUserId,
             auctionId,
-            newBidAmount: parseFloat(bidAmount),
-          },
+            type: 'outbid'
+          }
         });
       }
 
       toast({
-        title: "Success",
-        description: "Your bid has been placed!",
+        title: "Bid placed successfully",
+        description: `Your bid of €${bidAmount.toLocaleString()} has been placed`,
       });
 
-      onBidPlaced?.();
+      onBidPlaced();
     } catch (error) {
-      console.error('Error placing bid:', error);
+      console.error("Error placing bid:", error);
       toast({
         title: "Error",
         description: "Failed to place bid. Please try again.",
@@ -81,23 +94,19 @@ export const BidForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
+      <div className="flex space-x-2">
         <Input
           type="number"
+          min={currentBid + 1}
           value={bidAmount}
-          onChange={(e) => setBidAmount(e.target.value)}
-          min={currentHighestBid ? currentHighestBid + 1 : defaultBid}
-          step="1"
-          disabled={isLoading || isSubmitting}
+          onChange={(e) => setBidAmount(Number(e.target.value))}
+          placeholder="Enter bid amount"
+          className="flex-1"
         />
+        <Button type="submit" disabled={isSubmitting}>
+          Place Bid
+        </Button>
       </div>
-      <Button
-        type="submit"
-        disabled={isLoading || isSubmitting}
-        className="w-full"
-      >
-        {isSubmitting ? "Placing Bid..." : "Place Bid"}
-      </Button>
     </form>
   );
 };
