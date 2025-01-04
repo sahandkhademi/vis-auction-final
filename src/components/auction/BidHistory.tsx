@@ -32,19 +32,21 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
 
   const fetchBids = async () => {
     try {
-      console.log("Fetching bids for auction:", auctionId);
+      console.log("Starting bid fetch for auction:", auctionId);
+      console.log("Current session:", session);
+
       const { data: bidsData, error: bidsError } = await supabase
         .from('bids')
         .select('*')
         .eq('auction_id', auctionId)
-        .order('created_at', { ascending: false });
+        .order('amount', { ascending: false });
 
       if (bidsError) {
         console.error('Error fetching bids:', bidsError);
         return;
       }
 
-      console.log('Fetched bids:', bidsData);
+      console.log('Raw bids data:', bidsData);
       setBids(bidsData || []);
     } catch (error) {
       console.error('Error in fetchBids:', error);
@@ -54,6 +56,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
   };
 
   useEffect(() => {
+    console.log("BidHistory component mounted with auctionId:", auctionId);
     fetchBids();
 
     const channel = supabase
@@ -99,9 +102,6 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
   const displayedBids = showAllBids ? bids : bids.slice(0, 4);
   const hasMoreBids = bids.length > 4;
 
-  // Debug log to check session and user ID
-  console.log("Current session user ID:", session?.user?.id);
-
   return (
     <div className="mt-8">
       <h3 className="text-lg font-medium mb-4">Bid History</h3>
@@ -114,10 +114,9 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         </TableHeader>
         <TableBody>
           {displayedBids.map((bid) => {
-            // Debug log for each bid comparison
             const isUserBid = session?.user?.id === bid.user_id;
-            console.log("Bid comparison:", {
-              bidUserId: bid.user_id,
+            console.log("Bid row comparison:", {
+              bid,
               sessionUserId: session?.user?.id,
               isUserBid
             });
