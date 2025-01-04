@@ -12,6 +12,8 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('Received webhook request');
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -19,25 +21,42 @@ serve(async (req) => {
   try {
     const signature = req.headers.get('stripe-signature');
     if (!signature) {
-      console.error('No Stripe signature found');
+      console.error('No Stripe signature found in headers:', Object.fromEntries(req.headers));
       throw new Error('No Stripe signature found');
     }
 
     const body = await req.text();
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
     if (!webhookSecret) {
-      console.error('Stripe webhook secret not configured');
+      console.error('Stripe webhook secret not configured in environment');
       throw new Error('Stripe webhook secret not configured');
     }
 
-    console.log('Constructing Stripe event...');
-    const event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      webhookSecret
-    );
+    console.log('Constructing Stripe event with signature:', signature.substring(0, 20) + '...');
+    
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(
+        body,
+        signature,
+        webhookSecret
+      );
+    } catch (err) {
+      console.error('Error constructing event:', err.message);
+      return new Response(
+        JSON.stringify({ error: `Webhook signature verification failed: ${err.message}` }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
-    console.log('Processing Stripe webhook event:', event.type, 'Mode:', event.livemode ? 'live' : 'test');
+    console.log('Successfully constructed Stripe event:', {
+      type: event.type,
+      mode: event.livemode ? 'live' : 'test',
+      id: event.id
+    });
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -46,7 +65,11 @@ serve(async (req) => {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      console.log('Checkout session completed:', session.id, 'Payment status:', session.payment_status);
+      console.log('Processing checkout session:', {
+        id: session.id,
+        paymentStatus: session.payment_status,
+        metadata: session.metadata
+      });
       
       const { auction_id } = session.metadata || {};
 
@@ -55,7 +78,6 @@ serve(async (req) => {
         throw new Error('No auction ID found in session metadata');
       }
 
-      // Verify the payment was successful
       if (session.payment_status !== 'paid') {
         console.error('Payment not completed:', session.payment_status);
         throw new Error('Payment not completed');
@@ -63,7 +85,6 @@ serve(async (req) => {
 
       console.log('Updating payment status for auction:', auction_id);
 
-      // Update auction payment status
       const { error: updateError } = await supabaseClient
         .from('artworks')
         .update({ 
@@ -77,15 +98,19 @@ serve(async (req) => {
         throw updateError;
       }
 
+      console.log('Successfully updated payment status for auction:', auction_id);
+
       // Create a notification for the seller
-      const { data: artwork } = await supabaseClient
+      const { data: artwork, error: artworkError } = await supabaseClient
         .from('artworks')
         .select('title, created_by')
         .eq('id', auction_id)
         .single();
 
-      if (artwork?.created_by) {
-        await supabaseClient
+      if (artworkError) {
+        console.error('Error fetching artwork details:', artworkError);
+      } else if (artwork?.created_by) {
+        const { error: notificationError } = await supabaseClient
           .from('notifications')
           .insert({
             user_id: artwork.created_by,
@@ -93,6 +118,12 @@ serve(async (req) => {
             message: `Payment has been completed for your artwork "${artwork.title}"`,
             type: 'payment_received'
           });
+
+        if (notificationError) {
+          console.error('Error creating notification:', notificationError);
+        } else {
+          console.log('Successfully created notification for seller');
+        }
       }
 
       console.log('Payment completed successfully for auction:', auction_id);
@@ -103,9 +134,16 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error('Webhook error:', error.message);
+    console.error('Webhook error:', {
+      message: error.message,
+      stack: error.stack
+    });
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.stack 
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
