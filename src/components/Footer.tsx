@@ -6,11 +6,11 @@ const Footer = () => {
       <div className="container mx-auto px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <div className="flex items-center space-x-3 mb-4">
+            <div className="flex flex-col items-center md:items-start space-y-3 mb-4">
               <img 
                 src="/lovable-uploads/48e1bd0c-6d7a-461c-a150-3037fa8f5f59.png" 
                 alt="VIS Auction Logo" 
-                className="h-8 w-8"
+                className="h-12 w-12"
               />
               <h3 className="text-xl font-serif text-gray-900">VIS Auction</h3>
             </div>
