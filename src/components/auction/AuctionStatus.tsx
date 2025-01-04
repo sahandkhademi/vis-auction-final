@@ -4,6 +4,7 @@ import { PaymentButton } from "./PaymentButton";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -37,23 +38,30 @@ export const AuctionStatus = ({
       // If less than 1 hour remaining, send notification
       if (timeRemaining > 0 && timeRemaining <= 3600000) {
         const notifyEndingSoon = async () => {
-          const { data: bids } = await supabase
-            .from('bids')
-            .select('user_id')
-            .eq('auction_id', auctionId)
-            .order('created_at', { ascending: false });
+          try {
+            const { data: bids } = await supabase
+              .from('bids')
+              .select('user_id')
+              .eq('auction_id', auctionId)
+              .order('created_at', { ascending: false });
 
-          // Notify all unique bidders
-          const uniqueBidders = [...new Set(bids?.map(bid => bid.user_id))];
-          
-          for (const userId of uniqueBidders) {
-            await supabase.functions.invoke('send-auction-update', {
-              body: {
-                userId,
-                auctionId,
-                type: 'ending_soon'
-              }
-            });
+            if (!bids) return;
+
+            // Notify all unique bidders
+            const uniqueBidders = [...new Set(bids.map(bid => bid.user_id))];
+            
+            for (const userId of uniqueBidders) {
+              await supabase.functions.invoke('send-auction-update', {
+                body: {
+                  userId,
+                  auctionId,
+                  type: 'ending_soon'
+                }
+              });
+            }
+          } catch (error) {
+            console.error('Error sending ending soon notifications:', error);
+            toast.error('Failed to send auction ending notifications');
           }
         };
 
@@ -61,6 +69,49 @@ export const AuctionStatus = ({
       }
     }
   }, [endDate, auctionId]);
+
+  // Subscribe to auction updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('auction-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'artworks',
+          filter: `id=eq.${auctionId}`,
+        },
+        async (payload) => {
+          const newData = payload.new as { completion_status: string; payment_status: string };
+          
+          // Show toast when auction completes
+          if (newData.completion_status === 'completed' && completionStatus === 'ongoing') {
+            if (isWinner) {
+              toast.success("Congratulations! You've won the auction!", {
+                description: "Please complete your payment to claim your item."
+              });
+            } else {
+              toast.info("This auction has ended");
+            }
+          }
+
+          // Show toast when payment is completed
+          if (newData.payment_status === 'completed' && paymentStatus === 'pending') {
+            if (isWinner) {
+              toast.success("Payment completed successfully!", {
+                description: "Thank you for your purchase."
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [auctionId, completionStatus, paymentStatus, isWinner]);
 
   return (
     <div className="space-y-6">

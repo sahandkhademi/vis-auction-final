@@ -19,7 +19,7 @@ export const PaymentButton = ({ auctionId, disabled }: PaymentButtonProps) => {
       });
 
       if (error) throw error;
-      if (!data.url) throw new Error('No checkout URL received');
+      if (!data?.url) throw new Error('No checkout URL received');
 
       window.location.href = data.url;
     } catch (error) {
