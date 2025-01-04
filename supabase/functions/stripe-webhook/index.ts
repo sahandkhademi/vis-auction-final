@@ -9,14 +9,19 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('Received webhook request');
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     // Get the stripe signature from the headers
     const signature = req.headers.get('stripe-signature');
+    console.log('Stripe signature:', signature ? 'Present' : 'Missing');
+
     if (!signature) {
       console.error('Missing Stripe signature');
       return new Response(
@@ -30,16 +35,20 @@ serve(async (req) => {
 
     // Get the raw body
     const body = await req.text();
-    console.log('Received webhook body:', body);
+    console.log('Webhook body:', body);
 
     // Verify the webhook signature
     let event;
     try {
+      const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+      console.log('Webhook secret present:', !!webhookSecret);
+      
       event = stripe.webhooks.constructEvent(
         body,
         signature,
-        Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
+        webhookSecret || ''
       );
+      console.log('Event constructed successfully:', event.type);
     } catch (err) {
       console.error(`Webhook signature verification failed:`, err.message);
       return new Response(
@@ -52,25 +61,33 @@ serve(async (req) => {
     }
 
     // Handle the webhook event
-    const supabase = createClient(Deno.env.get('SUPABASE_URL') || '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '');
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') || '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+    );
+    console.log('Supabase client created');
 
     switch (event.type) {
       case 'payment_intent.succeeded':
         const paymentIntent = event.data.object;
-        // Handle successful payment here
         console.log('PaymentIntent was successful!', paymentIntent);
         break;
       case 'payment_intent.payment_failed':
         const paymentFailedIntent = event.data.object;
-        // Handle payment failure here
         console.log('PaymentIntent failed:', paymentFailedIntent);
         break;
-      // Add more event types as needed
       default:
         console.log(`Unhandled event type ${event.type}`);
     }
 
-    return new Response(JSON.stringify({ received: true }), { status: 200, headers: corsHeaders });
+    console.log('Webhook processed successfully');
+    return new Response(
+      JSON.stringify({ received: true }),
+      { 
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   } catch (error) {
     console.error('Error processing webhook:', error);
     return new Response(
