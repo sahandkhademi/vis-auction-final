@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
@@ -19,68 +19,31 @@ import FAQ from "@/pages/FAQ";
 
 const queryClient = new QueryClient();
 
-// Pages that need less top padding
-const reducedPaddingRoutes = [
-  '/auction',
-  '/artist',
-  '/profile',
-  '/admin',
-  '/submit-art',
-  '/faq'
-];
-
-// Pages that need more padding for content-heavy layouts
-const contentPaddingRoutes = [
-  '/auctions',
-  '/about',  // About page might have a grid of team members or content sections
-  '/'        // Homepage with featured auctions and grid layouts
-];
-
-function AppContent() {
-  const location = useLocation();
-  const needsReducedPadding = reducedPaddingRoutes.some(route => 
-    location.pathname.startsWith(route)
-  );
-  const needsContentPadding = contentPaddingRoutes.some(route =>
-    location.pathname.startsWith(route)
-  );
-
-  const getPaddingClass = () => {
-    if (needsReducedPadding) return 'pt-6';
-    if (needsContentPadding) return 'pt-32 px-8 md:px-12 lg:px-16';
-    return 'pt-24';
-  };
-
-  return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Navigation />
-      <main className={`flex-grow ${getPaddingClass()} pb-16`}>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/artwork/:id" element={<AdminArtwork />} />
-          <Route path="/auction/:id" element={<AuctionDetail />} />
-          <Route path="/artist/:id" element={<ArtistDetail />} />
-          <Route path="/auctions" element={<Auctions />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/submit-art" element={<SubmitArt />} />
-          <Route path="/faq" element={<FAQ />} />
-        </Routes>
-      </main>
-      <Footer />
-      <Toaster />
-    </div>
-  );
-}
-
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionContextProvider supabaseClient={supabase}>
         <BrowserRouter>
-          <AppContent />
+          <div className="min-h-screen flex flex-col bg-background">
+            <Navigation />
+            <main className="flex-grow pt-24 pb-16">
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/artwork/:id" element={<AdminArtwork />} />
+                <Route path="/auction/:id" element={<AuctionDetail />} />
+                <Route path="/artist/:id" element={<ArtistDetail />} />
+                <Route path="/auctions" element={<Auctions />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/submit-art" element={<SubmitArt />} />
+                <Route path="/faq" element={<FAQ />} />
+              </Routes>
+            </main>
+            <Footer />
+            <Toaster />
+          </div>
         </BrowserRouter>
       </SessionContextProvider>
     </QueryClientProvider>
