@@ -18,7 +18,7 @@ export const MobileNav = ({ mobileMenuOpen, setMobileMenuOpen, setOpen }: Mobile
           <Menu className="h-[1.25rem] w-[1.25rem]" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[240px] sm:w-[300px]">
+      <SheetContent side="right" className="w-[240px] sm:w-[300px]">
         <div className="flex flex-col gap-4 mt-6">
           <Button 
             variant="ghost" 
