@@ -129,7 +129,7 @@ export const BidForm = ({
         />
         <Button 
           type="submit" 
-          disabled={isSubmitting || isLoading || !session?.user}
+          disabled={isSubmitting || isLoading || !session}
         >
           {isSubmitting ? "Placing bid..." : "Place Bid"}
         </Button>
