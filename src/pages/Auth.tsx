@@ -26,8 +26,6 @@ const AuthPage = () => {
         </h1>
         <Auth
           supabaseClient={supabase}
-          view={view}
-          onViewChange={(newView) => setView(newView as "sign_in" | "sign_up")}
           appearance={{
             theme: ThemeSupa,
             variables: {
@@ -45,6 +43,20 @@ const AuthPage = () => {
             },
           }}
           providers={[]}
+          view={view}
+          localization={{
+            variables: {
+              sign_in: {
+                email_label: 'Email',
+                password_label: 'Password',
+              },
+              sign_up: {
+                email_label: 'Email',
+                password_label: 'Password',
+              },
+            },
+          }}
+          onViewChange={setView}
         />
       </div>
     </div>
