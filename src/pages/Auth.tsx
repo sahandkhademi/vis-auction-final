@@ -1,11 +1,12 @@
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const [view, setView] = useState<"sign_in" | "sign_up">("sign_in");
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -20,9 +21,13 @@ const AuthPage = () => {
   return (
     <div className="min-h-screen pt-32 bg-white">
       <div className="max-w-md mx-auto px-4">
-        <h1 className="text-2xl font-light mb-8 text-center">Sign in</h1>
+        <h1 className="text-2xl font-light mb-8 text-center">
+          {view === "sign_in" ? "Sign in" : "Sign up"}
+        </h1>
         <Auth
           supabaseClient={supabase}
+          view={view}
+          onViewChange={(newView) => setView(newView as "sign_in" | "sign_up")}
           appearance={{
             theme: ThemeSupa,
             variables: {
