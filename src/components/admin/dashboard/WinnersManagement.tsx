@@ -22,9 +22,7 @@ type Winner = {
   profiles: {
     username: string | null;
     id: string;
-    email: {
-      email: string;
-    } | null;
+    email: string | null;
   } | null;
 };
 
@@ -44,9 +42,7 @@ export const WinnersManagement = () => {
           profiles:winner_id (
             username,
             id,
-            email:auth_users!inner (
-              email
-            )
+            email
           )
         `)
         .not('winner_id', 'is', null)
@@ -99,7 +95,7 @@ export const WinnersManagement = () => {
                   {winner.profiles?.username || 'Unknown'}
                 </TableCell>
                 <TableCell>
-                  {winner.profiles?.email?.email || 'No email'}
+                  {winner.profiles?.email || 'No email'}
                 </TableCell>
                 <TableCell>€{winner.current_price?.toLocaleString()}</TableCell>
                 <TableCell>
