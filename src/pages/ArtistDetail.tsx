@@ -70,8 +70,8 @@ const ArtistDetail = () => {
     <div className="min-h-screen bg-white pt-20">
       <div className="max-w-[1400px] mx-auto px-6">
         <div className="py-12">
-          <div className="flex flex-col md:flex-row md:items-start gap-8">
-            <div className="flex flex-col items-center md:items-start">
+          <div className="block md:flex md:items-start md:gap-8">
+            <div className="flex flex-col items-center md:block mb-6 md:mb-0">
               <Avatar className="h-24 w-24">
                 {artist.profile_image_url ? (
                   <AvatarImage src={artist.profile_image_url} alt={artist.name} />
