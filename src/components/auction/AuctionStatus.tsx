@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle2 } from "lucide-react";
+import { CountdownTimer } from "./CountdownTimer";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -25,8 +25,9 @@ export const AuctionStatus = ({
 }: AuctionStatusProps) => {
   const user = useUser();
   const isWinner = user?.id === winnerId;
-  const needsPayment = isWinner && paymentStatus === 'pending' && completionStatus === 'completed';
-  const hasCompletedPayment = isWinner && paymentStatus === 'completed' && completionStatus === 'completed';
+  const needsPayment = isWinner && paymentStatus === 'pending';
+  const hasCompletedPayment = isWinner && paymentStatus === 'completed';
+  const isEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
   // Fetch the winner's actual winning bid amount
   const { data: winningBid } = useQuery({
@@ -55,7 +56,6 @@ export const AuctionStatus = ({
     <div className="space-y-4">
       {hasCompletedPayment && (
         <Alert className="bg-green-50 border-green-200">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
           <AlertTitle className="text-green-800">Payment Completed!</AlertTitle>
           <AlertDescription className="text-green-700">
             Thank you for your payment! Your purchase has been confirmed. You should have received a confirmation email with further details.
@@ -68,13 +68,26 @@ export const AuctionStatus = ({
           <p className="text-sm text-gray-500">Current Price</p>
           <p className="text-2xl font-bold">€{finalPrice?.toLocaleString()}</p>
         </div>
-        <div>
-          {completionStatus === 'completed' ? (
-            <Badge variant={paymentStatus === 'completed' ? 'default' : 'secondary'}>
-              {paymentStatus === 'completed' ? 'Paid' : 'Payment Pending'}
+        <div className="flex flex-col items-end gap-2">
+          {!isEnded && endDate && (
+            <div className="text-right">
+              <p className="text-sm text-gray-500 mb-1">Time Remaining</p>
+              <CountdownTimer endDate={endDate} />
+            </div>
+          )}
+          <Badge 
+            variant={completionStatus === 'completed' ? 'default' : 'outline'}
+            className={`${completionStatus === 'completed' ? 'bg-blue-500' : ''}`}
+          >
+            {completionStatus === 'completed' ? 'Auction Ended' : 'Ongoing'}
+          </Badge>
+          {isWinner && (
+            <Badge 
+              variant="default" 
+              className="bg-green-500"
+            >
+              You Won!
             </Badge>
-          ) : (
-            <Badge variant="outline">Ongoing</Badge>
           )}
         </div>
       </div>

@@ -49,7 +49,7 @@ export const EmailTester = () => {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-serif">Email Template Tester</h2>
+      <h2 className="text-xl">Email Template Tester</h2>
       <p className="text-muted-foreground">
         Send test emails to all admin accounts to preview the email templates.
       </p>

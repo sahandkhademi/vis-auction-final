@@ -3,10 +3,9 @@ import { differenceInSeconds } from "date-fns";
 
 interface CountdownTimerProps {
   endDate: string | null;
-  onTimerEnd?: () => void;
 }
 
-export const CountdownTimer = ({ endDate, onTimerEnd }: CountdownTimerProps) => {
+export const CountdownTimer = ({ endDate }: CountdownTimerProps) => {
   const [timeLeft, setTimeLeft] = useState<string>("");
 
   useEffect(() => {
@@ -22,9 +21,6 @@ export const CountdownTimer = ({ endDate, onTimerEnd }: CountdownTimerProps) => 
 
       if (diffInSeconds <= 0) {
         setTimeLeft("Auction ended");
-        if (onTimerEnd) {
-          onTimerEnd();
-        }
         return;
       }
 
@@ -33,20 +29,29 @@ export const CountdownTimer = ({ endDate, onTimerEnd }: CountdownTimerProps) => 
       const minutes = Math.floor((diffInSeconds % (60 * 60)) / 60);
       const seconds = diffInSeconds % 60;
 
-      setTimeLeft(
-        `${days > 0 ? `${days}d ` : ''}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-      );
+      if (days > 0) {
+        setTimeLeft(`${days}d ${hours}h ${minutes}m`);
+      } else if (hours > 0) {
+        setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+      } else if (minutes > 0) {
+        setTimeLeft(`${minutes}m ${seconds}s`);
+      } else {
+        setTimeLeft(`${seconds}s`);
+      }
     };
 
+    // Calculate immediately
     calculateTimeLeft();
+    
+    // Update every second
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, [endDate, onTimerEnd]);
+  }, [endDate]);
 
   return (
-    <div className="text-sm font-medium bg-gray-100 px-3 py-1 rounded-full">
-      Time remaining: {timeLeft}
+    <div className="font-mono text-sm font-medium">
+      {timeLeft}
     </div>
   );
 };

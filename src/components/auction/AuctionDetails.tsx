@@ -6,8 +6,6 @@ import { BidForm } from "./BidForm";
 import { BidHistory } from "./BidHistory";
 import { ArtistInfo } from "./ArtistInfo";
 import { AuctionInfo } from "./AuctionInfo";
-import { CountdownTimer } from "./CountdownTimer";
-import { useToast } from "@/hooks/use-toast";
 
 interface AuctionDetailsProps {
   artwork: ArtworkWithArtist;
@@ -22,20 +20,10 @@ export const AuctionDetails = ({
   isLoading,
   onBidPlaced 
 }: AuctionDetailsProps) => {
-  const { toast } = useToast();
   const artistData = typeof artwork.artist === 'object' ? artwork.artist : null;
   const artistName = artistData?.name || (typeof artwork.artist === 'string' ? artwork.artist : 'Unknown Artist');
 
   const currentPrice = currentHighestBid || artwork.starting_price;
-
-  const handleTimerEnd = () => {
-    toast({
-      title: "Auction Ended",
-      description: "This auction has ended. The page will refresh to show the final results.",
-    });
-    // Refresh the page to show the updated auction status
-    window.location.reload();
-  };
 
   return (
     <motion.div
@@ -49,13 +37,6 @@ export const AuctionDetails = ({
         title={artwork.title}
         description={artwork.description}
       />
-
-      {artwork.completion_status === 'ongoing' && (
-        <CountdownTimer 
-          endDate={artwork.end_date} 
-          onTimerEnd={handleTimerEnd}
-        />
-      )}
 
       <AuctionStatus
         currentBid={currentPrice}
@@ -73,6 +54,8 @@ export const AuctionDetails = ({
             currentBid={currentPrice}
             isLoading={isLoading}
             onBidPlaced={onBidPlaced}
+            completionStatus={artwork.completion_status}
+            endDate={artwork.end_date}
           />
         </div>
       )}
