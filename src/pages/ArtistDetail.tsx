@@ -81,13 +81,13 @@ const ArtistDetail = () => {
               )}
             </Avatar>
             <div>
-              <h1 className="text-3xl font-serif text-gray-900">{artist.name}</h1>
+              <h1 className="text-3xl text-gray-900">{artist.name}</h1>
               <p className="mt-4 text-gray-600 max-w-2xl">{artist.bio}</p>
             </div>
           </div>
 
           <div className="mt-16">
-            <h2 className="text-2xl font-serif text-gray-900 mb-8">Artworks by {artist.name}</h2>
+            <h2 className="text-2xl text-gray-900 mb-8">Artworks by {artist.name}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {artworks?.map((artwork) => (
                 <AuctionCard
