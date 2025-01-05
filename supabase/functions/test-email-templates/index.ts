@@ -5,23 +5,28 @@ import { getEmailTemplates, SampleArtwork } from './email-templates.ts';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Content-Type': 'application/json',
 };
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 
 serve(async (req) => {
-  console.log('Received request to test email templates');
-  
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Validate RESEND_API_KEY
     if (!RESEND_API_KEY) {
       console.error('RESEND_API_KEY is not set');
-      throw new Error('RESEND_API_KEY is not set');
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        { headers: corsHeaders, status: 500 }
+      );
     }
 
+    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -35,12 +40,18 @@ serve(async (req) => {
 
     if (adminError) {
       console.error('Error fetching admin profiles:', adminError);
-      throw adminError;
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch admin profiles' }),
+        { headers: corsHeaders, status: 500 }
+      );
     }
 
     if (!adminProfiles?.length) {
       console.error('No admin profiles found');
-      throw new Error('No admin users found');
+      return new Response(
+        JSON.stringify({ error: 'No admin users found' }),
+        { headers: corsHeaders, status: 404 }
+      );
     }
 
     console.log(`Found ${adminProfiles.length} admin profiles`);
@@ -49,7 +60,10 @@ serve(async (req) => {
     
     if (usersError) {
       console.error('Error fetching admin users:', usersError);
-      throw usersError;
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch admin users' }),
+        { headers: corsHeaders, status: 500 }
+      );
     }
 
     const adminEmails = adminUsers
@@ -59,7 +73,10 @@ serve(async (req) => {
 
     if (!adminEmails.length) {
       console.error('No admin emails found');
-      throw new Error('No admin emails found');
+      return new Response(
+        JSON.stringify({ error: 'No admin emails found' }),
+        { headers: corsHeaders, status: 404 }
+      );
     }
 
     console.log(`Found ${adminEmails.length} admin emails:`, adminEmails);
@@ -81,13 +98,11 @@ serve(async (req) => {
       try {
         const emailData = {
           from: 'Mosaic Auctions <onboarding@resend.dev>',
-          to: adminEmails.map(email => email.trim()),
+          to: adminEmails,
           subject: template.subject,
           html: template.html,
           reply_to: 'support@mosaicauctions.com'
         };
-
-        console.log('Sending email with data:', JSON.stringify(emailData, null, 2));
 
         const response = await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -98,12 +113,14 @@ serve(async (req) => {
           body: JSON.stringify(emailData)
         });
 
-        const responseText = await response.text();
-        console.log(`Response for ${template.subject}:`, responseText);
-
         if (!response.ok) {
-          throw new Error(`Failed to send email: ${responseText}`);
+          const errorText = await response.text();
+          console.error(`Failed to send email: ${errorText}`);
+          throw new Error(`Failed to send email: ${errorText}`);
         }
+
+        const responseData = await response.json();
+        console.log(`Response for ${template.subject}:`, responseData);
       } catch (error) {
         console.error(`Error sending template ${template.subject}:`, error);
         throw error;
@@ -114,25 +131,20 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
+        success: true,
         message: 'Test emails sent successfully', 
         recipients: adminEmails 
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
+      { headers: corsHeaders, status: 200 }
     );
   } catch (error) {
     console.error('Error in test-email-templates function:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: error.message || 'Internal server error',
         details: error.toString()
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
-      }
+      { headers: corsHeaders, status: 500 }
     );
   }
 });
