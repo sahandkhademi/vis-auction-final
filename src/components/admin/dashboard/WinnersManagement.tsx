@@ -23,7 +23,10 @@ export const WinnersManagement = () => {
           winner:profiles!artworks_winner_id_fkey (
             id,
             username,
-            avatar_url
+            avatar_url,
+            email:auth_users!profiles_id_fkey (
+              email
+            )
           )
         `)
         .not("winner_id", "is", null)
@@ -83,6 +86,7 @@ export const WinnersManagement = () => {
           <TableRow>
             <TableHead>Artwork</TableHead>
             <TableHead>Winner</TableHead>
+            <TableHead>Email</TableHead>
             <TableHead>Final Price</TableHead>
             <TableHead>Payment Status</TableHead>
             <TableHead>Delivery Status</TableHead>
@@ -93,7 +97,8 @@ export const WinnersManagement = () => {
           {winners?.map((artwork) => (
             <TableRow key={artwork.id}>
               <TableCell className="font-medium">{artwork.title}</TableCell>
-              <TableCell>{artwork.winner?.username}</TableCell>
+              <TableCell>{artwork.winner?.username || "No username"}</TableCell>
+              <TableCell>{artwork.winner?.email?.email}</TableCell>
               <TableCell>
                 ${artwork.current_price?.toLocaleString()}
               </TableCell>
