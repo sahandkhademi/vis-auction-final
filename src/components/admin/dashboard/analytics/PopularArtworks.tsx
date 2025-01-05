@@ -33,9 +33,9 @@ export const PopularArtworks = () => {
           artworks (
             title
           ),
-          count: count(*)
+          count
         `)
-        .groupBy('artwork_id, artworks.title')
+        .select('*, count(*)', { count: 'exact' })
         .order('count', { ascending: false })
         .limit(5);
 
