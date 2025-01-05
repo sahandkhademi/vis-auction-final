@@ -1,52 +1,53 @@
-import { useState } from 'react';
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export const EmailTester = () => {
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
-  const handleTestEmail = async () => {
-    if (!email) {
-      toast.error('Please enter an email address');
-      return;
-    }
-
-    setIsLoading(true);
+  const handleTestEmails = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('test-email', {
-        body: { email }
-      });
+      setIsSending(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-email-templates`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+        }
+      );
 
-      if (error) throw error;
-      toast.success('Test email sent successfully!');
+      if (!response.ok) {
+        throw new Error("Failed to send test emails");
+      }
+
+      const result = await response.json();
+      toast.success("Test emails sent successfully!");
+      console.log("Test emails sent to:", result.recipients);
     } catch (error) {
-      console.error('Error sending test email:', error);
-      toast.error('Failed to send test email. Check the console for details.');
+      console.error("Error sending test emails:", error);
+      toast.error("Failed to send test emails");
     } finally {
-      setIsLoading(false);
+      setIsSending(false);
     }
   };
 
   return (
-    <div className="space-y-4 p-4 border rounded-lg bg-white">
-      <h3 className="text-lg font-semibold">Email Tester</h3>
-      <div className="flex gap-2">
-        <Input
-          type="email"
-          placeholder="Enter email address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <Button 
-          onClick={handleTestEmail}
-          disabled={isLoading}
-        >
-          {isLoading ? 'Sending...' : 'Send Test Email'}
-        </Button>
-      </div>
+    <div className="space-y-4">
+      <h2 className="text-xl font-serif">Email Template Tester</h2>
+      <p className="text-muted-foreground">
+        Send test emails to all admin accounts to preview the email templates.
+      </p>
+      <Button 
+        onClick={handleTestEmails} 
+        disabled={isSending}
+      >
+        {isSending ? "Sending..." : "Send Test Emails"}
+      </Button>
     </div>
   );
 };
