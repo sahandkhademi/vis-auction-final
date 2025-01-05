@@ -149,14 +149,7 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="backups">
-          <Card>
-            <CardHeader>
-              <CardTitle>Backup Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <BackupMonitoring />
-            </CardContent>
-          </Card>
+          <BackupMonitoring />
         </TabsContent>
       </Tabs>
     </div>
