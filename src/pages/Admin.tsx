@@ -42,16 +42,11 @@ const AdminDashboard = () => {
 
   return (
     <div className="container py-8 space-y-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-serif mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">
-            Manage your gallery's artworks, artists, and operations
-          </p>
-        </div>
-        <Button onClick={() => navigate("/admin/artwork/new")}>
-          <Plus className="mr-2 h-4 w-4" /> New Artwork
-        </Button>
+      <div>
+        <h1 className="text-3xl font-serif mb-2">Admin Dashboard</h1>
+        <p className="text-muted-foreground">
+          Manage your gallery's artworks, artists, and operations
+        </p>
       </div>
 
       <Tabs defaultValue="analytics" className="space-y-6">
@@ -82,8 +77,11 @@ const AdminDashboard = () => {
 
         <TabsContent value="artworks">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Artwork Management</CardTitle>
+              <Button onClick={() => navigate("/admin/artwork/new")}>
+                <Plus className="mr-2 h-4 w-4" /> New Artwork
+              </Button>
             </CardHeader>
             <CardContent>
               <ArtworkList />
