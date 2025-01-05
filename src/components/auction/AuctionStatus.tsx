@@ -105,7 +105,7 @@ export const AuctionStatus = ({
         </div>
       </div>
 
-      {needsPayment && isEnded && (
+      {isWinner && isEnded && paymentStatus === 'pending' && (
         <div className="mt-4">
           <PaymentButton 
             auctionId={auctionId} 
