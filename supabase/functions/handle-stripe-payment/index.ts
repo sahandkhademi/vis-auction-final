@@ -49,14 +49,8 @@ serve(async (req) => {
     console.log(`[${requestId}] Event type: ${event.type}`);
 
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+      Deno.env.get('SUPABASE_URL') || '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
     );
 
     if (event.type === 'checkout.session.completed') {
@@ -81,17 +75,10 @@ serve(async (req) => {
         success_url: `${session.success_url}?payment_success=true`,
       });
 
-      // Fetch and verify auction details with buyer information
+      // Fetch and verify auction details
       const { data: auction, error: fetchError } = await supabaseClient
         .from('artworks')
-        .select(`
-          *,
-          profiles!winner_id(
-            id,
-            email,
-            username
-          )
-        `)
+        .select('*, profiles!winner_id(*)')
         .eq('id', auctionId)
         .single();
 
@@ -147,9 +134,6 @@ serve(async (req) => {
             .filter(Boolean);
 
           if (adminEmails.length > 0) {
-            const buyerEmail = auction.profiles?.email || 'No email available';
-            const buyerUsername = auction.profiles?.username || 'Anonymous';
-
             await fetch('https://api.resend.com/emails', {
               method: 'POST',
               headers: {
@@ -164,15 +148,11 @@ serve(async (req) => {
                   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                     <h1 style="color: #1a1a1a;">Payment Completed</h1>
                     <p>A payment has been completed for the artwork "${auction.title}".</p>
-                    <p>Buyer Details:</p>
-                    <ul>
-                      <li>Email: ${buyerEmail}</li>
-                      <li>Username: ${buyerUsername}</li>
-                    </ul>
                     <p>Transaction Details:</p>
                     <ul>
                       <li>Amount: €${auction.current_price?.toLocaleString()}</li>
                       <li>Payment ID: ${session.payment_intent}</li>
+                      <li>Buyer ID: ${session.metadata.user_id}</li>
                       <li>Transaction Date: ${new Date().toISOString()}</li>
                     </ul>
                   </div>
