@@ -27,7 +27,10 @@ export const WinnersManagement = () => {
           winner_id,
           profiles:winner_id (
             username,
-            id
+            id,
+            email:auth_users!inner (
+              email
+            )
           )
         `)
         .not('winner_id', 'is', null)
@@ -65,6 +68,7 @@ export const WinnersManagement = () => {
             <TableRow>
               <TableHead>Artwork</TableHead>
               <TableHead>Winner</TableHead>
+              <TableHead>Email</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Payment Status</TableHead>
               <TableHead>Delivery Status</TableHead>
@@ -77,6 +81,9 @@ export const WinnersManagement = () => {
                 <TableCell>{winner.title}</TableCell>
                 <TableCell>
                   {winner.profiles?.username || 'Unknown'}
+                </TableCell>
+                <TableCell>
+                  {winner.profiles?.email?.email || 'No email'}
                 </TableCell>
                 <TableCell>€{winner.current_price?.toLocaleString()}</TableCell>
                 <TableCell>
