@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Bell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 export const NotificationBadge = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const { data: notifications, refetch } = useQuery({
     queryKey: ["notifications"],
@@ -56,7 +58,7 @@ export const NotificationBadge = () => {
     }
   }, [notifications]);
 
-  const markAsRead = async (id: string) => {
+  const markAsRead = async (id: string, type: string, entityId?: string) => {
     const { error } = await supabase
       .from("notifications")
       .update({ read: true })
@@ -64,6 +66,23 @@ export const NotificationBadge = () => {
       
     if (!error) {
       refetch();
+      
+      // Navigate based on notification type
+      if (entityId) {
+        switch (type) {
+          case 'auction_won':
+          case 'outbid':
+          case 'auction_expired':
+            navigate(`/auctions/${entityId}`);
+            break;
+          case 'payment_success':
+            navigate(`/profile`);
+            break;
+          default:
+            // For unknown types, just mark as read without navigation
+            break;
+        }
+      }
     }
   };
 
@@ -118,19 +137,24 @@ export const NotificationBadge = () => {
         {notifications?.length === 0 ? (
           <DropdownMenuItem>No new notifications</DropdownMenuItem>
         ) : (
-          notifications?.map((notification) => (
-            <DropdownMenuItem
-              key={notification.id}
-              className="flex flex-col items-start p-4 space-y-1 cursor-pointer"
-              onClick={() => markAsRead(notification.id)}
-            >
-              <div className="font-semibold">{notification.title}</div>
-              <div className="text-sm text-gray-500">{notification.message}</div>
-              <div className="text-xs text-gray-400">
-                {new Date(notification.created_at).toLocaleDateString()}
-              </div>
-            </DropdownMenuItem>
-          ))
+          notifications?.map((notification) => {
+            // Extract entity ID from the message if present
+            const entityId = notification.message.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/)?.[0];
+            
+            return (
+              <DropdownMenuItem
+                key={notification.id}
+                className="flex flex-col items-start p-4 space-y-1 cursor-pointer"
+                onClick={() => markAsRead(notification.id, notification.type, entityId)}
+              >
+                <div className="font-semibold">{notification.title}</div>
+                <div className="text-sm text-gray-500">{notification.message}</div>
+                <div className="text-xs text-gray-400">
+                  {new Date(notification.created_at).toLocaleDateString()}
+                </div>
+              </DropdownMenuItem>
+            );
+          })
         )}
       </DropdownMenuContent>
     </DropdownMenu>
