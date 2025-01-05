@@ -5,6 +5,7 @@ export const getBaseEmailStyle = () => `
   padding: 20px;
   background-color: #ffffff;
   color: #1a1a1a;
+  border: 1px solid #e5e7eb;
 `;
 
 export const getHeadingStyle = () => `
@@ -27,14 +28,15 @@ export const getButtonStyle = () => `
   color: white;
   padding: 12px 24px;
   text-decoration: none;
-  border-radius: 4px;
+  border-radius: 0;
   margin: 16px 0;
+  font-weight: 500;
 `;
 
 export const getFooterStyle = () => `
   margin-top: 32px;
   padding-top: 16px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #e5e7eb;
   color: #666;
   font-size: 14px;
 `;
@@ -47,5 +49,5 @@ export const getTableStyle = () => `
 
 export const getTdStyle = () => `
   padding: 12px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #e5e7eb;
 `;
