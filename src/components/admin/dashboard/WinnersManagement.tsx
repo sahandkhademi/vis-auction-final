@@ -11,6 +11,13 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type Winner = {
   id: string;
@@ -84,7 +91,7 @@ export const WinnersManagement = () => {
               <TableHead>Price</TableHead>
               <TableHead>Payment Status</TableHead>
               <TableHead>Delivery Status</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -112,16 +119,21 @@ export const WinnersManagement = () => {
                     {winner.delivery_status === 'delivered' ? 'Delivered' : 'Pending'}
                   </Badge>
                 </TableCell>
-                <TableCell>
-                  {winner.delivery_status !== 'delivered' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleMarkDelivered(winner.id)}
-                    >
-                      Mark as Delivered
-                    </Button>
-                  )}
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {winner.delivery_status !== 'delivered' && (
+                        <DropdownMenuItem onClick={() => handleMarkDelivered(winner.id)}>
+                          Mark as Delivered
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
