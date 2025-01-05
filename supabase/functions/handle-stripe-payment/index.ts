@@ -9,38 +9,30 @@ const corsHeaders = {
 
 serve(async (req) => {
   console.log(`[${new Date().toISOString()}] Request received`);
-  console.log('Request method:', req.method);
-  console.log('Request headers:', Object.fromEntries(req.headers.entries()));
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Special handling for Stripe webhook requests
-  const stripeSignature = req.headers.get('stripe-signature');
-  if (stripeSignature) {
-    console.log('Stripe webhook signature detected, processing webhook');
-    return await handleStripeWebhook(req);
-  }
-
-  console.log('Processing as authenticated request');
-  return await handleAuthenticatedRequest(req);
-});
-
-async function handleStripeWebhook(req: Request) {
   try {
     const signature = req.headers.get('stripe-signature');
-    console.log('Processing webhook with signature:', signature);
-
     if (!signature) {
       console.error('Missing Stripe signature');
-      throw new Error('Missing stripe signature');
+      return new Response(
+        JSON.stringify({ error: 'Missing stripe signature' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    const body = await req.text();
-    console.log('Webhook body received:', body);
+    // Get the raw body as text
+    const rawBody = await req.text();
+    console.log('Raw webhook body:', rawBody);
+    console.log('Stripe signature:', signature);
+    console.log('Webhook secret:', Deno.env.get('STRIPE_WEBHOOK_SECRET'));
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
@@ -48,19 +40,18 @@ async function handleStripeWebhook(req: Request) {
 
     let event;
     try {
-      event = await stripe.webhooks.constructEventAsync(
-        body,
+      event = stripe.webhooks.constructEvent(
+        rawBody,
         signature,
         Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
       );
     } catch (err) {
       console.error('Error constructing webhook event:', err);
-      console.log('Webhook Secret used:', Deno.env.get('STRIPE_WEBHOOK_SECRET'));
       return new Response(
         JSON.stringify({ error: err.message }),
         { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
@@ -73,7 +64,7 @@ async function handleStripeWebhook(req: Request) {
     );
 
     if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
+      const session = event.data.object;
       console.log('Processing completed checkout session:', session.id);
 
       if (session.metadata?.auction_id) {
@@ -120,7 +111,7 @@ async function handleStripeWebhook(req: Request) {
       status: 200,
     });
   } catch (error) {
-    console.error('Webhook error:', error.message);
+    console.error('Webhook error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
@@ -129,11 +120,4 @@ async function handleStripeWebhook(req: Request) {
       }
     );
   }
-}
-
-async function handleAuthenticatedRequest(req: Request) {
-  // Handle any authenticated requests here
-  return new Response(JSON.stringify({ message: "Authenticated endpoint" }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
-}
+});
