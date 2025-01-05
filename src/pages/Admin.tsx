@@ -67,7 +67,7 @@ const AdminDashboard = () => {
       <Tabs defaultValue="analytics" className="space-y-6">
         <Card>
           <CardContent className="pt-6 pb-4">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2 min-h-[88px]">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 min-h-[88px]">
               <TabsTrigger value="analytics" className="w-full">Analytics</TabsTrigger>
               <TabsTrigger value="artworks" className="w-full">Artworks</TabsTrigger>
               <TabsTrigger value="artists" className="w-full">Artists</TabsTrigger>
