@@ -8,27 +8,30 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log(`[${new Date().toISOString()}] Webhook request received`);
+  console.log(`[${new Date().toISOString()}] Request received`);
+  console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request');
+    return new Response(null, { headers: corsHeaders });
+  }
 
   // Special handling for Stripe webhook requests
   const stripeSignature = req.headers.get('stripe-signature');
   if (stripeSignature) {
-    console.log('Stripe webhook signature detected, bypassing JWT verification');
+    console.log('Stripe webhook signature detected, processing webhook');
     return await handleStripeWebhook(req);
   }
 
-  // For all other requests, verify JWT (this will be handled by Supabase since verify_jwt = true)
+  console.log('Processing as authenticated request');
   return await handleAuthenticatedRequest(req);
 });
 
 async function handleStripeWebhook(req: Request) {
   try {
-    if (req.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
-    }
-
     const signature = req.headers.get('stripe-signature');
-    console.log('Received signature:', signature);
+    console.log('Processing webhook with signature:', signature);
 
     if (!signature) {
       console.error('Missing Stripe signature');

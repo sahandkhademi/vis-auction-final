@@ -1,3 +1,5 @@
 project_id = "dsrjyryrxfruexcwbxea"
 [functions.handle-stripe-payment]
 verify_jwt = true
+[functions.handle-stripe-payment.jwt.bypass]
+paths = ["/"]
