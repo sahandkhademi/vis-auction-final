@@ -8,12 +8,15 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('🔔 Checkout session request received:', new Date().toISOString());
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { auctionId } = await req.json();
+    console.log('Auction ID:', auctionId);
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -28,6 +31,7 @@ serve(async (req) => {
       .single();
 
     if (auctionError || !auction) {
+      console.error('Error fetching auction:', auctionError);
       throw new Error('Auction not found');
     }
 
@@ -37,14 +41,16 @@ serve(async (req) => {
     const { data: { user } } = await supabaseClient.auth.getUser(token);
 
     if (!user || user.id !== auction.winner_id) {
+      console.error('Unauthorized user attempt:', user?.id);
       throw new Error('Unauthorized');
     }
 
+    console.log('Creating Stripe instance with secret key...');
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
 
-    // Create Stripe checkout session
+    console.log('Creating checkout session...');
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -70,6 +76,7 @@ serve(async (req) => {
       },
     });
 
+    console.log('✅ Checkout session created successfully:', session.id);
     return new Response(
       JSON.stringify({ url: session.url }),
       { 
@@ -78,7 +85,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error creating checkout session:', error);
+    console.error('❌ Error creating checkout session:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
