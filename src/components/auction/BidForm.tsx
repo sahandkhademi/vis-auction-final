@@ -53,13 +53,26 @@ export const BidForm = ({
         return;
       }
 
+      // Get the auction details for the email
+      const { data: auction, error: auctionError } = await supabase
+        .from('artworks')
+        .select('title')
+        .eq('id', auctionId)
+        .single();
+
+      if (auctionError) {
+        console.error('Error fetching auction details:', auctionError);
+        return;
+      }
+
       // Send email notification via edge function
       const { error: emailError } = await supabase.functions.invoke('send-auction-update', {
         body: {
           userId: previousBidUserId,
           auctionId,
           type: 'outbid',
-          newBidAmount: bidAmount
+          newBidAmount: bidAmount,
+          auctionTitle: auction.title
         }
       });
 

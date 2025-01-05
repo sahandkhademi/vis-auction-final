@@ -26,8 +26,8 @@ serve(async (req: Request) => {
       }
     );
 
-    const { userId, auctionId, type, newBidAmount } = await req.json() as EmailData;
-    console.log('Processing email notification:', { userId, auctionId, type, newBidAmount });
+    const { userId, auctionId, type, newBidAmount, auctionTitle } = await req.json() as EmailData;
+    console.log('Processing email notification:', { userId, auctionId, type, newBidAmount, auctionTitle });
 
     // Get the user's email
     const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
@@ -90,6 +90,8 @@ serve(async (req: Request) => {
 
     const emailContent = getEmailContent(type, auction, newBidAmount, auctionUrl);
     const response = await sendEmail(user.email, emailContent);
+
+    console.log('Email sent successfully:', response);
 
     return new Response(
       JSON.stringify({ message: 'Email sent successfully' }),

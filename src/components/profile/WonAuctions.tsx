@@ -21,17 +21,18 @@ export const WonAuctions = ({ userId }: { userId: string }) => {
   const { data: wonAuctions, isLoading } = useQuery({
     queryKey: ["wonAuctions", userId],
     queryFn: async () => {
-      // First, get auctions where user is the winner
+      // First, get auctions where user is explicitly set as winner
       const { data: winnerAuctions, error: winnerError } = await supabase
         .from("artworks")
         .select("id, title, current_price, payment_status, image_url, winner_id, completion_status")
         .eq("winner_id", userId)
+        .eq("completion_status", "completed")
         .order("updated_at", { ascending: false });
 
       if (winnerError) throw winnerError;
 
-      // Then, get completed auctions where user is the highest bidder
-      const { data: highestBids, error: bidsError } = await supabase
+      // Then, get completed auctions where user has the highest bid
+      const { data: bids, error: bidsError } = await supabase
         .from("bids")
         .select("auction_id, amount")
         .eq("user_id", userId)
@@ -39,9 +40,9 @@ export const WonAuctions = ({ userId }: { userId: string }) => {
 
       if (bidsError) throw bidsError;
 
-      if (!highestBids?.length) return winnerAuctions || [];
+      if (!bids?.length) return winnerAuctions || [];
 
-      const auctionIds = highestBids.map(bid => bid.auction_id);
+      const auctionIds = bids.map(bid => bid.auction_id);
       
       const { data: potentialWins, error: potentialError } = await supabase
         .from("artworks")
@@ -53,9 +54,33 @@ export const WonAuctions = ({ userId }: { userId: string }) => {
 
       if (potentialError) throw potentialError;
 
+      // For each potential win, verify the user has the highest bid
+      const verifiedWins = await Promise.all(
+        (potentialWins || []).map(async (auction) => {
+          const { data: highestBid } = await supabase
+            .from("bids")
+            .select("user_id, amount")
+            .eq("auction_id", auction.id)
+            .order("amount", { ascending: false })
+            .limit(1)
+            .single();
+
+          if (highestBid?.user_id === userId) {
+            return auction;
+          }
+          return null;
+        })
+      );
+
       // Combine and deduplicate results
-      const allWonAuctions = [...(winnerAuctions || []), ...(potentialWins || [])];
-      const uniqueAuctions = Array.from(new Map(allWonAuctions.map(auction => [auction.id, auction])).values());
+      const allWonAuctions = [
+        ...(winnerAuctions || []),
+        ...verifiedWins.filter(Boolean)
+      ];
+      
+      const uniqueAuctions = Array.from(
+        new Map(allWonAuctions.map(auction => [auction.id, auction])).values()
+      );
       
       return uniqueAuctions as WonAuction[];
     },
