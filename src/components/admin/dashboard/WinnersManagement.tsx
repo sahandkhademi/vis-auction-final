@@ -12,8 +12,24 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
+type Winner = {
+  id: string;
+  title: string;
+  current_price: number;
+  payment_status: string;
+  delivery_status: string;
+  winner_id: string;
+  profiles: {
+    username: string | null;
+    id: string;
+    email: {
+      email: string;
+    } | null;
+  } | null;
+};
+
 export const WinnersManagement = () => {
-  const { data: winners, refetch } = useQuery({
+  const { data: winners, refetch } = useQuery<Winner[]>({
     queryKey: ['winners'],
     queryFn: async () => {
       const { data: artworks, error } = await supabase
