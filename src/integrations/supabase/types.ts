@@ -36,6 +36,38 @@ export type Database = {
         }
         Relationships: []
       }
+      artwork_views: {
+        Row: {
+          artwork_id: string
+          id: string
+          session_id: string | null
+          viewed_at: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          artwork_id: string
+          id?: string
+          session_id?: string | null
+          viewed_at?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          artwork_id?: string
+          id?: string
+          session_id?: string | null
+          viewed_at?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artwork_views_artwork_id_fkey"
+            columns: ["artwork_id"]
+            isOneToOne: false
+            referencedRelation: "artworks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artworks: {
         Row: {
           artist: string
