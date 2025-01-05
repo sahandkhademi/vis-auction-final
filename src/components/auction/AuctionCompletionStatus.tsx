@@ -1,4 +1,4 @@
-import { Clock, CheckCircle2, Timer, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface AuctionCompletionStatusProps {
   status: string;
@@ -13,10 +13,12 @@ export const AuctionCompletionStatus = ({
 }: AuctionCompletionStatusProps) => {
   if (status === 'ongoing') {
     return (
-      <div className="flex items-center gap-2 text-neutral-600">
-        <Clock className="h-4 w-4" />
-        <span className="text-sm font-medium">Auction in Progress</span>
-      </div>
+      <Badge 
+        variant="outline" 
+        className="text-neutral-600 border-neutral-300 bg-neutral-50 px-3 py-1 text-xs tracking-wider uppercase"
+      >
+        In Progress
+      </Badge>
     );
   }
 
@@ -24,33 +26,30 @@ export const AuctionCompletionStatus = ({
     if (isWinner) {
       return (
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-emerald-600">
-            <CheckCircle2 className="h-4 w-4" />
-            <span className="text-sm font-medium">You Won This Auction!</span>
-          </div>
-          
+          <Badge 
+            variant="default" 
+            className="bg-[#403E43] hover:bg-[#2D2B30] text-white px-3 py-1 text-xs tracking-wider uppercase"
+          >
+            Won
+          </Badge>
           {paymentStatus === 'pending' && (
-            <div className="flex items-center gap-2 text-amber-600">
-              <Timer className="h-4 w-4" />
-              <span className="text-sm font-medium">Payment Required</span>
-            </div>
-          )}
-          
-          {paymentStatus === 'completed' && (
-            <div className="flex items-center gap-2 text-emerald-600">
-              <CheckCircle2 className="h-4 w-4" />
-              <span className="text-sm font-medium">Payment Completed</span>
-            </div>
+            <Badge 
+              variant="outline" 
+              className="border-[#E5DEFF] bg-[#F8F7FF] text-[#6B5ED2] px-3 py-1 text-xs tracking-wider uppercase"
+            >
+              Awaiting Payment
+            </Badge>
           )}
         </div>
       );
     }
-    
     return (
-      <div className="flex items-center gap-2 text-neutral-600">
-        <AlertCircle className="h-4 w-4" />
-        <span className="text-sm font-medium">Auction Ended</span>
-      </div>
+      <Badge 
+        variant="outline" 
+        className="text-neutral-500 border-neutral-200 bg-neutral-50 px-3 py-1 text-xs tracking-wider uppercase"
+      >
+        Completed
+      </Badge>
     );
   }
 
