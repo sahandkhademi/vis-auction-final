@@ -33,7 +33,7 @@ export const AuctionStatus = ({
   const { data: winningBid } = useQuery({
     queryKey: ['winningBid', auctionId, winnerId],
     queryFn: async () => {
-      if (!winnerId || completionStatus !== 'completed') return null;
+      if (!winnerId) return null;
       
       const { data, error } = await supabase
         .from('bids')
@@ -47,7 +47,7 @@ export const AuctionStatus = ({
       if (error) throw error;
       return data?.amount || currentBid;
     },
-    enabled: !!winnerId && completionStatus === 'completed'
+    enabled: !!winnerId
   });
 
   const finalPrice = winningBid || currentBid;
@@ -76,10 +76,10 @@ export const AuctionStatus = ({
             </div>
           )}
           <Badge 
-            variant={completionStatus === 'completed' ? 'default' : 'outline'}
-            className={`${completionStatus === 'completed' ? 'bg-blue-500' : ''}`}
+            variant={isEnded ? 'default' : 'outline'}
+            className={`${isEnded ? 'bg-blue-500' : ''}`}
           >
-            {completionStatus === 'completed' ? 'Auction Ended' : 'Ongoing'}
+            {isEnded ? 'Auction Ended' : 'Ongoing'}
           </Badge>
           {isWinner && (
             <Badge 
@@ -92,7 +92,7 @@ export const AuctionStatus = ({
         </div>
       </div>
 
-      {needsPayment && (
+      {needsPayment && isEnded && (
         <div className="mt-4">
           <PaymentButton 
             auctionId={auctionId} 
