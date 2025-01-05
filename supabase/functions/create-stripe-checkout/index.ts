@@ -14,8 +14,12 @@ serve(async (req) => {
 
   try {
     console.log('🔔 Starting Stripe checkout process...');
-    const { auctionId } = await req.json();
-    console.log('Auction ID:', auctionId);
+    const { auctionId, amount } = await req.json();
+    console.log('Auction ID:', auctionId, 'Amount:', amount);
+
+    if (!auctionId || !amount) {
+      throw new Error('Missing required parameters: auctionId or amount');
+    }
 
     // Create Stripe instance
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
@@ -44,6 +48,10 @@ serve(async (req) => {
 
     console.log('Creating checkout session for artwork:', artwork.title);
 
+    // Get origin from request headers or use a fallback
+    const origin = req.headers.get('origin') || 'http://localhost:5173';
+    console.log('Using origin:', origin);
+
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -56,14 +64,14 @@ serve(async (req) => {
               description: `Artwork by ${artwork.artist}`,
               images: artwork.image_url ? [artwork.image_url] : undefined,
             },
-            unit_amount: Math.round(artwork.current_price * 100), // Convert to cents
+            unit_amount: Math.round(amount * 100), // Convert to cents
           },
           quantity: 1,
         },
       ],
       mode: 'payment',
-      success_url: `${req.headers.get('origin')}/auction/${auctionId}?payment=success`,
-      cancel_url: `${req.headers.get('origin')}/auction/${auctionId}?payment=cancelled`,
+      success_url: `${origin}/auction/${auctionId}?payment_success=true`,
+      cancel_url: `${origin}/auction/${auctionId}?payment_cancelled=true`,
       metadata: {
         auction_id: auctionId,
       },
