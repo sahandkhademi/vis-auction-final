@@ -14,7 +14,7 @@ const AuctionDetail = () => {
   const [currentHighestBid, setCurrentHighestBid] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { data: artwork, error: artworkError } = useQuery({
+  const { data: artwork, error: artworkError, refetch } = useQuery({
     queryKey: ['artwork', id],
     queryFn: async () => {
       if (!id) throw new Error('No artwork ID provided');
@@ -52,6 +52,7 @@ const AuctionDetail = () => {
     if (id) {
       fetchCurrentHighestBid();
       subscribeToNewBids();
+      subscribeToAuctionUpdates();
     }
   }, [id]);
 
@@ -93,7 +94,37 @@ const AuctionDetail = () => {
           const newBid = payload.new as { amount: number };
           if (newBid.amount > (currentHighestBid || 0)) {
             setCurrentHighestBid(newBid.amount);
-            toast.info(`New highest bid: $${newBid.amount.toLocaleString()}`);
+            toast.info(`New highest bid: €${newBid.amount.toLocaleString()}`);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const subscribeToAuctionUpdates = () => {
+    if (!id) return;
+
+    const channel = supabase
+      .channel('auction-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'artworks',
+          filter: `id=eq.${id}`,
+        },
+        async (payload) => {
+          const newData = payload.new as { completion_status: string };
+          
+          // If auction status changes to completed, refresh the page data
+          if (newData.completion_status === 'completed') {
+            await refetch();
+            toast.info("This auction has ended");
           }
         }
       )
