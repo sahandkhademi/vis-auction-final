@@ -16,41 +16,62 @@ serve(async (req) => {
 
   try {
     const { auctionId } = await req.json();
-    console.log('Auction ID:', auctionId);
+    console.log('Processing auction ID:', auctionId);
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
     );
 
-    // Get auction details
+    // Get auction details with enhanced error handling
     const { data: auction, error: auctionError } = await supabaseClient
       .from('artworks')
       .select('*')
       .eq('id', auctionId)
       .single();
 
-    if (auctionError || !auction) {
+    if (auctionError) {
       console.error('Error fetching auction:', auctionError);
+      throw new Error(`Failed to fetch auction: ${auctionError.message}`);
+    }
+
+    if (!auction) {
+      console.error('Auction not found:', auctionId);
       throw new Error('Auction not found');
     }
 
-    // Get the authenticated user
-    const authHeader = req.headers.get('Authorization')!;
+    // Validate auction status
+    if (auction.status !== 'published' || auction.completion_status !== 'completed') {
+      console.error('Invalid auction status:', auction.status, auction.completion_status);
+      throw new Error('Invalid auction status');
+    }
+
+    // Get the authenticated user with enhanced validation
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header provided');
+    }
+
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user } } = await supabaseClient.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+
+    if (userError) {
+      console.error('Error fetching user:', userError);
+      throw new Error('Authentication failed');
+    }
 
     if (!user || user.id !== auction.winner_id) {
       console.error('Unauthorized user attempt:', user?.id);
-      throw new Error('Unauthorized');
+      throw new Error('Unauthorized: Only the auction winner can make a payment');
     }
 
-    console.log('Creating Stripe instance with secret key...');
+    console.log('Creating Stripe instance...');
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
+      typescript: true,
     });
 
-    console.log('Creating checkout session...');
+    // Create checkout session with additional metadata
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -61,8 +82,12 @@ serve(async (req) => {
               name: auction.title,
               description: `Artwork by ${auction.artist}`,
               images: auction.image_url ? [auction.image_url] : undefined,
+              metadata: {
+                artwork_id: auction.id,
+                artist: auction.artist,
+              },
             },
-            unit_amount: Math.round(auction.current_price * 100), // Convert to cents
+            unit_amount: Math.round(auction.current_price * 100),
           },
           quantity: 1,
         },
@@ -73,6 +98,15 @@ serve(async (req) => {
       metadata: {
         auction_id: auctionId,
         user_id: user.id,
+        environment: 'production',
+        artwork_title: auction.title,
+        artist: auction.artist,
+      },
+      payment_intent_data: {
+        metadata: {
+          auction_id: auctionId,
+          user_id: user.id,
+        },
       },
     });
 
@@ -87,7 +121,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('❌ Error creating checkout session:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
