@@ -16,24 +16,22 @@ export const EmailTester = () => {
         return;
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-email-templates`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
+      console.log("Sending test emails with session:", session.access_token);
 
-      const result = await response.json();
+      const response = await supabase.functions.invoke('test-email-templates', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to send test emails");
+      console.log("Response from test-email-templates:", response);
+
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to send test emails");
       }
 
       toast.success("Test emails sent successfully!");
-      console.log("Test emails sent to:", result.recipients);
+      console.log("Test emails sent to:", response.data?.recipients);
     } catch (error) {
       console.error("Error sending test emails:", error);
       toast.error(error.message || "Failed to send test emails");
