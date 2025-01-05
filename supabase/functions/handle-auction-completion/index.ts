@@ -53,60 +53,23 @@ serve(async (req) => {
       completionStatus: auction.completion_status
     });
 
-    if (!auction.winner?.email) {
-      console.error('❌ No winner email found for auction:', auctionId);
-      throw new Error('No winner email found');
-    }
-
-    // Send email using Resend
-    console.log('📧 Attempting to send winner email to:', auction.winner.email);
-    
-    const emailResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'VIS Auction <updates@visauction.com>',
-        to: [auction.winner.email],
-        subject: 'Congratulations! You Won the Auction!',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #1a1a1a;">🎉 Congratulations!</h1>
-            <p>You've won the auction for "${auction.title}"!</p>
-            <p style="font-size: 18px; color: #C6A07C; font-weight: bold;">
-              Final price: €${auction.current_price?.toLocaleString()}
-            </p>
-            <p>Please complete your payment within 48 hours to secure your win.</p>
-            <a href="${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}/auction/${auction.id}"
-               style="display: inline-block; background-color: #C6A07C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">
-              Complete Payment
-            </a>
-            <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; color: #666;">
-              <small>This email was sent by VIS Auction. If you no longer wish to receive these emails, 
-              you can adjust your notification preferences in your account settings.</small>
-            </div>
-          </div>
-        `,
-      }),
+    // Call the email sending function
+    console.log('📧 Calling send-auction-email function');
+    const emailResponse = await supabaseClient.functions.invoke('send-auction-email', {
+      body: { auctionId }
     });
 
-    const emailResult = await emailResponse.json();
-    console.log('📧 Email API Response:', {
-      status: emailResponse.status,
-      result: emailResult
-    });
-
-    if (!emailResponse.ok) {
-      console.error('❌ Failed to send email:', emailResult);
-      throw new Error(`Failed to send winner email: ${JSON.stringify(emailResult)}`);
+    if (emailResponse.error) {
+      console.error('❌ Error calling send-auction-email:', emailResponse.error);
+    } else {
+      console.log('✅ Email function called successfully:', emailResponse.data);
     }
-
-    console.log('✅ Winner notification email sent successfully');
 
     return new Response(
-      JSON.stringify({ message: 'Winner notification email sent successfully' }),
+      JSON.stringify({ 
+        message: 'Auction completion processed and email notification sent',
+        emailStatus: emailResponse.data 
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
