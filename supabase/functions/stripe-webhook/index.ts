@@ -45,7 +45,6 @@ serve(async (req) => {
     try {
       const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
       console.log('Webhook secret present:', !!webhookSecret);
-      console.log('Webhook secret first 4 chars:', webhookSecret?.substring(0, 4));
       
       event = stripe.webhooks.constructEvent(
         body,
@@ -64,19 +63,27 @@ serve(async (req) => {
       );
     }
 
-    // Handle the webhook event
+    // Initialize Supabase client with service role key for admin access
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') || '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
     );
-    console.log('Supabase client created');
+    console.log('Supabase client created with service role');
 
     switch (event.type) {
       case 'checkout.session.completed':
         const session = event.data.object;
         console.log('💰 Checkout session completed!', session.id);
+        console.log('Session metadata:', session.metadata);
         
         if (session.metadata?.artwork_id) {
+          console.log('Updating artwork payment status for:', session.metadata.artwork_id);
           const { error } = await supabase
             .from('artworks')
             .update({ payment_status: 'completed' })
