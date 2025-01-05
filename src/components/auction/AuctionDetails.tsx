@@ -6,6 +6,7 @@ import { BidForm } from "./BidForm";
 import { BidHistory } from "./BidHistory";
 import { ArtistInfo } from "./ArtistInfo";
 import { AuctionInfo } from "./AuctionInfo";
+import { CountdownTimer } from "./CountdownTimer";
 
 interface AuctionDetailsProps {
   artwork: ArtworkWithArtist;
@@ -37,6 +38,10 @@ export const AuctionDetails = ({
         title={artwork.title}
         description={artwork.description}
       />
+
+      {artwork.completion_status === 'ongoing' && (
+        <CountdownTimer endDate={artwork.end_date} />
+      )}
 
       <AuctionStatus
         currentBid={currentPrice}
