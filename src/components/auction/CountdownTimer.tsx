@@ -30,7 +30,7 @@ export const CountdownTimer = ({ endDate }: CountdownTimerProps) => {
       const seconds = diffInSeconds % 60;
 
       setTimeLeft(
-        `${days}d ${hours}h ${minutes}m ${seconds}s`
+        `${days > 0 ? `${days}d ` : ''}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
       );
     };
 
@@ -41,8 +41,8 @@ export const CountdownTimer = ({ endDate }: CountdownTimerProps) => {
   }, [endDate]);
 
   return (
-    <div className="text-sm font-medium">
-      {timeLeft}
+    <div className="text-sm font-medium bg-gray-100 px-3 py-1 rounded-full">
+      Time remaining: {timeLeft}
     </div>
   );
 };
