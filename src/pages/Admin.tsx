@@ -13,9 +13,12 @@ import { UserManagement } from "@/components/admin/dashboard/UserManagement";
 import { BackupMonitoring } from "@/components/admin/dashboard/BackupMonitoring";
 import { WinnersManagement } from "@/components/admin/dashboard/WinnersManagement";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Monitor } from "lucide-react";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -39,6 +42,18 @@ const AdminDashboard = () => {
 
     checkAdmin();
   }, [navigate]);
+
+  if (isMobile) {
+    return (
+      <div className="container flex flex-col items-center justify-center min-h-[80vh] px-4 text-center">
+        <Monitor className="h-16 w-16 text-muted-foreground mb-4" />
+        <h1 className="text-2xl font-serif mb-2">Desktop View Required</h1>
+        <p className="text-muted-foreground">
+          The admin dashboard is optimized for desktop viewing. Please access it from a larger screen for the best experience.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8 space-y-8">
