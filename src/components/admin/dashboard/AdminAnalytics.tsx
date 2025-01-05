@@ -19,7 +19,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { startOfMonth, subMonths, format } from "date-fns";
-import { PopularArtworks } from "./analytics/PopularArtworks";
 
 export const AdminAnalytics = () => {
   const { data: totalAuctions } = useQuery({
@@ -198,9 +197,6 @@ export const AdminAnalytics = () => {
             </CardContent>
           </Card>
         </div>
-
-        {/* Popular Artworks */}
-        <PopularArtworks />
 
         {/* System Status */}
         <Card>
