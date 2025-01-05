@@ -10,11 +10,23 @@ const corsHeaders = {
 serve(async (req) => {
   console.log(`[${new Date().toISOString()}] Webhook request received`);
 
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  // Special handling for Stripe webhook requests
+  const stripeSignature = req.headers.get('stripe-signature');
+  if (stripeSignature) {
+    console.log('Stripe webhook signature detected, bypassing JWT verification');
+    return await handleStripeWebhook(req);
   }
 
+  // For all other requests, verify JWT (this will be handled by Supabase since verify_jwt = true)
+  return await handleAuthenticatedRequest(req);
+});
+
+async function handleStripeWebhook(req: Request) {
   try {
+    if (req.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
     const signature = req.headers.get('stripe-signature');
     console.log('Received signature:', signature);
 
@@ -113,4 +125,11 @@ serve(async (req) => {
       }
     );
   }
-});
+}
+
+async function handleAuthenticatedRequest(req: Request) {
+  // Handle any authenticated requests here
+  return new Response(JSON.stringify({ message: "Authenticated endpoint" }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
