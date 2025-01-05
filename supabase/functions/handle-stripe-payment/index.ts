@@ -18,8 +18,10 @@ serve(async (req) => {
       throw new Error('Missing Stripe signature');
     }
 
-    // Get the raw body as text for signature verification
-    const rawBody = await req.text();
+    // Get the raw body using arrayBuffer and decode it
+    const bodyBuffer = await req.arrayBuffer();
+    const rawBody = new TextDecoder().decode(bodyBuffer);
+    
     console.log(`[${requestId}] Processing webhook event with signature:`, signature);
     console.log(`[${requestId}] Raw body length:`, rawBody.length);
 
