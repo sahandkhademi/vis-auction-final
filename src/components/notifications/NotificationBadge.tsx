@@ -109,23 +109,6 @@ export const NotificationBadge = () => {
     }
   };
 
-  const deleteNotification = async (id: string) => {
-    const { error } = await supabase
-      .from("notifications")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete notification",
-        variant: "destructive",
-      });
-    } else {
-      refetch();
-    }
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -165,7 +148,6 @@ export const NotificationBadge = () => {
                 message={notification.message}
                 createdAt={notification.created_at}
                 type={notification.type}
-                onDelete={deleteNotification}
                 onRead={markAsRead}
               />
             ))}
