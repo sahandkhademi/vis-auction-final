@@ -81,10 +81,11 @@ const ArtistDetail = () => {
                   </AvatarFallback>
                 )}
               </Avatar>
-              <h1 className="text-3xl text-gray-900 mt-4 md:mt-0 md:ml-0">{artist.name}</h1>
+              <h1 className="text-3xl text-gray-900 mt-4 md:mt-0 md:ml-0 md:hidden">{artist.name}</h1>
             </div>
             <div className="text-center md:text-left">
-              <p className="mt-4 text-gray-600 max-w-2xl">{artist.bio}</p>
+              <h1 className="hidden md:block text-3xl text-gray-900 mb-4">{artist.name}</h1>
+              <p className="mt-4 md:mt-0 text-gray-600 max-w-2xl">{artist.bio}</p>
             </div>
           </div>
 
