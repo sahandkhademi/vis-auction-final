@@ -16,7 +16,6 @@ interface Winner {
   id: string;
   username: string | null;
   avatar_url: string | null;
-  email?: string;
 }
 
 interface ArtworkWithWinner {
@@ -28,16 +27,10 @@ interface ArtworkWithWinner {
   winner: Winner | null;
 }
 
-interface AdminUser {
-  id: string;
-  email?: string;
-}
-
 export const WinnersManagement = () => {
   const { data: winners, refetch } = useQuery({
     queryKey: ["admin-winners"],
     queryFn: async () => {
-      // First, get artworks with winners
       const { data: artworks, error } = await supabase
         .from("artworks")
         .select(`
@@ -52,28 +45,6 @@ export const WinnersManagement = () => {
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
-
-      // For artworks with winners, get their emails using admin API
-      if (artworks && artworks.length > 0) {
-        const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
-        
-        if (usersError) {
-          console.error("Error fetching user emails:", usersError);
-          return artworks as ArtworkWithWinner[];
-        }
-
-        const adminUsers = users as AdminUser[];
-
-        // Map emails to winners
-        return artworks.map(artwork => ({
-          ...artwork,
-          winner: artwork.winner ? {
-            ...artwork.winner,
-            email: adminUsers.find(u => u.id === artwork.winner?.id)?.email
-          } : null
-        })) as ArtworkWithWinner[];
-      }
-
       return artworks as ArtworkWithWinner[];
     },
   });
@@ -127,7 +98,6 @@ export const WinnersManagement = () => {
           <TableRow>
             <TableHead>Artwork</TableHead>
             <TableHead>Winner</TableHead>
-            <TableHead>Email</TableHead>
             <TableHead>Final Price</TableHead>
             <TableHead>Payment Status</TableHead>
             <TableHead>Delivery Status</TableHead>
@@ -139,7 +109,6 @@ export const WinnersManagement = () => {
             <TableRow key={artwork.id}>
               <TableCell className="font-medium">{artwork.title}</TableCell>
               <TableCell>{artwork.winner?.username || "No username"}</TableCell>
-              <TableCell>{artwork.winner?.email}</TableCell>
               <TableCell>
                 ${artwork.current_price?.toLocaleString()}
               </TableCell>
