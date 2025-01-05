@@ -53,7 +53,7 @@ export const BidForm = ({
           userId: previousBidUserId,
           auctionId,
           type: 'outbid',
-          newBidAmount: bidAmount // Make sure we pass the new bid amount
+          newBidAmount: bidAmount
         }
       });
 
@@ -116,7 +116,7 @@ export const BidForm = ({
         return;
       }
 
-      // Update the artwork's current price
+      // Update the artwork's current price with the new bid amount
       const { error: updateError } = await supabase
         .from("artworks")
         .update({ current_price: bidAmount })
