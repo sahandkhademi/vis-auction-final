@@ -17,9 +17,11 @@ serve(async (req) => {
       throw new Error('Missing Stripe signature');
     }
 
-    // Get the raw body as text directly
-    const rawBody = await req.text();
-    console.log(`[${requestId}] Raw body received, length:`, rawBody.length);
+    // Get the raw body as ArrayBuffer and convert to string
+    const rawBody = await req.arrayBuffer();
+    const rawBodyString = new TextDecoder().decode(rawBody);
+    
+    console.log(`[${requestId}] Raw body received, length:`, rawBodyString.length);
     console.log(`[${requestId}] Signature:`, signature);
     console.log(`[${requestId}] Webhook secret length:`, (Deno.env.get('STRIPE_WEBHOOK_SECRET') || '').length);
     
@@ -28,7 +30,7 @@ serve(async (req) => {
     let event;
     try {
       event = stripe.webhooks.constructEvent(
-        rawBody,
+        rawBodyString,
         signature,
         Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
       );
@@ -36,7 +38,7 @@ serve(async (req) => {
       console.error(`[${requestId}] Error constructing webhook event:`, err);
       console.error(`[${requestId}] Error details:`, {
         signatureLength: signature.length,
-        bodyPreview: rawBody.substring(0, 100) + '...',
+        bodyPreview: rawBodyString.substring(0, 100) + '...',
         webhookSecretExists: !!Deno.env.get('STRIPE_WEBHOOK_SECRET')
       });
       throw new Error(`Webhook Error: ${err.message}`);
