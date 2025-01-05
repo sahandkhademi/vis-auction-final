@@ -16,24 +16,38 @@ serve(async (req) => {
 
   try {
     const signature = req.headers.get('stripe-signature');
+    console.log('Received signature:', signature);
+
     if (!signature) {
       console.error('Missing Stripe signature');
       throw new Error('Missing stripe signature');
     }
 
     const body = await req.text();
-    console.log('Webhook body received, length:', body.length);
+    console.log('Webhook body received:', body);
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
 
-    // Updated to use constructEventAsync instead of constructEvent
-    const event = await stripe.webhooks.constructEventAsync(
-      body,
-      signature,
-      Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
-    );
+    let event;
+    try {
+      event = await stripe.webhooks.constructEventAsync(
+        body,
+        signature,
+        Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
+      );
+    } catch (err) {
+      console.error('Error constructing webhook event:', err);
+      console.log('Webhook Secret used:', Deno.env.get('STRIPE_WEBHOOK_SECRET'));
+      return new Response(
+        JSON.stringify({ error: err.message }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
 
     console.log('Webhook event type:', event.type);
 
