@@ -8,9 +8,8 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log(`[${new Date().toISOString()}] Request received`);
+  console.log(`[${new Date().toISOString()}] Payment webhook received`);
 
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -28,9 +27,7 @@ serve(async (req) => {
       );
     }
 
-    // Get the raw body as an ArrayBuffer
     const rawBody = await req.arrayBuffer();
-    // Convert ArrayBuffer to string
     const rawBodyString = new TextDecoder().decode(rawBody);
     
     console.log('Raw webhook body:', rawBodyString);
@@ -42,7 +39,6 @@ serve(async (req) => {
 
     let event;
     try {
-      // Use constructEventAsync with the raw body string
       event = await stripe.webhooks.constructEventAsync(
         rawBodyString,
         signature,
@@ -74,10 +70,17 @@ serve(async (req) => {
         const auctionId = session.metadata.auction_id;
         console.log('Updating payment status for auction:', auctionId);
 
-        // First, verify the auction exists and get its current status
+        // Fetch auction details with buyer information
         const { data: auction, error: fetchError } = await supabaseClient
           .from('artworks')
-          .select('completion_status, payment_status')
+          .select(`
+            *,
+            profiles!winner_id(
+              id,
+              email,
+              username
+            )
+          `)
           .eq('id', auctionId)
           .single();
 
@@ -90,7 +93,7 @@ serve(async (req) => {
           throw new Error(`Auction ${auctionId} not found`);
         }
 
-        // Update the payment status
+        // Update payment status
         const { error: updateError } = await supabaseClient
           .from('artworks')
           .update({ 
@@ -104,24 +107,50 @@ serve(async (req) => {
           throw updateError;
         }
 
-        console.log('Payment status updated successfully for auction:', auctionId);
+        console.log('Payment status updated successfully');
 
-        // Create a notification for the seller
-        const { data: artwork } = await supabaseClient
-          .from('artworks')
-          .select('title, artist_id')
-          .eq('id', auctionId)
-          .single();
-
-        if (artwork?.artist_id) {
-          await supabaseClient
-            .from('notifications')
-            .insert({
-              user_id: artwork.artist_id,
-              title: 'Payment Received',
-              message: `Payment has been completed for your artwork: ${artwork.title}`,
-              type: 'payment_received'
+        // Send confirmation email
+        if (auction.profiles?.email) {
+          try {
+            console.log('Sending payment confirmation email to:', auction.profiles.email);
+            
+            const emailResponse = await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                from: 'VIS Auction <updates@visauction.com>',
+                to: [auction.profiles.email],
+                subject: 'Payment Confirmation - VIS Auction',
+                html: `
+                  <div style="font-family: Arial, sans-serif;">
+                    <h1>Payment Confirmation</h1>
+                    <p>Thank you for your payment for "${auction.title}".</p>
+                    <p>Your transaction has been completed successfully.</p>
+                    <p>We will be in touch shortly with shipping details.</p>
+                  </div>
+                `
+              })
             });
+
+            const emailResult = await emailResponse.json();
+            console.log('Email API Response:', {
+              status: emailResponse.status,
+              result: emailResult
+            });
+
+            if (!emailResponse.ok) {
+              console.error('Failed to send confirmation email:', emailResult);
+            } else {
+              console.log('Payment confirmation email sent successfully');
+            }
+          } catch (error) {
+            console.error('Error sending payment confirmation email:', error);
+          }
+        } else {
+          console.error('No email found for winner:', auction.profiles);
         }
       }
     }
