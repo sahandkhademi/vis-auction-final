@@ -11,13 +11,17 @@ interface BidFormProps {
   currentBid: number;
   onBidPlaced: () => void;
   isLoading?: boolean;
+  completionStatus?: string;
+  endDate?: string | null;
 }
 
 export const BidForm = ({ 
   auctionId, 
   currentBid, 
   onBidPlaced,
-  isLoading = false
+  isLoading = false,
+  completionStatus,
+  endDate
 }: BidFormProps) => {
   const [bidAmount, setBidAmount] = useState<number>(currentBid + 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,6 +33,8 @@ export const BidForm = ({
   useEffect(() => {
     setBidAmount(currentBid + 1);
   }, [currentBid]);
+
+  const isAuctionEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
   const notifyPreviousBidder = async (previousBidUserId: string) => {
     try {
@@ -68,6 +74,15 @@ export const BidForm = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isAuctionEnded) {
+      toast({
+        title: "Auction has ended",
+        description: "This auction is no longer accepting bids",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!session?.user?.id) {
       const returnUrl = encodeURIComponent(location.pathname);
       navigate(`/auth?returnUrl=${returnUrl}`);
@@ -93,7 +108,7 @@ export const BidForm = ({
         .eq('auction_id', auctionId)
         .order('amount', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       // Insert the new bid
       const { data: bidData, error: bidError } = await supabase
@@ -156,6 +171,10 @@ export const BidForm = ({
     }
   };
 
+  if (isAuctionEnded) {
+    return null;
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex space-x-2">
@@ -166,11 +185,11 @@ export const BidForm = ({
           onChange={(e) => setBidAmount(Number(e.target.value))}
           placeholder="Enter bid amount"
           className="flex-1"
-          disabled={isSubmitting || isLoading}
+          disabled={isSubmitting || isLoading || isAuctionEnded}
         />
         <Button 
           type="submit" 
-          disabled={isSubmitting || isLoading || !session?.user}
+          disabled={isSubmitting || isLoading || !session?.user || isAuctionEnded}
         >
           {isSubmitting ? "Placing bid..." : "Place Bid"}
         </Button>

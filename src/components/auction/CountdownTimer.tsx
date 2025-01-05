@@ -29,19 +29,28 @@ export const CountdownTimer = ({ endDate }: CountdownTimerProps) => {
       const minutes = Math.floor((diffInSeconds % (60 * 60)) / 60);
       const seconds = diffInSeconds % 60;
 
-      setTimeLeft(
-        `${days}d ${hours}h ${minutes}m ${seconds}s`
-      );
+      if (days > 0) {
+        setTimeLeft(`${days}d ${hours}h ${minutes}m`);
+      } else if (hours > 0) {
+        setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+      } else if (minutes > 0) {
+        setTimeLeft(`${minutes}m ${seconds}s`);
+      } else {
+        setTimeLeft(`${seconds}s`);
+      }
     };
 
+    // Calculate immediately
     calculateTimeLeft();
+    
+    // Update every second
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
   }, [endDate]);
 
   return (
-    <div className="text-sm font-medium">
+    <div className="font-mono text-sm font-medium">
       {timeLeft}
     </div>
   );
