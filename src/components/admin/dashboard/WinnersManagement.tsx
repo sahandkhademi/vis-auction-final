@@ -28,6 +28,11 @@ interface ArtworkWithWinner {
   winner: Winner | null;
 }
 
+interface AdminUser {
+  id: string;
+  email?: string;
+}
+
 export const WinnersManagement = () => {
   const { data: winners, refetch } = useQuery({
     queryKey: ["admin-winners"],
@@ -57,12 +62,14 @@ export const WinnersManagement = () => {
           return artworks as ArtworkWithWinner[];
         }
 
+        const adminUsers = users as AdminUser[];
+
         // Map emails to winners
         return artworks.map(artwork => ({
           ...artwork,
           winner: artwork.winner ? {
             ...artwork.winner,
-            email: users.find(u => u.id === artwork.winner?.id)?.email
+            email: adminUsers.find(u => u.id === artwork.winner?.id)?.email
           } : null
         })) as ArtworkWithWinner[];
       }
