@@ -77,7 +77,7 @@ serve(async (req) => {
         // First, verify the auction exists and get its current status
         const { data: auction, error: fetchError } = await supabaseClient
           .from('artworks')
-          .select('completion_status, payment_status')
+          .select('completion_status, payment_status, title')
           .eq('id', auctionId)
           .single();
 
@@ -106,22 +106,68 @@ serve(async (req) => {
 
         console.log('Payment status updated successfully for auction:', auctionId);
 
-        // Create a notification for the seller
-        const { data: artwork } = await supabaseClient
-          .from('artworks')
-          .select('title, artist_id')
-          .eq('id', auctionId)
-          .single();
+        // Get all admin users
+        const { data: adminProfiles, error: adminError } = await supabaseClient
+          .from('profiles')
+          .select('id')
+          .eq('is_admin', true);
 
-        if (artwork?.artist_id) {
-          await supabaseClient
-            .from('notifications')
-            .insert({
-              user_id: artwork.artist_id,
-              title: 'Payment Received',
-              message: `Payment has been completed for your artwork: ${artwork.title}`,
-              type: 'payment_received'
+        if (adminError) {
+          console.error('Error fetching admin profiles:', adminError);
+          throw adminError;
+        }
+
+        // Get admin users' emails
+        const adminIds = adminProfiles.map(profile => profile.id);
+        const { data: { users: adminUsers }, error: usersError } = await supabaseClient.auth.admin.listUsers();
+        
+        if (usersError) {
+          console.error('Error fetching admin users:', usersError);
+          throw usersError;
+        }
+
+        const adminEmails = adminUsers
+          .filter(user => adminIds.includes(user.id))
+          .map(user => user.email)
+          .filter(Boolean);
+
+        // Send email to admin users
+        if (adminEmails.length > 0) {
+          const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+          if (!RESEND_API_KEY) {
+            throw new Error('RESEND_API_KEY is not set');
+          }
+
+          try {
+            const emailResponse = await fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${RESEND_API_KEY}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                from: 'VIS Auction <updates@visauction.com>',
+                to: adminEmails,
+                subject: 'Payment Completed for Artwork',
+                html: `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h1 style="color: #1a1a1a;">Payment Completed</h1>
+                    <p>A payment has been completed for the artwork "${auction.title}".</p>
+                    <p>The payment status has been updated to "completed" in the system.</p>
+                  </div>
+                `
+              })
             });
+
+            if (!emailResponse.ok) {
+              const error = await emailResponse.text();
+              console.error('Error sending admin notification email:', error);
+            } else {
+              console.log('Admin notification emails sent successfully');
+            }
+          } catch (error) {
+            console.error('Error sending admin notification email:', error);
+          }
         }
       }
     }
