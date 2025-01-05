@@ -85,7 +85,7 @@ export const AuctionStatus = ({
 
   const currentPaymentStatus = auctionData?.payment_status || paymentStatus;
   const hasCompletedPayment = isWinner && currentPaymentStatus === 'completed';
-  const needsPayment = isWinner && currentPaymentStatus === 'pending';
+  const needsPayment = (isWinner || isPotentialWinner) && currentPaymentStatus === 'pending';
 
   // For debugging
   console.log('Debug auction status:', {
