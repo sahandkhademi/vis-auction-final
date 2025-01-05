@@ -29,8 +29,6 @@ export const AuctionStatus = ({
   const user = useUser();
   const [searchParams] = useSearchParams();
   const isWinner = user?.id === winnerId;
-  const needsPayment = isWinner && paymentStatus === 'pending';
-  const hasCompletedPayment = isWinner && paymentStatus === 'completed';
   const isEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
   // Fetch auction data to get latest payment status
@@ -74,7 +72,6 @@ export const AuctionStatus = ({
     const checkPaymentStatus = async () => {
       const paymentSuccess = searchParams.get('payment_success');
       if (paymentSuccess === 'true') {
-        // Refetch the auction data to get the latest payment status
         await refetchAuction();
         toast.success(
           "Payment successful! You'll receive a confirmation email shortly.",
@@ -86,13 +83,17 @@ export const AuctionStatus = ({
     checkPaymentStatus();
   }, [searchParams, refetchAuction]);
 
+  const currentPaymentStatus = auctionData?.payment_status || paymentStatus;
+  const hasCompletedPayment = isWinner && currentPaymentStatus === 'completed';
+  const needsPayment = isWinner && currentPaymentStatus === 'pending';
+
   // For debugging
   console.log('Debug auction status:', {
     userId: user?.id,
     winnerId,
     isWinner,
     completionStatus,
-    paymentStatus,
+    paymentStatus: currentPaymentStatus,
     isEnded,
     needsPayment,
     isPotentialWinner,
@@ -104,7 +105,7 @@ export const AuctionStatus = ({
 
   return (
     <div className="space-y-4">
-      {(hasCompletedPayment || (auctionData?.payment_status === 'completed' && isWinner)) && (
+      {hasCompletedPayment && (
         <Alert className="bg-green-50 border-green-200">
           <AlertTitle className="text-green-800">Payment Completed!</AlertTitle>
           <AlertDescription className="text-green-700">
@@ -142,8 +143,7 @@ export const AuctionStatus = ({
         </div>
       </div>
 
-      {((isWinner || isPotentialWinner) && isEnded && 
-        (paymentStatus === 'pending' && auctionData?.payment_status !== 'completed')) && (
+      {needsPayment && isEnded && (
         <div className="mt-4">
           <PaymentButton 
             auctionId={auctionId} 
