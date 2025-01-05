@@ -76,7 +76,7 @@ serve(async (req) => {
 
     console.log('Sending test emails...');
     // Send all test emails
-    const emailPromises = templates.map(async (template) => {
+    for (const template of templates) {
       console.log(`Sending template: ${template.subject}`);
       try {
         const response = await fetch('https://api.resend.com/emails', {
@@ -86,10 +86,11 @@ serve(async (req) => {
             'Authorization': `Bearer ${RESEND_API_KEY}`
           },
           body: JSON.stringify({
-            from: 'VIS Auction <onboarding@resend.dev>',
+            from: 'Mosaic Auctions <onboarding@resend.dev>',
             to: adminEmails,
             subject: template.subject,
-            html: template.html
+            html: template.html,
+            reply_to: 'support@mosaicauctions.com'
           })
         });
 
@@ -99,26 +100,13 @@ serve(async (req) => {
         if (!response.ok) {
           throw new Error(`Failed to send email: ${responseText}`);
         }
-
-        try {
-          return JSON.parse(responseText);
-        } catch (e) {
-          console.error('Error parsing response:', e);
-          throw new Error(`Invalid response format: ${responseText}`);
-        }
       } catch (error) {
         console.error(`Error sending template ${template.subject}:`, error);
         throw error;
       }
-    });
-
-    try {
-      await Promise.all(emailPromises);
-      console.log('All test emails sent successfully');
-    } catch (error) {
-      console.error('Error sending emails:', error);
-      throw error;
     }
+
+    console.log('All test emails sent successfully');
 
     return new Response(
       JSON.stringify({ 
