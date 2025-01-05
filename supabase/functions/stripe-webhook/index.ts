@@ -72,15 +72,15 @@ serve(async (req) => {
     console.log('Supabase client created');
 
     switch (event.type) {
-      case 'payment_intent.succeeded':
-        const paymentIntent = event.data.object;
-        console.log('💰 PaymentIntent was successful!', paymentIntent.id);
-        // Update artwork payment status
-        if (paymentIntent.metadata.artwork_id) {
+      case 'checkout.session.completed':
+        const session = event.data.object;
+        console.log('💰 Checkout session completed!', session.id);
+        
+        if (session.metadata?.artwork_id) {
           const { error } = await supabase
             .from('artworks')
             .update({ payment_status: 'completed' })
-            .eq('id', paymentIntent.metadata.artwork_id);
+            .eq('id', session.metadata.artwork_id);
           
           if (error) {
             console.error('Error updating artwork payment status:', error);
@@ -89,10 +89,12 @@ serve(async (req) => {
           }
         }
         break;
+        
       case 'payment_intent.payment_failed':
         const paymentFailedIntent = event.data.object;
         console.log('❌ PaymentIntent failed:', paymentFailedIntent.id);
         break;
+        
       default:
         console.log(`⚠️ Unhandled event type ${event.type}`);
     }
