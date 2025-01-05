@@ -84,7 +84,7 @@ export const AuctionStatus = ({
   }, [searchParams, refetchAuction]);
 
   const currentPaymentStatus = auctionData?.payment_status || paymentStatus;
-  const hasCompletedPayment = isWinner && currentPaymentStatus === 'completed';
+  const hasCompletedPayment = (isWinner || isPotentialWinner) && currentPaymentStatus === 'completed';
   const needsPayment = (isWinner || isPotentialWinner) && currentPaymentStatus === 'pending';
 
   // For debugging
