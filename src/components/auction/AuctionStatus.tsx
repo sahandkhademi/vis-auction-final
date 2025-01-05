@@ -5,6 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { CountdownTimer } from "./CountdownTimer";
+import { useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -24,13 +27,14 @@ export const AuctionStatus = ({
   auctionId,
 }: AuctionStatusProps) => {
   const user = useUser();
+  const [searchParams] = useSearchParams();
   const isWinner = user?.id === winnerId;
   const needsPayment = isWinner && paymentStatus === 'pending';
   const hasCompletedPayment = isWinner && paymentStatus === 'completed';
   const isEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
   // Fetch highest bid to determine potential winner
-  const { data: highestBid } = useQuery({
+  const { data: highestBid, refetch: refetchBids } = useQuery({
     queryKey: ['highestBid', auctionId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -49,6 +53,23 @@ export const AuctionStatus = ({
 
   // If auction has ended but winner not set, check if current user is highest bidder
   const isPotentialWinner = isEnded && !winnerId && highestBid?.user_id === user?.id;
+
+  // Check payment status on mount and when URL params change
+  useEffect(() => {
+    const checkPaymentStatus = async () => {
+      const paymentSuccess = searchParams.get('payment_success');
+      if (paymentSuccess === 'true') {
+        // Refetch the auction data to get the latest payment status
+        await refetchBids();
+        toast.success(
+          "Payment successful! You'll receive a confirmation email shortly.",
+          { duration: 5000 }
+        );
+      }
+    };
+
+    checkPaymentStatus();
+  }, [searchParams, refetchBids]);
 
   // For debugging
   console.log('Debug auction status:', {
