@@ -1,6 +1,5 @@
 import { PaymentButton } from "./PaymentButton";
 import { useUser } from "@supabase/auth-helpers-react";
-import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -8,6 +7,7 @@ import { CountdownTimer } from "./CountdownTimer";
 import { useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { Clock, CheckCircle2, Trophy } from "lucide-react";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -119,26 +119,36 @@ export const AuctionStatus = ({
           <p className="text-sm text-gray-500">Current Price</p>
           <p className="text-2xl font-bold">€{currentBid?.toLocaleString()}</p>
         </div>
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-col items-end gap-3">
           {!isEnded && endDate && (
             <div className="text-right">
-              <p className="text-sm text-gray-500 mb-1">Time Remaining</p>
+              <div className="flex items-center gap-2 text-gray-600 mb-1">
+                <Clock className="w-4 h-4" />
+                <p className="text-sm">Time Remaining</p>
+              </div>
               <CountdownTimer endDate={endDate} />
             </div>
           )}
-          <Badge 
-            variant={isEnded ? 'default' : 'outline'}
-            className={`${isEnded ? 'bg-blue-500' : ''}`}
-          >
-            {isEnded ? 'Auction Ended' : 'Ongoing'}
-          </Badge>
+          
+          <div className="flex items-center gap-2">
+            {isEnded ? (
+              <div className="flex items-center gap-2 text-blue-600">
+                <CheckCircle2 className="w-4 h-4" />
+                <span className="text-sm font-medium">Auction Ended</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-gray-600">
+                <Clock className="w-4 h-4" />
+                <span className="text-sm font-medium">Ongoing</span>
+              </div>
+            )}
+          </div>
+
           {(isWinner || isPotentialWinner) && (
-            <Badge 
-              variant="default" 
-              className="bg-green-500"
-            >
-              You Won!
-            </Badge>
+            <div className="flex items-center gap-2 text-emerald-600">
+              <Trophy className="w-4 h-4" />
+              <span className="text-sm font-medium">You Won!</span>
+            </div>
           )}
         </div>
       </div>
