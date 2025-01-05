@@ -12,6 +12,22 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
+interface Winner {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+  email?: string;
+}
+
+interface ArtworkWithWinner {
+  id: string;
+  title: string;
+  current_price: number | null;
+  payment_status: string | null;
+  delivery_status: string | null;
+  winner: Winner | null;
+}
+
 export const WinnersManagement = () => {
   const { data: winners, refetch } = useQuery({
     queryKey: ["admin-winners"],
@@ -47,14 +63,14 @@ export const WinnersManagement = () => {
         // Merge email data with artwork data
         return data.map(artwork => ({
           ...artwork,
-          winner: {
+          winner: artwork.winner ? {
             ...artwork.winner,
             email: emails?.find(e => e.id === artwork.winner?.id)?.auth_users?.email
-          }
-        }));
+          } : null
+        })) as ArtworkWithWinner[];
       }
 
-      return data;
+      return data as ArtworkWithWinner[];
     },
   });
 
