@@ -6,7 +6,12 @@ export const corsHeaders = {
 };
 
 export const createStripeClient = () => {
-  return new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+  const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+  if (!stripeKey) {
+    throw new Error('Missing STRIPE_SECRET_KEY');
+  }
+  
+  return new Stripe(stripeKey, {
     apiVersion: '2023-10-16',
     typescript: true,
   });
@@ -21,13 +26,14 @@ export const handleCheckoutComplete = async (session: Stripe.Checkout.Session, s
   console.log(`[${session.id}] Updating payment status for auction:`, auctionId);
 
   // Verify the payment intent status
-  const paymentIntent = await createStripeClient().paymentIntents.retrieve(session.payment_intent as string);
+  const stripe = createStripeClient();
+  const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent as string);
   if (paymentIntent.status !== 'succeeded') {
     throw new Error(`Payment not successful. Status: ${paymentIntent.status}`);
   }
 
   // Update the return_url in the session to include payment_success parameter
-  await createStripeClient().checkout.sessions.update(session.id, {
+  await stripe.checkout.sessions.update(session.id, {
     success_url: `${session.success_url}?payment_success=true`,
   });
 
