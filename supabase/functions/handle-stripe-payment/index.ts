@@ -9,6 +9,7 @@ const corsHeaders = {
 
 serve(async (req) => {
   console.log(`[${new Date().toISOString()}] Request received`);
+  console.log('Request method:', req.method);
   console.log('Request headers:', Object.fromEntries(req.headers.entries()));
 
   // Handle CORS preflight requests
