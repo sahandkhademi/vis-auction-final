@@ -53,7 +53,7 @@ export const BidForm = ({
           userId: previousBidUserId,
           auctionId,
           type: 'outbid',
-          newBidAmount: bidAmount // Make sure we pass the new bid amount
+          newBidAmount: bidAmount
         }
       });
 
@@ -86,14 +86,14 @@ export const BidForm = ({
     setIsSubmitting(true);
 
     try {
-      // Get the current highest bid's user
+      // Get the current highest bid's user, using maybeSingle() instead of single()
       const { data: previousBid } = await supabase
         .from('bids')
         .select('user_id')
         .eq('auction_id', auctionId)
         .order('amount', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       // Insert the new bid
       const { data: bidData, error: bidError } = await supabase
@@ -116,7 +116,7 @@ export const BidForm = ({
         return;
       }
 
-      // Update the artwork's current price
+      // Update the artwork's current price with the new bid amount
       const { error: updateError } = await supabase
         .from("artworks")
         .update({ current_price: bidAmount })

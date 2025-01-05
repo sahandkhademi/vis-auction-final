@@ -1,17 +1,23 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Bell } from "lucide-react";
+import { Bell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
+import { AnimatePresence } from "framer-motion";
+import { NotificationItem } from "./NotificationItem";
 
 export const NotificationBadge = () => {
   const [unreadCount, setUnreadCount] = useState(0);
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const { data: notifications, refetch } = useQuery({
     queryKey: ["notifications"],
@@ -54,13 +60,51 @@ export const NotificationBadge = () => {
     }
   }, [notifications]);
 
-  const markAsRead = async (id: string) => {
+  const markAsRead = async (id: string, type: string, entityId?: string) => {
     const { error } = await supabase
       .from("notifications")
       .update({ read: true })
       .eq("id", id);
       
     if (!error) {
+      refetch();
+      
+      // Navigate based on notification type
+      if (entityId) {
+        switch (type) {
+          case 'auction_won':
+          case 'outbid':
+          case 'auction_expired':
+            navigate(`/auction/${entityId}`);
+            break;
+          case 'payment_success':
+            navigate(`/profile`);
+            break;
+          default:
+            // For unknown types, just mark as read without navigation
+            break;
+        }
+      }
+    }
+  };
+
+  const markAllAsRead = async () => {
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("read", false);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to mark notifications as read",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "All notifications marked as read",
+      });
       refetch();
     }
   };
@@ -78,22 +122,36 @@ export const NotificationBadge = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
+        <div className="flex items-center justify-between p-2 border-b">
+          <span className="font-semibold">Notifications</span>
+          {unreadCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={markAllAsRead}
+            >
+              <Check className="h-3 w-3 mr-1" />
+              Mark all as read
+            </Button>
+          )}
+        </div>
         {notifications?.length === 0 ? (
           <DropdownMenuItem>No new notifications</DropdownMenuItem>
         ) : (
-          notifications?.map((notification) => (
-            <DropdownMenuItem
-              key={notification.id}
-              className="flex flex-col items-start p-4 space-y-1 cursor-pointer"
-              onClick={() => markAsRead(notification.id)}
-            >
-              <div className="font-semibold">{notification.title}</div>
-              <div className="text-sm text-gray-500">{notification.message}</div>
-              <div className="text-xs text-gray-400">
-                {new Date(notification.created_at).toLocaleDateString()}
-              </div>
-            </DropdownMenuItem>
-          ))
+          <AnimatePresence initial={false}>
+            {notifications?.map((notification) => (
+              <NotificationItem
+                key={notification.id}
+                id={notification.id}
+                title={notification.title}
+                message={notification.message}
+                createdAt={notification.created_at}
+                type={notification.type}
+                onRead={markAsRead}
+              />
+            ))}
+          </AnimatePresence>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

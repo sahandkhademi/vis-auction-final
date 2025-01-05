@@ -28,39 +28,57 @@ Deno.serve(async (req) => {
 
     if (auctionError) throw auctionError
 
-    // Get winner's notification preferences
-    const { data: preferences } = await supabaseClient
-      .from('notification_preferences')
-      .select('auction_won_notifications')
+    // Check if a notification already exists for this auction win
+    const { data: existingNotification, error: notificationError } = await supabaseClient
+      .from('notifications')
+      .select('id')
       .eq('user_id', auction.winner_id)
+      .eq('type', 'auction_won')
+      .eq('message', `Congratulations! You won the auction for "${auction.title}" with a bid of $${auction.current_price}`)
       .single()
 
-    if (preferences?.auction_won_notifications) {
-      // Create in-app notification
-      await supabaseClient
-        .from('notifications')
-        .insert({
-          user_id: auction.winner_id,
-          title: 'Congratulations! You won the auction!',
-          message: `You won the auction for "${auction.title}" with a bid of $${auction.current_price}`,
-          type: 'auction_won'
+    if (notificationError && notificationError.code !== 'PGRST116') { // PGRST116 means no rows returned
+      throw notificationError
+    }
+
+    // Only create notification if it doesn't exist
+    if (!existingNotification) {
+      // Get winner's notification preferences
+      const { data: preferences } = await supabaseClient
+        .from('notification_preferences')
+        .select('auction_won_notifications')
+        .eq('user_id', auction.winner_id)
+        .single()
+
+      if (preferences?.auction_won_notifications) {
+        // Create in-app notification
+        await supabaseClient
+          .from('notifications')
+          .insert({
+            user_id: auction.winner_id,
+            title: 'Congratulations! You won the auction!',
+            message: `Congratulations! You won the auction for "${auction.title}" with a bid of $${auction.current_price}`,
+            type: 'auction_won'
+          })
+
+        // Send email notification
+        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-winner-email`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ auctionId }),
         })
 
-      // Send email notification
-      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-winner-email`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ auctionId }),
-      })
-
-      console.log(`Notifications sent to user ${auction.winner_id} for auction ${auctionId}`)
+        console.log(`Notifications sent to user ${auction.winner_id} for auction ${auctionId}`)
+      }
+    } else {
+      console.log(`Notification already exists for auction ${auctionId} win`)
     }
 
     return new Response(
-      JSON.stringify({ message: 'Notifications sent successfully' }),
+      JSON.stringify({ message: 'Notifications handled successfully' }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
