@@ -70,11 +70,6 @@ serve(async (req) => {
         throw new Error(`Payment not successful. Status: ${paymentIntent.status}`);
       }
 
-      // Update the return_url in the session to include payment_success parameter
-      await stripe.checkout.sessions.update(session.id, {
-        success_url: `${session.success_url}?payment_success=true`,
-      });
-
       // Fetch and verify auction details
       const { data: auction, error: fetchError } = await supabaseClient
         .from('artworks')
