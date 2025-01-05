@@ -26,6 +26,7 @@ export const AuctionStatus = ({
   const user = useUser();
   const isWinner = user?.id === winnerId;
   const needsPayment = isWinner && paymentStatus === 'pending';
+  const hasCompletedPayment = isWinner && paymentStatus === 'completed';
   const isEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
   // Fetch the winner's actual winning bid amount
