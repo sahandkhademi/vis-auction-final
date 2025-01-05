@@ -3,12 +3,12 @@ import React from "react";
 const About = () => {
   return (
     <div className="container max-w-4xl mx-auto px-4">
-      <h1 className="text-4xl font-serif mb-6">About Digital Bid Bazaar</h1>
+      <h1 className="text-4xl mb-6">About VIS Auction</h1>
       
       <div className="bg-white rounded-lg shadow-sm border p-8 space-y-8">
         <div className="prose prose-lg max-w-none">
           <p className="text-gray-700">
-            Welcome to Digital Bid Bazaar, your premier destination for discovering and collecting exceptional digital artworks through our innovative auction platform.
+            Welcome to VIS Auction, your premier destination for discovering and collecting exceptional digital artworks through our innovative auction platform.
           </p>
 
           <div className="bg-secondary/50 rounded-lg p-6 my-8">

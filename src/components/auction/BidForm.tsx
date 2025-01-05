@@ -26,29 +26,53 @@ export const BidForm = ({
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Update bid amount when currentBid changes
   useEffect(() => {
     setBidAmount(currentBid + 1);
   }, [currentBid]);
 
-  console.log("Current session:", session); // Debug log
+  const notifyPreviousBidder = async (previousBidUserId: string) => {
+    try {
+      // Send in-app notification
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: previousBidUserId,
+          title: 'You have been outbid!',
+          message: `Someone has placed a higher bid of €${bidAmount.toLocaleString()} on an auction you were winning.`,
+          type: 'outbid'
+        });
+
+      if (notificationError) {
+        console.error('Error creating notification:', notificationError);
+        return;
+      }
+
+      // Send email notification via edge function
+      const { error: emailError } = await supabase.functions.invoke('send-auction-update', {
+        body: {
+          userId: previousBidUserId,
+          auctionId,
+          type: 'outbid',
+          newBidAmount: bidAmount
+        }
+      });
+
+      if (emailError) {
+        console.error('Error sending email notification:', emailError);
+      }
+    } catch (error) {
+      console.error('Error in notifyPreviousBidder:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!session?.user?.id) {
-      console.log("No authenticated user found");
       const returnUrl = encodeURIComponent(location.pathname);
       navigate(`/auth?returnUrl=${returnUrl}`);
       return;
     }
-
-    console.log("Starting bid submission:", { 
-      auctionId, 
-      bidAmount, 
-      currentBid, 
-      userId: session.user.id 
-    });
 
     if (bidAmount <= currentBid) {
       toast({
@@ -62,7 +86,16 @@ export const BidForm = ({
     setIsSubmitting(true);
 
     try {
-      // Insert the bid
+      // Get the current highest bid's user
+      const { data: previousBid } = await supabase
+        .from('bids')
+        .select('user_id')
+        .eq('auction_id', auctionId)
+        .order('amount', { ascending: false })
+        .limit(1)
+        .single();
+
+      // Insert the new bid
       const { data: bidData, error: bidError } = await supabase
         .from("bids")
         .insert({
@@ -83,9 +116,7 @@ export const BidForm = ({
         return;
       }
 
-      console.log("Bid inserted successfully:", bidData);
-
-      // Update the artwork's current price
+      // Update the artwork's current price with the new bid amount
       const { error: updateError } = await supabase
         .from("artworks")
         .update({ current_price: bidAmount })
@@ -101,8 +132,11 @@ export const BidForm = ({
         return;
       }
 
-      console.log("Artwork price updated successfully");
-      
+      // Notify previous highest bidder if they exist and it's not the same user
+      if (previousBid && previousBid.user_id !== session.user.id) {
+        await notifyPreviousBidder(previousBid.user_id);
+      }
+
       toast({
         title: "Bid placed successfully!",
         description: `Your bid of €${bidAmount.toLocaleString()} has been placed`,

@@ -11,9 +11,14 @@ import { AdminAnalytics } from "@/components/admin/dashboard/AdminAnalytics";
 import { BulkArtworkManager } from "@/components/admin/dashboard/BulkArtworkManager";
 import { UserManagement } from "@/components/admin/dashboard/UserManagement";
 import { BackupMonitoring } from "@/components/admin/dashboard/BackupMonitoring";
+import { WinnersManagement } from "@/components/admin/dashboard/WinnersManagement";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Monitor } from "lucide-react";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -38,51 +43,112 @@ const AdminDashboard = () => {
     checkAdmin();
   }, [navigate]);
 
+  if (isMobile) {
+    return (
+      <div className="container flex flex-col items-center justify-center min-h-[80vh] px-8 text-center">
+        <Monitor className="h-16 w-16 text-muted-foreground mb-4" />
+        <h1 className="text-2xl mb-2">Desktop View Required</h1>
+        <p className="text-muted-foreground">
+          The admin dashboard is optimized for desktop viewing. Please access it from a larger screen for the best experience.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-serif mb-2">Admin Dashboard</h1>
+        <h1 className="text-3xl mb-2">Admin Dashboard</h1>
         <p className="text-muted-foreground">
-          Manage your artworks, artists, users, and system backups
+          Manage your gallery's artworks, artists, and operations
         </p>
       </div>
 
-      <Tabs defaultValue="analytics">
-        <TabsList>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="artworks">Artworks</TabsTrigger>
-          <TabsTrigger value="bulk-manager">Bulk Manager</TabsTrigger>
-          <TabsTrigger value="artists">Artists</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="backups">Backups</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="analytics" className="space-y-6">
+        <Card>
+          <CardContent className="pt-6 pb-4">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 min-h-[44px]">
+              <TabsTrigger value="analytics" className="w-full">Analytics</TabsTrigger>
+              <TabsTrigger value="artworks" className="w-full">Artworks</TabsTrigger>
+              <TabsTrigger value="artists" className="w-full">Artists</TabsTrigger>
+              <TabsTrigger value="winners" className="w-full">Winners</TabsTrigger>
+              <TabsTrigger value="users" className="w-full">Users</TabsTrigger>
+              <TabsTrigger value="bulk" className="w-full">Bulk Manager</TabsTrigger>
+              <TabsTrigger value="backups" className="w-full">Backups</TabsTrigger>
+            </TabsList>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="analytics" className="mt-6">
-          <AdminAnalytics />
+        <TabsContent value="analytics">
+          <Card>
+            <CardHeader>
+              <CardTitle>Analytics Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AdminAnalytics />
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="artworks" className="mt-6">
-          <div className="flex justify-end mb-6">
-            <Button onClick={() => navigate("/admin/artwork/new")}>
-              <Plus className="mr-2 h-4 w-4" /> New Artwork
-            </Button>
-          </div>
-          <ArtworkList />
+        <TabsContent value="artworks">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Artwork Management</CardTitle>
+              <Button onClick={() => navigate("/admin/artwork/new")}>
+                <Plus className="mr-2 h-4 w-4" /> New Artwork
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <ArtworkList />
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="bulk-manager" className="mt-6">
-          <BulkArtworkManager />
+        <TabsContent value="bulk">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bulk Artwork Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BulkArtworkManager />
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="artists" className="mt-6">
-          <ArtistList />
+        <TabsContent value="artists">
+          <Card>
+            <CardHeader>
+              <CardTitle>Artist Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ArtistList />
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="users" className="mt-6">
-          <UserManagement />
+        <TabsContent value="users">
+          <Card>
+            <CardHeader>
+              <CardTitle>User Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <UserManagement />
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="backups" className="mt-6">
+        <TabsContent value="winners">
+          <Card>
+            <CardHeader>
+              <CardTitle>Winner Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <WinnersManagement />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="backups">
           <BackupMonitoring />
         </TabsContent>
       </Tabs>

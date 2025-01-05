@@ -1,146 +1,108 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7'
-
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+import { serve } from 'https://deno.land/std@0.190.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
+import { EmailData } from './types.ts';
+import { getEmailContent } from './email-templates.ts';
+import { sendEmail } from './email-service.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+};
 
-interface EmailData {
-  userId: string;
-  auctionId: string;
-  type: 'outbid' | 'ending_soon' | 'won';
-}
-
-Deno.serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseClient = createClient(
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
 
-    const { userId, auctionId, type } = await req.json() as EmailData
+    const { userId, auctionId, type, newBidAmount } = await req.json() as EmailData;
+    console.log('Processing email notification:', { userId, auctionId, type, newBidAmount });
 
-    // Get user's email and notification preferences
-    const { data: userData, error: userError } = await supabaseClient
-      .from('auth.users')
-      .select('email')
-      .eq('id', userId)
-      .single()
+    // Get the user's email
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
+    if (userError || !user?.email) {
+      console.error('Error fetching user:', userError);
+      throw new Error('User not found or no email available');
+    }
+    console.log('Found user email:', user.email);
 
-    if (userError) throw userError
-
-    const { data: preferences, error: prefError } = await supabaseClient
+    // Get user's notification preferences
+    const { data: preferences, error: prefError } = await supabaseAdmin
       .from('notification_preferences')
       .select('*')
       .eq('user_id', userId)
-      .single()
+      .single();
 
-    if (prefError) throw prefError
+    if (prefError) {
+      console.error('Error fetching preferences:', prefError);
+      throw prefError;
+    }
+    console.log('User preferences:', preferences);
 
     // Get auction details
-    const { data: auction, error: auctionError } = await supabaseClient
+    const { data: auction, error: auctionError } = await supabaseAdmin
       .from('artworks')
       .select('*')
       .eq('id', auctionId)
-      .single()
+      .single();
 
-    if (auctionError) throw auctionError
-
-    // Check if user wants this type of notification
-    let shouldSend = false
-    let emailContent = {
-      subject: '',
-      html: ''
+    if (auctionError) {
+      console.error('Error fetching auction:', auctionError);
+      throw auctionError;
     }
+    console.log('Found auction:', auction);
 
+    // Check if notifications are enabled for this type
+    let shouldSend = false;
     switch (type) {
       case 'outbid':
-        if (preferences.outbid_notifications) {
-          shouldSend = true
-          emailContent = {
-            subject: "You Have Been Outbid!",
-            html: `
-              <h1>Someone has placed a higher bid</h1>
-              <p>A new bid of €${auction.current_price} has been placed on "${auction.title}".</p>
-              <p>Do not miss out - place a new bid now!</p>
-            `
-          }
-        }
-        break
-      
+        shouldSend = preferences.outbid_notifications;
+        break;
       case 'ending_soon':
-        if (preferences.auction_ending_notifications) {
-          shouldSend = true
-          emailContent = {
-            subject: "Auction Ending Soon!",
-            html: `
-              <h1>Time is running out!</h1>
-              <p>The auction for "${auction.title}" is ending soon.</p>
-              <p>Current bid: €${auction.current_price}</p>
-              <p>Do not miss your chance to win this piece!</p>
-            `
-          }
-        }
-        break
-      
-      case 'won':
-        if (preferences.auction_won_notifications) {
-          shouldSend = true
-          emailContent = {
-            subject: "Congratulations! You Won the Auction!",
-            html: `
-              <h1>You have won!</h1>
-              <p>Congratulations! You have won the auction for "${auction.title}" with a bid of €${auction.current_price}.</p>
-              <p>Please complete your payment to claim your artwork.</p>
-            `
-          }
-        }
-        break
+        shouldSend = preferences.auction_ending_notifications;
+        break;
+      case 'auction_won':
+        shouldSend = preferences.auction_won_notifications;
+        break;
     }
 
-    if (shouldSend) {
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
-        },
-        body: JSON.stringify({
-          from: 'Mosaic Auctions <onboarding@resend.dev>',
-          to: [userData.email],
-          subject: emailContent.subject,
-          html: emailContent.html,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to send email')
-      }
-
-      console.log(`Email sent successfully to ${userData.email} for ${type} notification`)
+    if (!shouldSend) {
+      console.log('Notification type disabled by user preferences');
+      return new Response(
+        JSON.stringify({ message: 'Notification type disabled by user preferences' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    const auctionUrl = `${new URL(req.url).origin.replace('functions.', '')}/auction/${auctionId}`;
+    console.log('Auction URL:', auctionUrl);
+
+    const emailContent = getEmailContent(type, auction, newBidAmount, auctionUrl);
+    const response = await sendEmail(user.email, emailContent);
 
     return new Response(
-      JSON.stringify({ message: 'Notification processed successfully' }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    )
+      JSON.stringify({ message: 'Email sent successfully' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   } catch (error) {
-    console.error('Error processing notification:', error)
+    console.error('Error in send-auction-update function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      { 
         status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
-    )
+    );
   }
-})
+});

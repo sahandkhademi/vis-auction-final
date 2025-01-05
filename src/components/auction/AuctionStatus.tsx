@@ -1,93 +1,90 @@
-import { CountdownTimer } from "./CountdownTimer";
-import { AuctionCompletionStatus } from "./AuctionCompletionStatus";
 import { PaymentButton } from "./PaymentButton";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useEffect } from "react";
+import { useUser } from "@supabase/auth-helpers-react";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface AuctionStatusProps {
   currentBid: number;
   endDate: string | null;
-  completionStatus?: string;
-  paymentStatus?: string;
-  winnerId?: string | null;
+  completionStatus: string | null;
+  paymentStatus: string | null;
+  winnerId: string | null;
   auctionId: string;
 }
 
-export const AuctionStatus = ({ 
-  currentBid, 
+export const AuctionStatus = ({
+  currentBid,
   endDate,
-  completionStatus = 'ongoing',
-  paymentStatus = 'pending',
+  completionStatus,
+  paymentStatus,
   winnerId,
-  auctionId
+  auctionId,
 }: AuctionStatusProps) => {
-  const session = useSession();
-  const isWinner = session?.user?.id === winnerId;
-  const showPaymentButton = isWinner && 
-    completionStatus === 'completed' && 
-    paymentStatus === 'pending';
+  const user = useUser();
+  const isWinner = user?.id === winnerId;
+  const needsPayment = isWinner && paymentStatus === 'pending' && completionStatus === 'completed';
+  const hasCompletedPayment = isWinner && paymentStatus === 'completed' && completionStatus === 'completed';
 
-  useEffect(() => {
-    if (endDate) {
-      const endDateTime = new Date(endDate).getTime();
-      const now = new Date().getTime();
-      const timeRemaining = endDateTime - now;
+  // Fetch the winner's actual winning bid amount
+  const { data: winningBid } = useQuery({
+    queryKey: ['winningBid', auctionId, winnerId],
+    queryFn: async () => {
+      if (!winnerId || completionStatus !== 'completed') return null;
       
-      // If less than 1 hour remaining, send notification
-      if (timeRemaining > 0 && timeRemaining <= 3600000) {
-        const notifyEndingSoon = async () => {
-          const { data: bids } = await supabase
-            .from('bids')
-            .select('user_id')
-            .eq('auction_id', auctionId)
-            .order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('bids')
+        .select('amount')
+        .eq('auction_id', auctionId)
+        .eq('user_id', winnerId)
+        .order('amount', { ascending: false })
+        .limit(1)
+        .single();
 
-          // Notify all unique bidders
-          const uniqueBidders = [...new Set(bids?.map(bid => bid.user_id))];
-          
-          for (const userId of uniqueBidders) {
-            await supabase.functions.invoke('send-auction-update', {
-              body: {
-                userId,
-                auctionId,
-                type: 'ending_soon'
-              }
-            });
-          }
-        };
+      if (error) throw error;
+      return data?.amount || currentBid;
+    },
+    enabled: !!winnerId && completionStatus === 'completed'
+  });
 
-        notifyEndingSoon();
-      }
-    }
-  }, [endDate, auctionId]);
+  const finalPrice = winningBid || currentBid;
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-1">
-          <p className="text-sm uppercase tracking-wider text-gray-500">Current Bid</p>
-          <p className="text-2xl font-light">
-            €{currentBid.toLocaleString()}
-          </p>
+    <div className="space-y-4">
+      {hasCompletedPayment && (
+        <Alert variant="success" className="mb-4">
+          <AlertTitle>Payment Completed!</AlertTitle>
+          <AlertDescription>
+            Thank you for your payment! Your purchase has been confirmed. You should have received a confirmation email with further details.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-500">Current Price</p>
+          <p className="text-2xl font-bold">€{finalPrice?.toLocaleString()}</p>
         </div>
-        <div className="space-y-1">
-          <p className="text-sm uppercase tracking-wider text-gray-500">Time Remaining</p>
-          <CountdownTimer endDate={endDate} />
+        <div>
+          {completionStatus === 'completed' ? (
+            <Badge variant={paymentStatus === 'completed' ? 'default' : 'secondary'}>
+              {paymentStatus === 'completed' ? 'Paid' : 'Payment Pending'}
+            </Badge>
+          ) : (
+            <Badge variant="outline">Ongoing</Badge>
+          )}
         </div>
       </div>
-      
-      <div className="pt-2 space-y-4">
-        <AuctionCompletionStatus 
-          status={completionStatus}
-          paymentStatus={paymentStatus}
-          isWinner={isWinner}
-        />
-        
-        {showPaymentButton && (
-          <PaymentButton auctionId={auctionId} />
-        )}
-      </div>
+
+      {needsPayment && (
+        <div className="mt-4">
+          <PaymentButton 
+            auctionId={auctionId} 
+            currentPrice={finalPrice}
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -1,10 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Mail } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const SubmitArt = () => {
+  const isMobile = useIsMobile();
+
   return (
     <div className="container max-w-4xl mx-auto px-4">
-      <h1 className="text-4xl font-serif mb-6">Submit Your Art</h1>
+      <h1 className="text-4xl mb-6">Submit Your Art</h1>
       
       <div className="bg-white rounded-lg shadow-sm border p-8 space-y-6">
         <p className="text-lg text-gray-700">
@@ -28,11 +31,11 @@ const SubmitArt = () => {
         <div className="flex justify-center">
           <a 
             href="mailto:support@visauction.com"
-            className="inline-block"
+            className="inline-block w-full sm:w-auto"
           >
-            <Button className="text-lg">
-              <Mail className="mr-2" />
-              Contact us at support@visauction.com
+            <Button className={`w-full sm:w-auto ${isMobile ? 'text-base' : 'text-lg'}`}>
+              <Mail className={`${isMobile ? 'size-4' : 'size-5'} mr-2`} />
+              {isMobile ? 'Contact Us' : 'Contact us at support@visauction.com'}
             </Button>
           </a>
         </div>

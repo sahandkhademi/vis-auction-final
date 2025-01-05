@@ -36,6 +36,38 @@ export type Database = {
         }
         Relationships: []
       }
+      artwork_views: {
+        Row: {
+          artwork_id: string
+          id: string
+          session_id: string | null
+          viewed_at: string | null
+          viewer_id: string | null
+        }
+        Insert: {
+          artwork_id: string
+          id?: string
+          session_id?: string | null
+          viewed_at?: string | null
+          viewer_id?: string | null
+        }
+        Update: {
+          artwork_id?: string
+          id?: string
+          session_id?: string | null
+          viewed_at?: string | null
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artwork_views_artwork_id_fkey"
+            columns: ["artwork_id"]
+            isOneToOne: false
+            referencedRelation: "artworks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artworks: {
         Row: {
           artist: string
@@ -45,6 +77,7 @@ export type Database = {
           created_by: string | null
           created_year: string | null
           current_price: number | null
+          delivery_status: string | null
           description: string | null
           dimensions: string | null
           end_date: string | null
@@ -66,6 +99,7 @@ export type Database = {
           created_by?: string | null
           created_year?: string | null
           current_price?: number | null
+          delivery_status?: string | null
           description?: string | null
           dimensions?: string | null
           end_date?: string | null
@@ -87,6 +121,7 @@ export type Database = {
           created_by?: string | null
           created_year?: string | null
           current_price?: number | null
+          delivery_status?: string | null
           description?: string | null
           dimensions?: string | null
           end_date?: string | null
@@ -106,6 +141,13 @@ export type Database = {
             columns: ["artist_id"]
             isOneToOne: false
             referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artworks_winner_id_fkey"
+            columns: ["winner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -236,6 +278,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          email: string | null
           id: string
           is_admin: boolean | null
           username: string | null
@@ -243,6 +286,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          email?: string | null
           id: string
           is_admin?: boolean | null
           username?: string | null
@@ -250,6 +294,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           is_admin?: boolean | null
           username?: string | null
@@ -271,9 +316,11 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      handle_auction_completion: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
+      initiate_backup: {
+        Args: {
+          p_backup_type: string
+        }
+        Returns: string
       }
       log_backup_operation: {
         Args: {
