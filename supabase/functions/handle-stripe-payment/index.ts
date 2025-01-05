@@ -22,7 +22,7 @@ serve(async (req) => {
       throw new Error('Missing Stripe signature');
     }
 
-    const rawBody = await req.text(); // Get the raw body as text
+    const rawBody = await req.text();
     console.log(`[${requestId}] Raw body received, length: ${rawBody.length}`);
     
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
@@ -32,7 +32,8 @@ serve(async (req) => {
 
     let event;
     try {
-      event = stripe.webhooks.constructEvent(
+      // Use constructEventAsync instead of constructEvent
+      event = await stripe.webhooks.constructEventAsync(
         rawBody,
         signature,
         Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
