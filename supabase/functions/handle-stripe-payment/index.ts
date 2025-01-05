@@ -18,19 +18,17 @@ serve(async (req) => {
       throw new Error('Missing Stripe signature');
     }
 
-    // Get the raw body as a Uint8Array
-    const rawBody = await req.arrayBuffer();
-    const rawBodyBytes = new Uint8Array(rawBody);
-    
+    // Get the raw body as text for signature verification
+    const rawBody = await req.text();
     console.log(`[${requestId}] Processing webhook event with signature:`, signature);
-    console.log(`[${requestId}] Raw body length:`, rawBodyBytes.length);
+    console.log(`[${requestId}] Raw body length:`, rawBody.length);
 
     const stripe = createStripeClient();
     
     let event;
     try {
       event = await stripe.webhooks.constructEventAsync(
-        rawBodyBytes,
+        rawBody,
         signature,
         Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
       );
