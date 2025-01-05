@@ -24,7 +24,7 @@ export const WinnersManagement = () => {
             id,
             username,
             avatar_url,
-            email:auth_users!profiles_id_fkey (
+            auth_users (
               email
             )
           )
@@ -98,7 +98,7 @@ export const WinnersManagement = () => {
             <TableRow key={artwork.id}>
               <TableCell className="font-medium">{artwork.title}</TableCell>
               <TableCell>{artwork.winner?.username || "No username"}</TableCell>
-              <TableCell>{artwork.winner?.email?.email}</TableCell>
+              <TableCell>{artwork.winner?.auth_users?.email}</TableCell>
               <TableCell>
                 ${artwork.current_price?.toLocaleString()}
               </TableCell>
