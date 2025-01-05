@@ -17,10 +17,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
 } from "recharts";
 import { startOfMonth, subMonths, format } from "date-fns";
+import { PopularArtworks } from "./analytics/PopularArtworks";
 
 export const AdminAnalytics = () => {
   const { data: totalAuctions } = useQuery({
@@ -101,33 +100,6 @@ export const AdminAnalytics = () => {
         bids,
         conversionRate,
       };
-    },
-  });
-
-  // Popular artworks - Fixed query with proper grouping
-  const { data: popularArtworks } = useQuery({
-    queryKey: ["popularArtworks"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('artwork_views')
-        .select(`
-          artwork_id,
-          artworks!inner (title),
-          view_count:count(*)
-        `)
-        .groupBy('artwork_id, artworks!inner(title)')
-        .order('view_count', { ascending: false })
-        .limit(5);
-
-      if (error) {
-        console.error('Error fetching popular artworks:', error);
-        return [];
-      }
-
-      return data.map(item => ({
-        title: item.artworks?.title || 'Unknown',
-        count: parseInt(item.view_count as unknown as string, 10) || 0
-      }));
     },
   });
 
@@ -228,23 +200,7 @@ export const AdminAnalytics = () => {
         </div>
 
         {/* Popular Artworks */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Most Viewed Artworks</CardTitle>
-            <CardDescription>Top 5 artworks by view count</CardDescription>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={popularArtworks}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="title" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="#8884d8" name="Views" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <PopularArtworks />
 
         {/* System Status */}
         <Card>
