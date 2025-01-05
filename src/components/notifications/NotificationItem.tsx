@@ -24,8 +24,8 @@ export const NotificationItem = ({
 }: NotificationItemProps) => {
   const entityId = message.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/)?.[0];
 
-  const handleDragEnd = async (info: PanInfo) => {
-    const SWIPE_THRESHOLD = -50;
+  const handleDragEnd = async (_: any, info: PanInfo) => {
+    const SWIPE_THRESHOLD = -100; // Increased threshold for more intentional swipes
     if (info.offset.x < SWIPE_THRESHOLD) {
       await onDelete(id);
     }
@@ -38,11 +38,18 @@ export const NotificationItem = ({
       exit={{ opacity: 0, x: -100 }}
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
-      onDragEnd={(_, info) => handleDragEnd(info)}
-      className="relative group"
+      dragElastic={0.2}
+      onDragEnd={handleDragEnd}
+      className="relative group touch-pan-y"
+      style={{
+        touchAction: "pan-y"
+      }}
     >
+      <div className="absolute inset-y-0 right-0 w-20 bg-red-500 flex items-center justify-center">
+        <Trash2 className="h-5 w-5 text-white" />
+      </div>
       <DropdownMenuItem
-        className="flex flex-col items-start p-4 pr-12 space-y-1 cursor-pointer w-full"
+        className="flex flex-col items-start p-4 pr-12 space-y-1 cursor-pointer w-full bg-white"
         onClick={() => onRead(id, type, entityId)}
       >
         <div className="font-semibold">{title}</div>
