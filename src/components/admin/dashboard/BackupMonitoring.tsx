@@ -1,9 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { Loader2, AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type BackupLog = {
   id: string;
@@ -17,6 +19,8 @@ type BackupLog = {
 };
 
 export const BackupMonitoring = () => {
+  const queryClient = useQueryClient();
+
   const { data: backupLogs, isLoading, error } = useQuery({
     queryKey: ["backup-logs"],
     queryFn: async () => {
@@ -32,6 +36,28 @@ export const BackupMonitoring = () => {
       return data as BackupLog[];
     },
   });
+
+  const initiateBackupMutation = useMutation({
+    mutationFn: async (backupType: string) => {
+      const { data, error } = await supabase
+        .rpc('initiate_backup', { p_backup_type: backupType });
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Backup initiated successfully");
+      queryClient.invalidateQueries({ queryKey: ["backup-logs"] });
+    },
+    onError: (error) => {
+      console.error("Error initiating backup:", error);
+      toast.error("Failed to initiate backup");
+    },
+  });
+
+  const handleInitiateBackup = (type: string) => {
+    initiateBackupMutation.mutate(type);
+  };
 
   if (isLoading) {
     return (
@@ -75,8 +101,29 @@ export const BackupMonitoring = () => {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Backup Monitoring</CardTitle>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => handleInitiateBackup('full')}
+            disabled={initiateBackupMutation.isPending}
+          >
+            {initiateBackupMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : null}
+            Full Backup
+          </Button>
+          <Button 
+            variant="secondary"
+            onClick={() => handleInitiateBackup('incremental')}
+            disabled={initiateBackupMutation.isPending}
+          >
+            {initiateBackupMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : null}
+            Incremental Backup
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[400px]">

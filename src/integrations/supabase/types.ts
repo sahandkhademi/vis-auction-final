@@ -316,6 +316,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      initiate_backup: {
+        Args: {
+          p_backup_type: string
+        }
+        Returns: string
+      }
       log_backup_operation: {
         Args: {
           p_backup_type: string
