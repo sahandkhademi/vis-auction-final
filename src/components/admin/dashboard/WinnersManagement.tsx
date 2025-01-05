@@ -20,7 +20,7 @@ export const WinnersManagement = () => {
         .from("artworks")
         .select(`
           *,
-          winner:winner_id (
+          winner:profiles!artworks_winner_id_fkey (
             id,
             username,
             avatar_url
@@ -93,7 +93,7 @@ export const WinnersManagement = () => {
           {winners?.map((artwork) => (
             <TableRow key={artwork.id}>
               <TableCell className="font-medium">{artwork.title}</TableCell>
-              <TableCell>{artwork.winner?.username || "Unknown"}</TableCell>
+              <TableCell>{artwork.winner?.username}</TableCell>
               <TableCell>
                 ${artwork.current_price?.toLocaleString()}
               </TableCell>
