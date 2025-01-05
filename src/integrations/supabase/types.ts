@@ -45,6 +45,7 @@ export type Database = {
           created_by: string | null
           created_year: string | null
           current_price: number | null
+          delivery_status: string | null
           description: string | null
           dimensions: string | null
           end_date: string | null
@@ -66,6 +67,7 @@ export type Database = {
           created_by?: string | null
           created_year?: string | null
           current_price?: number | null
+          delivery_status?: string | null
           description?: string | null
           dimensions?: string | null
           end_date?: string | null
@@ -87,6 +89,7 @@ export type Database = {
           created_by?: string | null
           created_year?: string | null
           current_price?: number | null
+          delivery_status?: string | null
           description?: string | null
           dimensions?: string | null
           end_date?: string | null
