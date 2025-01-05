@@ -23,7 +23,6 @@ import {
 import { startOfMonth, subMonths, format } from "date-fns";
 
 export const AdminAnalytics = () => {
-  // Basic stats queries
   const { data: totalAuctions } = useQuery({
     queryKey: ["totalAuctions"],
     queryFn: async () => {
@@ -56,7 +55,6 @@ export const AdminAnalytics = () => {
     },
   });
 
-  // Revenue data query
   const { data: revenueData } = useQuery({
     queryKey: ["revenueData"],
     queryFn: async () => {
@@ -81,7 +79,6 @@ export const AdminAnalytics = () => {
     },
   });
 
-  // User engagement metrics
   const { data: userEngagement } = useQuery({
     queryKey: ["userEngagement"],
     queryFn: async () => {
@@ -107,26 +104,29 @@ export const AdminAnalytics = () => {
     },
   });
 
-  // Popular artworks
+  // Popular artworks - Fixed query
   const { data: popularArtworks } = useQuery({
     queryKey: ["popularArtworks"],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("artwork_views")
-        .select(`
-          artwork_id,
-          artworks (
-            title
-          ),
-          count: count(*)
-        `)
-        .order('count', { ascending: false })
+      const { data, error } = await supabase
+        .from('artwork_views')
+        .select('artwork_id, count')
+        .select('artwork_id, artworks!inner(title), count', {
+          count: 'exact',
+          head: false
+        })
+        .returns<{ artwork_id: string; artworks: { title: string }; count: number }[]>()
         .limit(5);
 
-      return data?.map(item => ({
+      if (error) {
+        console.error('Error fetching popular artworks:', error);
+        return [];
+      }
+
+      return data.map(item => ({
         title: item.artworks?.title || 'Unknown',
-        count: parseInt(item.count as string, 10)
-      })) || [];
+        count: item.count || 0
+      }));
     },
   });
 
@@ -141,7 +141,6 @@ export const AdminAnalytics = () => {
         transition={{ duration: 0.5, delay: 0.2 }}
         className="space-y-8"
       >
-        {/* Basic Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader>
@@ -171,7 +170,6 @@ export const AdminAnalytics = () => {
           </Card>
         </div>
 
-        {/* Revenue Chart */}
         <Card>
           <CardHeader>
             <CardTitle>Monthly Revenue</CardTitle>
@@ -195,7 +193,6 @@ export const AdminAnalytics = () => {
           </CardContent>
         </Card>
 
-        {/* Engagement Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader>
@@ -245,7 +242,6 @@ export const AdminAnalytics = () => {
           </CardContent>
         </Card>
 
-        {/* System Status */}
         <Card>
           <CardHeader>
             <CardTitle>System Status</CardTitle>
