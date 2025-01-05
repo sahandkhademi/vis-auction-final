@@ -3,9 +3,10 @@ import { differenceInSeconds } from "date-fns";
 
 interface CountdownTimerProps {
   endDate: string | null;
+  onTimerEnd?: () => void;
 }
 
-export const CountdownTimer = ({ endDate }: CountdownTimerProps) => {
+export const CountdownTimer = ({ endDate, onTimerEnd }: CountdownTimerProps) => {
   const [timeLeft, setTimeLeft] = useState<string>("");
 
   useEffect(() => {
@@ -21,6 +22,9 @@ export const CountdownTimer = ({ endDate }: CountdownTimerProps) => {
 
       if (diffInSeconds <= 0) {
         setTimeLeft("Auction ended");
+        if (onTimerEnd) {
+          onTimerEnd();
+        }
         return;
       }
 
@@ -38,7 +42,7 @@ export const CountdownTimer = ({ endDate }: CountdownTimerProps) => {
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, [endDate]);
+  }, [endDate, onTimerEnd]);
 
   return (
     <div className="text-sm font-medium bg-gray-100 px-3 py-1 rounded-full">
