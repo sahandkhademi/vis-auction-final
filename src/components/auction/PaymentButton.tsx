@@ -19,6 +19,12 @@ export const PaymentButton = ({ auctionId, currentPrice, disabled }: PaymentButt
     try {
       console.log('🔔 Initiating payment for auction:', auctionId, 'amount:', currentPrice);
       
+      // Check if we have valid inputs
+      if (!auctionId || !currentPrice) {
+        console.error('❌ Missing required payment data:', { auctionId, currentPrice });
+        throw new Error('Missing required payment data');
+      }
+
       const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
         body: { 
           auctionId,
@@ -28,8 +34,15 @@ export const PaymentButton = ({ auctionId, currentPrice, disabled }: PaymentButt
 
       console.log('Response from create-stripe-checkout:', { data, error });
 
-      if (error) throw error;
-      if (!data?.url) throw new Error('No checkout URL received');
+      if (error) {
+        console.error('❌ Supabase function error:', error);
+        throw error;
+      }
+
+      if (!data?.url) {
+        console.error('❌ No checkout URL received:', data);
+        throw new Error('No checkout URL received');
+      }
 
       console.log('✅ Redirecting to checkout URL:', data.url);
       window.location.href = data.url;
