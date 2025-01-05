@@ -9,55 +9,19 @@ const corsHeaders = {
 
 serve(async (req) => {
   console.log(`[${new Date().toISOString()}] Request received`);
-  console.log('Request method:', req.method);
-  console.log('Request headers:', Object.fromEntries(req.headers.entries()));
-
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     console.log('Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Special handling for Stripe webhook requests
-  const stripeSignature = req.headers.get('stripe-signature');
-  if (stripeSignature) {
-    console.log('Stripe webhook signature detected, processing webhook');
-    return await handleStripeWebhook(req);
-  }
-
-  console.log('Processing as authenticated request');
-  return await handleAuthenticatedRequest(req);
-});
-
-async function handleStripeWebhook(req: Request) {
   try {
     const signature = req.headers.get('stripe-signature');
-    console.log('Processing webhook with signature:', signature);
-
     if (!signature) {
       console.error('Missing Stripe signature');
-      throw new Error('Missing stripe signature');
-    }
-
-    const body = await req.text();
-    console.log('Webhook body received:', body);
-
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-      apiVersion: '2023-10-16',
-    });
-
-    let event;
-    try {
-      event = await stripe.webhooks.constructEventAsync(
-        body,
-        signature,
-        Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
-      );
-    } catch (err) {
-      console.error('Error constructing webhook event:', err);
-      console.log('Webhook Secret used:', Deno.env.get('STRIPE_WEBHOOK_SECRET'));
       return new Response(
-        JSON.stringify({ error: err.message }),
+        JSON.stringify({ error: 'Missing stripe signature' }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400,
@@ -65,7 +29,37 @@ async function handleStripeWebhook(req: Request) {
       );
     }
 
-    console.log('Webhook event type:', event.type);
+    const body = await req.text();
+    console.log('Webhook body:', body);
+    
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+      apiVersion: '2023-10-16',
+    });
+
+    const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+    console.log('Using webhook secret:', webhookSecret ? 'Secret is set' : 'Secret is missing');
+
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(
+        body,
+        signature,
+        webhookSecret || ''
+      );
+      console.log('Successfully constructed webhook event:', event.type);
+    } catch (err) {
+      console.error('Error constructing webhook event:', err);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Webhook signature verification failed',
+          details: err.message 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') || '',
@@ -73,7 +67,7 @@ async function handleStripeWebhook(req: Request) {
     );
 
     if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
+      const session = event.data.object;
       console.log('Processing completed checkout session:', session.id);
 
       if (session.metadata?.auction_id) {
@@ -111,6 +105,8 @@ async function handleStripeWebhook(req: Request) {
               message: `Payment has been completed for your artwork: ${artwork.title}`,
               type: 'payment_received'
             });
+          
+          console.log('Notification created for artist:', artwork.artist_id);
         }
       }
     }
@@ -122,18 +118,14 @@ async function handleStripeWebhook(req: Request) {
   } catch (error) {
     console.error('Webhook error:', error.message);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: 'Internal server error',
+        details: error.message 
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: 500,
       }
     );
   }
-}
-
-async function handleAuthenticatedRequest(req: Request) {
-  // Handle any authenticated requests here
-  return new Response(JSON.stringify({ message: "Authenticated endpoint" }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
-}
+});
