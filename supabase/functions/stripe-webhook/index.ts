@@ -12,8 +12,13 @@ const corsHeaders = {
 console.log('🔔 Stripe webhook function loaded');
 
 serve(async (req) => {
+  console.log(`[${new Date().toISOString()}] Received webhook request`);
+  console.log('Request method:', req.method);
+  console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request');
     return new Response(null, {
       status: 204,
       headers: corsHeaders
@@ -23,11 +28,12 @@ serve(async (req) => {
   try {
     // Get the raw body first - crucial for signature verification
     const rawBody = await req.text();
-    console.log('📦 Received webhook payload length:', rawBody.length);
+    console.log('📦 Raw body length:', rawBody.length);
+    console.log('Raw body preview:', rawBody.substring(0, 100) + '...');
 
-    // Get the stripe signature - must be exact header from Stripe
+    // Get the stripe signature
     const signature = req.headers.get('stripe-signature');
-    console.log('🔑 Stripe signature present:', !!signature);
+    console.log('🔑 Stripe signature:', signature ? 'Present' : 'Missing');
 
     if (!signature) {
       console.error('❌ Missing Stripe signature header');
@@ -42,6 +48,8 @@ serve(async (req) => {
 
     // Get webhook secret from environment
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+    console.log('Webhook secret present:', !!webhookSecret);
+    
     if (!webhookSecret) {
       console.error('❌ Missing STRIPE_WEBHOOK_SECRET environment variable');
       return new Response(
@@ -53,10 +61,13 @@ serve(async (req) => {
       );
     }
 
-    // Verify the webhook signature with raw body
+    // Verify the webhook signature
     let event;
     try {
       console.log('🔍 Attempting signature verification...');
+      console.log('Webhook secret length:', webhookSecret.length);
+      console.log('Signature length:', signature.length);
+      
       event = stripe.webhooks.constructEvent(
         rawBody,
         signature,
@@ -64,8 +75,10 @@ serve(async (req) => {
       );
       console.log('✅ Webhook verified successfully');
       console.log('📣 Event type:', event.type);
+      console.log('Event data:', JSON.stringify(event.data, null, 2));
     } catch (err) {
       console.error('❌ Webhook signature verification failed:', err.message);
+      console.error('Error details:', err);
       return new Response(
         JSON.stringify({ error: `Webhook Error: ${err.message}` }),
         { 
@@ -76,6 +89,7 @@ serve(async (req) => {
     }
 
     // Initialize Supabase client
+    console.log('Initializing Supabase client...');
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') || '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
@@ -123,6 +137,7 @@ serve(async (req) => {
         console.log(`⚠️ Unhandled event type: ${event.type}`);
     }
 
+    console.log('✅ Webhook processing completed successfully');
     return new Response(
       JSON.stringify({ received: true }),
       { 
@@ -132,6 +147,7 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error('❌ Error processing webhook:', error);
+    console.error('Error stack:', error.stack);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { 
