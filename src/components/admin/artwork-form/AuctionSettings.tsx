@@ -59,6 +59,12 @@ export const AuctionSettings = ({ form, isLoading }: AuctionSettingsProps) => {
               selectedDate.setHours(now.getHours(), now.getMinutes());
             }
             
+            // Ensure the selected date/time is not in the past
+            const now = new Date();
+            if (selectedDate < now) {
+              selectedDate = now;
+            }
+            
             field.onChange(selectedDate.toISOString());
           };
 
@@ -68,6 +74,16 @@ export const AuctionSettings = ({ form, isLoading }: AuctionSettingsProps) => {
             const [hours, minutes] = e.target.value.split(':').map(Number);
             const newDate = new Date(date);
             newDate.setHours(hours, minutes);
+
+            // Only validate against past times if it's today
+            const now = new Date();
+            const isToday = newDate.toDateString() === now.toDateString();
+            
+            if (isToday && newDate < now) {
+              // If it's today and the time is in the past, set it to current time
+              newDate.setHours(now.getHours(), now.getMinutes());
+            }
+            
             field.onChange(newDate.toISOString());
           };
 
