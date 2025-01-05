@@ -10,8 +10,6 @@ const corsHeaders = {
 
 serve(async (req) => {
   console.log('🔔 Webhook received:', new Date().toISOString());
-  console.log('Method:', req.method);
-  console.log('Headers:', Object.fromEntries(req.headers.entries()));
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -22,8 +20,6 @@ serve(async (req) => {
   try {
     // Get the stripe signature from the headers
     const signature = req.headers.get('stripe-signature');
-    console.log('Stripe signature present:', !!signature);
-
     if (!signature) {
       console.error('Missing Stripe signature');
       return new Response(
@@ -38,18 +34,19 @@ serve(async (req) => {
     // Get the raw body
     const body = await req.text();
     console.log('Webhook body length:', body.length);
-    console.log('Webhook body preview:', body.substring(0, 100));
 
     // Verify the webhook signature
     let event;
     try {
       const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
-      console.log('Webhook secret present:', !!webhookSecret);
+      if (!webhookSecret) {
+        throw new Error('Missing STRIPE_WEBHOOK_SECRET');
+      }
       
       event = stripe.webhooks.constructEvent(
         body,
         signature,
-        webhookSecret || ''
+        webhookSecret
       );
       console.log('Event constructed successfully:', event.type);
     } catch (err) {
@@ -64,7 +61,7 @@ serve(async (req) => {
     }
 
     // Initialize Supabase client with service role key for admin access
-    const supabase = createClient(
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') || '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
       {
@@ -74,39 +71,39 @@ serve(async (req) => {
         },
       }
     );
-    console.log('Supabase client created with service role');
 
     switch (event.type) {
-      case 'checkout.session.completed':
+      case 'checkout.session.completed': {
         const session = event.data.object;
-        console.log('💰 Checkout session completed!', session.id);
+        console.log('💰 Checkout session completed:', session.id);
         console.log('Session metadata:', session.metadata);
         
-        if (session.metadata?.artwork_id) {
-          console.log('Updating artwork payment status for:', session.metadata.artwork_id);
-          const { error } = await supabase
+        if (session.metadata?.auction_id) {
+          console.log('Updating artwork payment status for:', session.metadata.auction_id);
+          const { error } = await supabaseAdmin
             .from('artworks')
             .update({ payment_status: 'completed' })
-            .eq('id', session.metadata.artwork_id);
+            .eq('id', session.metadata.auction_id);
           
           if (error) {
             console.error('Error updating artwork payment status:', error);
-          } else {
-            console.log('✅ Updated artwork payment status to completed');
+            throw error;
           }
+          console.log('✅ Updated artwork payment status to completed');
         }
         break;
-        
-      case 'payment_intent.payment_failed':
-        const paymentFailedIntent = event.data.object;
-        console.log('❌ PaymentIntent failed:', paymentFailedIntent.id);
+      }
+      
+      case 'payment_intent.payment_failed': {
+        const paymentIntent = event.data.object;
+        console.log('❌ Payment failed:', paymentIntent.id);
         break;
+      }
         
       default:
         console.log(`⚠️ Unhandled event type ${event.type}`);
     }
 
-    console.log('✅ Webhook processed successfully');
     return new Response(
       JSON.stringify({ received: true }),
       { 
