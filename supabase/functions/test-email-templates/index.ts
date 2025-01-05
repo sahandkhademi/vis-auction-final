@@ -9,6 +9,7 @@ const corsHeaders = {
 };
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+const TEST_EMAIL = 'sahandkhademi@icloud.com';
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -26,60 +27,7 @@ serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    console.log('Fetching admin profiles...');
-    const { data: adminProfiles, error: adminError } = await supabaseClient
-      .from('profiles')
-      .select('id')
-      .eq('is_admin', true);
-
-    if (adminError) {
-      console.error('Error fetching admin profiles:', adminError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch admin profiles' }),
-        { headers: corsHeaders, status: 500 }
-      );
-    }
-
-    if (!adminProfiles?.length) {
-      console.error('No admin profiles found');
-      return new Response(
-        JSON.stringify({ error: 'No admin users found' }),
-        { headers: corsHeaders, status: 404 }
-      );
-    }
-
-    console.log(`Found ${adminProfiles.length} admin profiles`);
-
-    const { data: { users: adminUsers }, error: usersError } = await supabaseClient.auth.admin.listUsers();
-    
-    if (usersError) {
-      console.error('Error fetching admin users:', usersError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch admin users' }),
-        { headers: corsHeaders, status: 500 }
-      );
-    }
-
-    const adminEmails = adminUsers
-      .filter(user => adminProfiles.some(profile => profile.id === user.id))
-      .map(user => user.email)
-      .filter(Boolean);
-
-    if (!adminEmails.length) {
-      console.error('No admin emails found');
-      return new Response(
-        JSON.stringify({ error: 'No admin emails found' }),
-        { headers: corsHeaders, status: 404 }
-      );
-    }
-
-    console.log(`Found ${adminEmails.length} admin emails:`, adminEmails);
+    console.log('Starting to send test emails...');
 
     // Sample data for testing
     const sampleArtwork: SampleArtwork = {
@@ -98,7 +46,7 @@ serve(async (req) => {
       try {
         const emailData = {
           from: 'Mosaic Auctions <onboarding@resend.dev>',
-          to: adminEmails,
+          to: [TEST_EMAIL],
           subject: template.subject,
           html: template.html,
           reply_to: 'support@mosaicauctions.com'
@@ -133,7 +81,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true,
         message: 'Test emails sent successfully', 
-        recipients: adminEmails 
+        recipients: [TEST_EMAIL]
       }),
       { headers: corsHeaders, status: 200 }
     );
