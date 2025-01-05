@@ -32,11 +32,6 @@ export const handleCheckoutComplete = async (session: Stripe.Checkout.Session, s
     throw new Error(`Payment not successful. Status: ${paymentIntent.status}`);
   }
 
-  // Update the return_url in the session to include payment_success parameter
-  await stripe.checkout.sessions.update(session.id, {
-    success_url: `${session.success_url}?payment_success=true`,
-  });
-
   // Update payment status
   const { error: updateError } = await supabaseClient
     .from('artworks')

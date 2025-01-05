@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { corsHeaders, createStripeClient, handleCheckoutComplete } from './stripe-utils.ts';
-import { sendNotifications } from './email-notifications.ts';
 
 serve(async (req) => {
   const requestId = crypto.randomUUID();
@@ -22,6 +21,7 @@ serve(async (req) => {
     const rawBody = await req.text();
     console.log(`[${requestId}] Raw body received, length:`, rawBody.length);
     console.log(`[${requestId}] Signature:`, signature);
+    console.log(`[${requestId}] Webhook secret length:`, (Deno.env.get('STRIPE_WEBHOOK_SECRET') || '').length);
     
     const stripe = createStripeClient();
     
@@ -34,6 +34,11 @@ serve(async (req) => {
       );
     } catch (err) {
       console.error(`[${requestId}] Error constructing webhook event:`, err);
+      console.error(`[${requestId}] Error details:`, {
+        signatureLength: signature.length,
+        bodyPreview: rawBody.substring(0, 100) + '...',
+        webhookSecretExists: !!Deno.env.get('STRIPE_WEBHOOK_SECRET')
+      });
       throw new Error(`Webhook Error: ${err.message}`);
     }
 
@@ -55,7 +60,6 @@ serve(async (req) => {
       console.log(`[${requestId}] Processing completed checkout session:`, session.id);
 
       await handleCheckoutComplete(session, supabaseClient);
-      await sendNotifications(session.metadata?.auction_id, session);
     }
 
     return new Response(
