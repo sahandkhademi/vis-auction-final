@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Bell } from "lucide-react";
+import { Bell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,9 +9,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 export const NotificationBadge = () => {
   const [unreadCount, setUnreadCount] = useState(0);
+  const { toast } = useToast();
 
   const { data: notifications, refetch } = useQuery({
     queryKey: ["notifications"],
@@ -65,6 +67,27 @@ export const NotificationBadge = () => {
     }
   };
 
+  const markAllAsRead = async () => {
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("read", false);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to mark notifications as read",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "All notifications marked as read",
+      });
+      refetch();
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -78,6 +101,20 @@ export const NotificationBadge = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
+        <div className="flex items-center justify-between p-2 border-b">
+          <span className="font-semibold">Notifications</span>
+          {unreadCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={markAllAsRead}
+            >
+              <Check className="h-3 w-3 mr-1" />
+              Mark all as read
+            </Button>
+          )}
+        </div>
         {notifications?.length === 0 ? (
           <DropdownMenuItem>No new notifications</DropdownMenuItem>
         ) : (
