@@ -16,24 +16,31 @@ export const EmailTester = () => {
         return;
       }
 
-      console.log("Sending test emails with session:", session.access_token);
+      console.log("Starting test email request...");
 
       const response = await supabase.functions.invoke('test-email-templates', {
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
       });
 
-      console.log("Response from test-email-templates:", response);
+      console.log("Full response from test-email-templates:", response);
 
       if (response.error) {
+        console.error("Edge function error details:", response.error);
         throw new Error(response.error.message || "Failed to send test emails");
       }
 
+      if (!response.data) {
+        console.error("No data received from edge function");
+        throw new Error("No response data received");
+      }
+
       toast.success("Test emails sent successfully!");
-      console.log("Test emails sent to:", response.data?.recipients);
+      console.log("Test emails sent to:", response.data.recipients);
     } catch (error) {
-      console.error("Error sending test emails:", error);
+      console.error("Detailed error sending test emails:", error);
       toast.error(error.message || "Failed to send test emails");
     } finally {
       setIsSending(false);
