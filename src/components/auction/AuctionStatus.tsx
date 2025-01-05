@@ -42,7 +42,7 @@ export const AuctionStatus = ({
         .eq('user_id', winnerId)
         .order('amount', { ascending: false })
         .limit(1)
-        .maybeSingle();
+        .maybeSingle();  // Changed from .single() to .maybeSingle()
 
       if (error) throw error;
       return data?.amount || currentBid;
