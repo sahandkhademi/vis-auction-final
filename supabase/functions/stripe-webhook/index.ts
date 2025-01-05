@@ -12,17 +12,22 @@ const corsHeaders = {
 console.log('🔔 Stripe webhook function loaded');
 
 serve(async (req) => {
-  console.log('🔔 Webhook received:', new Date().toISOString());
-
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('Handling CORS preflight request');
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders
+    });
   }
 
   try {
     // Get the stripe signature from the headers
     const signature = req.headers.get('stripe-signature');
+    
+    // For debugging
+    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+    console.log('Stripe signature:', signature);
+
     if (!signature) {
       console.error('Missing Stripe signature');
       return new Response(
@@ -36,7 +41,6 @@ serve(async (req) => {
 
     // Get the raw body as text
     const rawBody = await req.text();
-    console.log('Webhook signature:', signature);
     console.log('Raw body length:', rawBody.length);
 
     // Verify the webhook signature
@@ -66,7 +70,7 @@ serve(async (req) => {
       );
     }
 
-    // Initialize Supabase client with service role key for admin access
+    // Initialize Supabase client
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') || '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
