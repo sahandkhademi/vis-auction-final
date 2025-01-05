@@ -9,57 +9,63 @@ const corsHeaders = {
 
 serve(async (req) => {
   console.log(`[${new Date().toISOString()}] Request received`);
-  
+  console.log('Request method:', req.method);
+  console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     console.log('Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Special handling for Stripe webhook requests
+  const stripeSignature = req.headers.get('stripe-signature');
+  if (stripeSignature) {
+    console.log('Stripe webhook signature detected, processing webhook');
+    return await handleStripeWebhook(req);
+  }
+
+  console.log('Processing as authenticated request');
+  return await handleAuthenticatedRequest(req);
+});
+
+async function handleStripeWebhook(req: Request) {
   try {
     const signature = req.headers.get('stripe-signature');
+    console.log('Processing webhook with signature:', signature);
+
     if (!signature) {
       console.error('Missing Stripe signature');
-      return new Response(
-        JSON.stringify({ error: 'Missing stripe signature' }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      );
+      throw new Error('Missing stripe signature');
     }
 
     const body = await req.text();
-    console.log('Webhook body:', body);
-    
+    console.log('Webhook body received:', body);
+
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
 
-    const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
-    console.log('Using webhook secret:', webhookSecret ? 'Secret is set' : 'Secret is missing');
-
     let event;
     try {
-      event = stripe.webhooks.constructEvent(
+      event = await stripe.webhooks.constructEventAsync(
         body,
         signature,
-        webhookSecret || ''
+        Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
       );
-      console.log('Successfully constructed webhook event:', event.type);
     } catch (err) {
       console.error('Error constructing webhook event:', err);
+      console.log('Webhook Secret used:', Deno.env.get('STRIPE_WEBHOOK_SECRET'));
       return new Response(
-        JSON.stringify({ 
-          error: 'Webhook signature verification failed',
-          details: err.message 
-        }),
+        JSON.stringify({ error: err.message }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400,
         }
       );
     }
+
+    console.log('Webhook event type:', event.type);
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') || '',
@@ -67,7 +73,7 @@ serve(async (req) => {
     );
 
     if (event.type === 'checkout.session.completed') {
-      const session = event.data.object;
+      const session = event.data.object as Stripe.Checkout.Session;
       console.log('Processing completed checkout session:', session.id);
 
       if (session.metadata?.auction_id) {
@@ -105,8 +111,6 @@ serve(async (req) => {
               message: `Payment has been completed for your artwork: ${artwork.title}`,
               type: 'payment_received'
             });
-          
-          console.log('Notification created for artist:', artwork.artist_id);
         }
       }
     }
@@ -118,14 +122,18 @@ serve(async (req) => {
   } catch (error) {
     console.error('Webhook error:', error.message);
     return new Response(
-      JSON.stringify({ 
-        error: 'Internal server error',
-        details: error.message 
-      }),
+      JSON.stringify({ error: error.message }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 400,
       }
     );
   }
-});
+}
+
+async function handleAuthenticatedRequest(req: Request) {
+  // Handle any authenticated requests here
+  return new Response(JSON.stringify({ message: "Authenticated endpoint" }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
