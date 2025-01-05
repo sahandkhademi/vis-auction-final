@@ -52,14 +52,14 @@ const AdminDashboard = () => {
       <Tabs defaultValue="analytics" className="space-y-6">
         <Card>
           <CardContent className="pt-6">
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="artworks">Artworks</TabsTrigger>
-              <TabsTrigger value="artists">Artists</TabsTrigger>
-              <TabsTrigger value="winners">Winners</TabsTrigger>
-              <TabsTrigger value="users">Users</TabsTrigger>
-              <TabsTrigger value="bulk">Bulk Manager</TabsTrigger>
-              <TabsTrigger value="backups">Backups</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+              <TabsTrigger value="analytics" className="w-full">Analytics</TabsTrigger>
+              <TabsTrigger value="artworks" className="w-full">Artworks</TabsTrigger>
+              <TabsTrigger value="artists" className="w-full">Artists</TabsTrigger>
+              <TabsTrigger value="winners" className="w-full">Winners</TabsTrigger>
+              <TabsTrigger value="users" className="w-full">Users</TabsTrigger>
+              <TabsTrigger value="bulk" className="w-full">Bulk Manager</TabsTrigger>
+              <TabsTrigger value="backups" className="w-full">Backups</TabsTrigger>
             </TabsList>
           </CardContent>
         </Card>
