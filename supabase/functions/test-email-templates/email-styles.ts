@@ -16,7 +16,7 @@ export const getHeadingStyle = () => `
 `;
 
 export const getPriceStyle = () => `
-  color: #C6A07C;
+  color: #0088cc;
   font-size: 20px;
   font-weight: 600;
   margin: 16px 0;
@@ -24,7 +24,7 @@ export const getPriceStyle = () => `
 
 export const getButtonStyle = () => `
   display: inline-block;
-  background-color: #C6A07C;
+  background-color: #0088cc;
   color: white;
   padding: 12px 24px;
   text-decoration: none;
