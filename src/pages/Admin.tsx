@@ -11,7 +11,6 @@ import { AdminAnalytics } from "@/components/admin/dashboard/AdminAnalytics";
 import { BulkArtworkManager } from "@/components/admin/dashboard/BulkArtworkManager";
 import { UserManagement } from "@/components/admin/dashboard/UserManagement";
 import { BackupMonitoring } from "@/components/admin/dashboard/BackupMonitoring";
-import { WinnersManagement } from "@/components/admin/dashboard/WinnersManagement";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -55,7 +54,6 @@ const AdminDashboard = () => {
           <TabsTrigger value="bulk-manager">Bulk Manager</TabsTrigger>
           <TabsTrigger value="artists">Artists</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="winners">Winners</TabsTrigger>
           <TabsTrigger value="backups">Backups</TabsTrigger>
         </TabsList>
 
@@ -82,10 +80,6 @@ const AdminDashboard = () => {
 
         <TabsContent value="users" className="mt-6">
           <UserManagement />
-        </TabsContent>
-
-        <TabsContent value="winners" className="mt-6">
-          <WinnersManagement />
         </TabsContent>
 
         <TabsContent value="backups" className="mt-6">

@@ -75,17 +75,10 @@ serve(async (req) => {
         success_url: `${session.success_url}?payment_success=true`,
       });
 
-      // Fetch auction details and buyer information
+      // Fetch and verify auction details
       const { data: auction, error: fetchError } = await supabaseClient
         .from('artworks')
-        .select(`
-          *,
-          profiles!winner_id(
-            id,
-            username,
-            email:auth.users!profiles.id(email)
-          )
-        `)
+        .select('*, profiles!winner_id(*)')
         .eq('id', auctionId)
         .single();
 
@@ -115,17 +108,17 @@ serve(async (req) => {
       console.log(`[${requestId}] Payment status updated successfully`);
 
       // Send confirmation emails
-      if (auction.profiles?.email?.[0]?.email) {
+      if (auction.profiles?.email) {
         try {
           const emailContent = getEmailContent('payment_confirmation', auction);
-          await sendEmail(auction.profiles.email[0].email, emailContent);
+          await sendEmail(auction.profiles.email, emailContent);
           console.log(`[${requestId}] Payment confirmation email sent to buyer`);
         } catch (error) {
           console.error(`[${requestId}] Error sending payment confirmation email:`, error);
         }
       }
 
-      // Notify admin users with buyer information
+      // Notify admin users
       try {
         const { data: adminProfiles } = await supabaseClient
           .from('profiles')
@@ -141,9 +134,6 @@ serve(async (req) => {
             .filter(Boolean);
 
           if (adminEmails.length > 0) {
-            const buyerUsername = auction.profiles?.username || 'Unknown User';
-            const buyerEmail = auction.profiles?.email?.[0]?.email || 'No email available';
-
             await fetch('https://api.resend.com/emails', {
               method: 'POST',
               headers: {
@@ -158,15 +148,11 @@ serve(async (req) => {
                   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                     <h1 style="color: #1a1a1a;">Payment Completed</h1>
                     <p>A payment has been completed for the artwork "${auction.title}".</p>
-                    <p><strong>Buyer Information:</strong></p>
-                    <ul>
-                      <li>Username: ${buyerUsername}</li>
-                      <li>Email: ${buyerEmail}</li>
-                    </ul>
-                    <p><strong>Transaction Details:</strong></p>
+                    <p>Transaction Details:</p>
                     <ul>
                       <li>Amount: €${auction.current_price?.toLocaleString()}</li>
                       <li>Payment ID: ${session.payment_intent}</li>
+                      <li>Buyer ID: ${session.metadata.user_id}</li>
                       <li>Transaction Date: ${new Date().toISOString()}</li>
                     </ul>
                   </div>
