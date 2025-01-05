@@ -31,10 +31,12 @@ serve(async (req) => {
       );
     }
 
-    // Get the raw body
-    const body = await req.text();
-    console.log('Webhook body length:', body.length);
+    // Get the raw body as a Uint8Array to preserve exact bytes
+    const rawBody = await req.arrayBuffer();
+    const rawBodyString = new TextDecoder().decode(rawBody);
+    
     console.log('Webhook signature:', signature);
+    console.log('Raw body length:', rawBodyString.length);
 
     // Verify the webhook signature
     let event;
@@ -47,7 +49,7 @@ serve(async (req) => {
       
       console.log('Constructing event with signature...');
       event = stripe.webhooks.constructEvent(
-        body,
+        rawBodyString,
         signature,
         webhookSecret
       );
@@ -114,8 +116,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ received: true }),
       { 
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
       }
     );
   } catch (error) {
@@ -123,8 +125,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
       }
     );
   }
