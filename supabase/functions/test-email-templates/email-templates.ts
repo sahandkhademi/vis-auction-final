@@ -12,7 +12,10 @@ export const getEmailTemplates = (sampleArtwork: SampleArtwork) => [
     subject: "[Test] Outbid Notification",
     html: `
       <div style="${getBaseEmailStyle()}">
-        <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" alt="Vienna International School" style="width: 150px; margin-bottom: 24px;" />
+        <div style="display: flex; align-items: center; margin-bottom: 24px;">
+          <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" alt="Vienna International School" style="width: 32px; height: 32px;" />
+          <span style="margin-left: 12px; font-family: ui-serif, Georgia, Cambria, Times New Roman, Times, serif; font-size: 20px; color: #1a1a1a;">VIS Auction</span>
+        </div>
         <h1 style="${getHeadingStyle()}">New Bid Alert</h1>
         <p>Someone has placed a higher bid on "${sampleArtwork.title}".</p>
         <p style="${getPriceStyle()}">New Highest Bid: €1,200</p>
@@ -28,7 +31,10 @@ export const getEmailTemplates = (sampleArtwork: SampleArtwork) => [
     subject: "[Test] Auction Ending Soon",
     html: `
       <div style="${getBaseEmailStyle()}">
-        <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" alt="Vienna International School" style="width: 150px; margin-bottom: 24px;" />
+        <div style="display: flex; align-items: center; margin-bottom: 24px;">
+          <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" alt="Vienna International School" style="width: 32px; height: 32px;" />
+          <span style="margin-left: 12px; font-family: ui-serif, Georgia, Cambria, Times New Roman, Times, serif; font-size: 20px; color: #1a1a1a;">VIS Auction</span>
+        </div>
         <h1 style="${getHeadingStyle()}">Time is Running Out</h1>
         <p>The auction for "${sampleArtwork.title}" is ending soon.</p>
         <p style="${getPriceStyle()}">Current Price: €${sampleArtwork.current_price.toLocaleString()}</p>
@@ -44,7 +50,10 @@ export const getEmailTemplates = (sampleArtwork: SampleArtwork) => [
     subject: "[Test] Auction Won",
     html: `
       <div style="${getBaseEmailStyle()}">
-        <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" alt="Vienna International School" style="width: 150px; margin-bottom: 24px;" />
+        <div style="display: flex; align-items: center; margin-bottom: 24px;">
+          <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" alt="Vienna International School" style="width: 32px; height: 32px;" />
+          <span style="margin-left: 12px; font-family: ui-serif, Georgia, Cambria, Times New Roman, Times, serif; font-size: 20px; color: #1a1a1a;">VIS Auction</span>
+        </div>
         <h1 style="${getHeadingStyle()}">Congratulations</h1>
         <p>You've won the auction for "${sampleArtwork.title}".</p>
         <p style="${getPriceStyle()}">Winning Bid: €${sampleArtwork.current_price.toLocaleString()}</p>
@@ -60,7 +69,10 @@ export const getEmailTemplates = (sampleArtwork: SampleArtwork) => [
     subject: "[Test] Payment Confirmation",
     html: `
       <div style="${getBaseEmailStyle()}">
-        <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" alt="Vienna International School" style="width: 150px; margin-bottom: 24px;" />
+        <div style="display: flex; align-items: center; margin-bottom: 24px;">
+          <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" alt="Vienna International School" style="width: 32px; height: 32px;" />
+          <span style="margin-left: 12px; font-family: ui-serif, Georgia, Cambria, Times New Roman, Times, serif; font-size: 20px; color: #1a1a1a;">VIS Auction</span>
+        </div>
         <h1 style="${getHeadingStyle()}">Payment Confirmed</h1>
         <p>Thank you for your payment. Here's your purchase confirmation for "${sampleArtwork.title}".</p>
         <table style="${getTableStyle()}">

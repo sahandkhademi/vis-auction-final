@@ -45,11 +45,11 @@ serve(async (req) => {
       console.log(`Sending template: ${template.subject}`);
       try {
         const emailData = {
-          from: 'Mosaic Auctions <onboarding@resend.dev>',
+          from: 'VIS Auction <onboarding@resend.dev>',
           to: [TEST_EMAIL],
           subject: template.subject,
           html: template.html,
-          reply_to: 'support@mosaicauctions.com'
+          reply_to: 'support@visauction.com'
         };
 
         const response = await fetch('https://api.resend.com/emails', {
