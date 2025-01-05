@@ -7,6 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Expose-Headers': 'stripe-signature'
 };
 
 console.log('🔔 Stripe webhook function loaded');
@@ -21,11 +22,12 @@ serve(async (req) => {
   }
 
   try {
+    // Log all headers for debugging
+    const headers = Object.fromEntries(req.headers.entries());
+    console.log('All request headers:', JSON.stringify(headers, null, 2));
+
     // Get the stripe signature from the headers
     const signature = req.headers.get('stripe-signature');
-    
-    // For debugging
-    console.log('Request headers:', Object.fromEntries(req.headers.entries()));
     console.log('Stripe signature:', signature);
 
     if (!signature) {
@@ -33,26 +35,34 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Missing Stripe signature' }),
         { 
-          status: 400,
+          status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
 
-    // Get the raw body as text
+    // Get the raw body
     const rawBody = await req.text();
     console.log('Raw body length:', rawBody.length);
+    console.log('First 100 chars of raw body:', rawBody.substring(0, 100));
+
+    // Get webhook secret
+    const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+    if (!webhookSecret) {
+      console.error('❌ Missing STRIPE_WEBHOOK_SECRET');
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
     // Verify the webhook signature
     let event;
     try {
-      const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
-      if (!webhookSecret) {
-        console.error('❌ Missing STRIPE_WEBHOOK_SECRET');
-        throw new Error('Missing STRIPE_WEBHOOK_SECRET');
-      }
-      
-      console.log('Constructing event with signature...');
+      console.log('Attempting to construct event with signature...');
       event = stripe.webhooks.constructEvent(
         rawBody,
         signature,
@@ -64,7 +74,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: `Webhook Error: ${err.message}` }),
         { 
-          status: 400,
+          status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
