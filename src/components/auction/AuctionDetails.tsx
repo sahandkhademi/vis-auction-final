@@ -54,6 +54,8 @@ export const AuctionDetails = ({
             currentBid={currentPrice}
             isLoading={isLoading}
             onBidPlaced={onBidPlaced}
+            completionStatus={artwork.completion_status}
+            endDate={artwork.end_date}
           />
         </div>
       )}
