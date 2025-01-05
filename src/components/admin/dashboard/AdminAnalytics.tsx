@@ -1,7 +1,7 @@
-import { EmailTester } from "../EmailTester";
-import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { EmailTester } from "../EmailTester";
+import { motion } from "framer-motion";
 import {
   Card,
   CardContent,
@@ -104,18 +104,19 @@ export const AdminAnalytics = () => {
     },
   });
 
-  // Popular artworks - Fixed query
+  // Popular artworks - Fixed query with proper grouping
   const { data: popularArtworks } = useQuery({
     queryKey: ["popularArtworks"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('artwork_views')
-        .select('artwork_id, count')
-        .select('artwork_id, artworks!inner(title), count', {
-          count: 'exact',
-          head: false
-        })
-        .returns<{ artwork_id: string; artworks: { title: string }; count: number }[]>()
+        .select(`
+          artwork_id,
+          artworks!inner (title),
+          view_count:count(*)
+        `)
+        .groupBy('artwork_id, artworks!inner(title)')
+        .order('view_count', { ascending: false })
         .limit(5);
 
       if (error) {
@@ -125,7 +126,7 @@ export const AdminAnalytics = () => {
 
       return data.map(item => ({
         title: item.artworks?.title || 'Unknown',
-        count: item.count || 0
+        count: parseInt(item.view_count as unknown as string, 10) || 0
       }));
     },
   });
@@ -141,6 +142,7 @@ export const AdminAnalytics = () => {
         transition={{ duration: 0.5, delay: 0.2 }}
         className="space-y-8"
       >
+        {/* Basic Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader>
@@ -170,6 +172,7 @@ export const AdminAnalytics = () => {
           </Card>
         </div>
 
+        {/* Revenue Chart */}
         <Card>
           <CardHeader>
             <CardTitle>Monthly Revenue</CardTitle>
@@ -193,6 +196,7 @@ export const AdminAnalytics = () => {
           </CardContent>
         </Card>
 
+        {/* Engagement Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader>
@@ -242,6 +246,7 @@ export const AdminAnalytics = () => {
           </CardContent>
         </Card>
 
+        {/* System Status */}
         <Card>
           <CardHeader>
             <CardTitle>System Status</CardTitle>
