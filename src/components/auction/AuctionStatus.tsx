@@ -26,7 +26,6 @@ export const AuctionStatus = ({
   const user = useUser();
   const isWinner = user?.id === winnerId;
   const needsPayment = isWinner && paymentStatus === 'pending';
-  const hasCompletedPayment = isWinner && paymentStatus === 'completed';
   const isEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
   // Fetch the winner's actual winning bid amount
@@ -42,7 +41,7 @@ export const AuctionStatus = ({
         .eq('user_id', winnerId)
         .order('amount', { ascending: false })
         .limit(1)
-        .maybeSingle();  // Changed from .single() to .maybeSingle()
+        .maybeSingle();
 
       if (error) throw error;
       return data?.amount || currentBid;
@@ -63,6 +62,7 @@ export const AuctionStatus = ({
     finalPrice,
     currentTime: new Date().toISOString(),
     endDate,
+    showPaymentButton: isWinner && isEnded && paymentStatus === 'pending'
   });
 
   return (
