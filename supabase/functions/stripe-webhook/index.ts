@@ -34,12 +34,10 @@ serve(async (req) => {
       );
     }
 
-    // Get the raw body as a Uint8Array to preserve exact bytes
-    const rawBody = await req.arrayBuffer();
-    const rawBodyString = new TextDecoder().decode(rawBody);
-    
+    // Get the raw body as text
+    const rawBody = await req.text();
     console.log('Webhook signature:', signature);
-    console.log('Raw body length:', rawBodyString.length);
+    console.log('Raw body length:', rawBody.length);
 
     // Verify the webhook signature
     let event;
@@ -52,7 +50,7 @@ serve(async (req) => {
       
       console.log('Constructing event with signature...');
       event = stripe.webhooks.constructEvent(
-        rawBodyString,
+        rawBody,
         signature,
         webhookSecret
       );
