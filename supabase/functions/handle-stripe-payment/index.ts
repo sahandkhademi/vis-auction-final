@@ -38,7 +38,8 @@ serve(async (req) => {
 
     let event;
     try {
-      event = stripe.webhooks.constructEvent(
+      // Use constructEvent asynchronously
+      event = await stripe.webhooks.constructEventAsync(
         rawBody,
         signature,
         Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
