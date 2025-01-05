@@ -113,13 +113,20 @@ export const AdminAnalytics = () => {
     queryFn: async () => {
       const { data } = await supabase
         .from("artwork_views")
-        .select("artwork_id, artworks(title)")
-        .select("artwork_id, count(*)")
-        .group("artwork_id")
-        .order("count", { ascending: false })
+        .select(`
+          artwork_id,
+          artworks (
+            title
+          ),
+          count: count(*)
+        `)
+        .order('count', { ascending: false })
         .limit(5);
 
-      return data || [];
+      return data?.map(item => ({
+        title: item.artworks?.title || 'Unknown',
+        count: parseInt(item.count as string, 10)
+      })) || [];
     },
   });
 
@@ -229,7 +236,7 @@ export const AdminAnalytics = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={popularArtworks}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="artworks.title" />
+                <XAxis dataKey="title" />
                 <YAxis />
                 <Tooltip />
                 <Bar dataKey="count" fill="#8884d8" name="Views" />
