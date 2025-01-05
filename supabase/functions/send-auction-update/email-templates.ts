@@ -36,43 +36,49 @@ export const getEmailContent = (
     font-weight: bold;
   `;
 
-  const tableStyle = `
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-  `;
-
-  const tdStyle = `
-    padding: 12px;
-    border-bottom: 1px solid #eee;
-  `;
-
   switch (type) {
     case 'outbid':
       return {
-        subject: "You've Been Outbid!",
+        subject: "You've Been Outbid on VIS Auction!",
         html: `
           <div style="${baseStyle}">
             <h1 style="${headingStyle}">New Bid Alert</h1>
             <p>Someone has placed a higher bid on "${auction.title}".</p>
-            <p style="${priceStyle}">
-              New Highest Bid: €${newBidAmount?.toLocaleString()}
-            </p>
+            <p style="${priceStyle}">New Highest Bid: €${newBidAmount?.toLocaleString()}</p>
             <p>Don't miss out - place a new bid now to stay in the running!</p>
             ${auctionUrl ? `
-              <div>
-                <a href="${auctionUrl}" style="${buttonStyle}">
-                  View Auction
-                </a>
-              </div>
+              <a href="${auctionUrl}" style="${buttonStyle}">
+                View Auction
+              </a>
             ` : ''}
             <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; color: #666;">
-              <small>This email was sent by VIS Auction. If you no longer wish to receive these emails, 
-              you can adjust your notification preferences in your account settings.</small>
+              <small>This email was sent by VIS Auction. You can adjust your notification preferences in your account settings.</small>
             </div>
           </div>
         `
       };
+
+    case 'payment_confirmation':
+      return {
+        subject: "Payment Confirmation - VIS Auction",
+        html: `
+          <div style="${baseStyle}">
+            <h1 style="${headingStyle}">Payment Confirmed!</h1>
+            <p>Thank you for your payment for "${auction.title}".</p>
+            <p style="${priceStyle}">Amount Paid: €${auction.current_price?.toLocaleString()}</p>
+            <p>Your transaction has been completed successfully. We will be in touch shortly with shipping details.</p>
+            ${auctionUrl ? `
+              <a href="${auctionUrl}" style="${buttonStyle}">
+                View Auction Details
+              </a>
+            ` : ''}
+            <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; color: #666;">
+              <small>This email was sent by VIS Auction. Please keep this email for your records.</small>
+            </div>
+          </div>
+        `
+      };
+
     case 'ending_soon':
       return {
         subject: "Auction Ending Soon!",
@@ -115,43 +121,6 @@ export const getEmailContent = (
             <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; color: #666;">
               <small>This email was sent by VIS Auction. If you no longer wish to receive these emails, 
               you can adjust your notification preferences in your account settings.</small>
-            </div>
-          </div>
-        `
-      };
-
-    case 'payment_confirmation':
-      return {
-        subject: "Payment Confirmation - VIS Auction",
-        html: `
-          <div style="${baseStyle}">
-            <h1 style="${headingStyle}">🎉 Payment Confirmed!</h1>
-            <p>Thank you for your payment. Here's your purchase confirmation for "${auction.title}".</p>
-            
-            <table style="${tableStyle}">
-              <tr>
-                <td style="${tdStyle}">Artwork</td>
-                <td style="${tdStyle}">${auction.title}</td>
-              </tr>
-              <tr>
-                <td style="${tdStyle}">Artist</td>
-                <td style="${tdStyle}">${auction.artist}</td>
-              </tr>
-              <tr>
-                <td style="${tdStyle}">Amount Paid</td>
-                <td style="${tdStyle}" style="${priceStyle}">€${auction.current_price?.toLocaleString()}</td>
-              </tr>
-              <tr>
-                <td style="${tdStyle}">Date</td>
-                <td style="${tdStyle}">${new Date().toLocaleDateString()}</td>
-              </tr>
-            </table>
-
-            <p>Your artwork purchase is now complete. We will contact you shortly with shipping details.</p>
-            
-            <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; color: #666;">
-              <small>This email was sent by VIS Auction. Please keep this email for your records. 
-              If you have any questions, please contact our support team.</small>
             </div>
           </div>
         `
