@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Check, Trash2 } from "lucide-react";
+import { Bell, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import {
@@ -11,7 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
+import { NotificationItem } from "./NotificationItem";
 
 export const NotificationBadge = () => {
   const [unreadCount, setUnreadCount] = useState(0);
@@ -125,16 +126,6 @@ export const NotificationBadge = () => {
     }
   };
 
-  const handleDragEnd = async (
-    info: PanInfo,
-    notification: { id: string }
-  ) => {
-    const SWIPE_THRESHOLD = -50;
-    if (info.offset.x < SWIPE_THRESHOLD) {
-      await deleteNotification(notification.id);
-    }
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -166,35 +157,18 @@ export const NotificationBadge = () => {
           <DropdownMenuItem>No new notifications</DropdownMenuItem>
         ) : (
           <AnimatePresence initial={false}>
-            {notifications?.map((notification) => {
-              const entityId = notification.message.match(/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/)?.[0];
-              
-              return (
-                <motion.div
-                  key={notification.id}
-                  initial={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -100 }}
-                  drag="x"
-                  dragConstraints={{ left: 0, right: 0 }}
-                  onDragEnd={(_, info) => handleDragEnd(info, notification)}
-                  className="relative"
-                >
-                  <DropdownMenuItem
-                    className="flex flex-col items-start p-4 space-y-1 cursor-pointer"
-                    onClick={() => markAsRead(notification.id, notification.type, entityId)}
-                  >
-                    <div className="font-semibold">{notification.title}</div>
-                    <div className="text-sm text-gray-500">{notification.message}</div>
-                    <div className="text-xs text-gray-400">
-                      {new Date(notification.created_at).toLocaleDateString()}
-                    </div>
-                  </DropdownMenuItem>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-                    <Trash2 className="h-4 w-4" />
-                  </div>
-                </motion.div>
-              );
-            })}
+            {notifications?.map((notification) => (
+              <NotificationItem
+                key={notification.id}
+                id={notification.id}
+                title={notification.title}
+                message={notification.message}
+                createdAt={notification.created_at}
+                type={notification.type}
+                onDelete={deleteNotification}
+                onRead={markAsRead}
+              />
+            ))}
           </AnimatePresence>
         )}
       </DropdownMenuContent>
