@@ -28,7 +28,8 @@ serve(async (req) => {
       apiVersion: '2023-10-16',
     });
 
-    const event = stripe.webhooks.constructEvent(
+    // Updated to use constructEventAsync instead of constructEvent
+    const event = await stripe.webhooks.constructEventAsync(
       body,
       signature,
       Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
