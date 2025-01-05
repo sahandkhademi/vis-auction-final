@@ -1,11 +1,16 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from 'https://esm.sh/stripe@14.21.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-import { corsHeaders, createStripeClient, handleCheckoutComplete } from './stripe-utils.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
+};
 
 serve(async (req) => {
-  const requestId = crypto.randomUUID();
-  console.log(`[${requestId}] Request received`);
+  console.log(`[${new Date().toISOString()}] Request received`);
 
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -13,72 +18,122 @@ serve(async (req) => {
   try {
     const signature = req.headers.get('stripe-signature');
     if (!signature) {
-      console.error(`[${requestId}] Missing Stripe signature`);
-      throw new Error('Missing Stripe signature');
+      console.error('Missing Stripe signature');
+      return new Response(
+        JSON.stringify({ error: 'Missing stripe signature' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    // Get the raw body as ArrayBuffer and convert to string
+    // Get the raw body as an ArrayBuffer
     const rawBody = await req.arrayBuffer();
+    // Convert ArrayBuffer to string
     const rawBodyString = new TextDecoder().decode(rawBody);
     
-    console.log(`[${requestId}] Raw body received, length:`, rawBodyString.length);
-    console.log(`[${requestId}] Signature:`, signature);
-    console.log(`[${requestId}] Webhook secret length:`, (Deno.env.get('STRIPE_WEBHOOK_SECRET') || '').length);
-    
-    const stripe = createStripeClient();
-    
+    console.log('Raw webhook body:', rawBodyString);
+    console.log('Stripe signature:', signature);
+
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+      apiVersion: '2023-10-16',
+    });
+
     let event;
     try {
-      event = stripe.webhooks.constructEvent(
+      // Use constructEventAsync with the raw body string
+      event = await stripe.webhooks.constructEventAsync(
         rawBodyString,
         signature,
         Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
       );
     } catch (err) {
-      console.error(`[${requestId}] Error constructing webhook event:`, err);
-      console.error(`[${requestId}] Error details:`, {
-        signatureLength: signature.length,
-        bodyPreview: rawBodyString.substring(0, 100) + '...',
-        webhookSecretExists: !!Deno.env.get('STRIPE_WEBHOOK_SECRET')
-      });
-      throw new Error(`Webhook Error: ${err.message}`);
+      console.error('Error constructing webhook event:', err);
+      return new Response(
+        JSON.stringify({ error: err.message }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    console.log(`[${requestId}] Event type: ${event.type}`);
+    console.log('Webhook event type:', event.type);
 
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+      Deno.env.get('SUPABASE_URL') || '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
     );
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
-      console.log(`[${requestId}] Processing completed checkout session:`, session.id);
+      console.log('Processing completed checkout session:', session.id);
 
-      await handleCheckoutComplete(session, supabaseClient);
+      if (session.metadata?.auction_id) {
+        const auctionId = session.metadata.auction_id;
+        console.log('Updating payment status for auction:', auctionId);
+
+        // First, verify the auction exists and get its current status
+        const { data: auction, error: fetchError } = await supabaseClient
+          .from('artworks')
+          .select('completion_status, payment_status')
+          .eq('id', auctionId)
+          .single();
+
+        if (fetchError) {
+          console.error('Error fetching artwork:', fetchError);
+          throw fetchError;
+        }
+
+        if (!auction) {
+          throw new Error(`Auction ${auctionId} not found`);
+        }
+
+        // Update the payment status
+        const { error: updateError } = await supabaseClient
+          .from('artworks')
+          .update({ 
+            payment_status: 'completed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', auctionId);
+
+        if (updateError) {
+          console.error('Error updating artwork payment status:', updateError);
+          throw updateError;
+        }
+
+        console.log('Payment status updated successfully for auction:', auctionId);
+
+        // Create a notification for the seller
+        const { data: artwork } = await supabaseClient
+          .from('artworks')
+          .select('title, artist_id')
+          .eq('id', auctionId)
+          .single();
+
+        if (artwork?.artist_id) {
+          await supabaseClient
+            .from('notifications')
+            .insert({
+              user_id: artwork.artist_id,
+              title: 'Payment Received',
+              message: `Payment has been completed for your artwork: ${artwork.title}`,
+              type: 'payment_received'
+            });
+        }
+      }
     }
 
-    return new Response(
-      JSON.stringify({ received: true, requestId }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
+    return new Response(JSON.stringify({ received: true }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    });
   } catch (error) {
-    console.error(`[${requestId}] Webhook error:`, error);
+    console.error('Webhook error:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        requestId,
-        timestamp: new Date().toISOString()
-      }),
+      JSON.stringify({ error: error.message }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
