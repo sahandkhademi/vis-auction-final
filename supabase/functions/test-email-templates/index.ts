@@ -76,32 +76,49 @@ serve(async (req) => {
 
     console.log('Sending test emails...');
     // Send all test emails
-    const emailPromises = templates.map(template => {
+    const emailPromises = templates.map(async (template) => {
       console.log(`Sending template: ${template.subject}`);
-      return fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${RESEND_API_KEY}`
-        },
-        body: JSON.stringify({
-          from: 'VIS Auction <onboarding@resend.dev>',
-          to: adminEmails,
-          subject: template.subject,
-          html: template.html
-        })
-      }).then(async (response) => {
+      try {
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${RESEND_API_KEY}`
+          },
+          body: JSON.stringify({
+            from: 'VIS Auction <onboarding@resend.dev>',
+            to: adminEmails,
+            subject: template.subject,
+            html: template.html
+          })
+        });
+
+        const responseText = await response.text();
+        console.log(`Response for ${template.subject}:`, responseText);
+
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`Failed to send email ${template.subject}:`, errorText);
-          throw new Error(`Failed to send email: ${errorText}`);
+          throw new Error(`Failed to send email: ${responseText}`);
         }
-        return response.json();
-      });
+
+        try {
+          return JSON.parse(responseText);
+        } catch (e) {
+          console.error('Error parsing response:', e);
+          throw new Error(`Invalid response format: ${responseText}`);
+        }
+      } catch (error) {
+        console.error(`Error sending template ${template.subject}:`, error);
+        throw error;
+      }
     });
 
-    await Promise.all(emailPromises);
-    console.log('All test emails sent successfully');
+    try {
+      await Promise.all(emailPromises);
+      console.log('All test emails sent successfully');
+    } catch (error) {
+      console.error('Error sending emails:', error);
+      throw error;
+    }
 
     return new Response(
       JSON.stringify({ 
@@ -114,9 +131,12 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error sending test emails:', error);
+    console.error('Error in test-email-templates function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.toString()
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
