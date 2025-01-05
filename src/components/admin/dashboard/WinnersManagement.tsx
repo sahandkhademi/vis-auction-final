@@ -32,7 +32,8 @@ export const WinnersManagement = () => {
   const { data: winners, refetch } = useQuery({
     queryKey: ["admin-winners"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First, get artworks with winners
+      const { data: artworks, error } = await supabase
         .from("artworks")
         .select(`
           *,
@@ -47,30 +48,26 @@ export const WinnersManagement = () => {
 
       if (error) throw error;
 
-      // Fetch emails in a separate query since we can't directly join with auth.users
-      if (data) {
-        const winnerIds = data.map(artwork => artwork.winner?.id).filter(Boolean);
-        const { data: emails } = await supabase
-          .from("profiles")
-          .select(`
-            id,
-            auth_users!profiles_id_fkey (
-              email
-            )
-          `)
-          .in('id', winnerIds);
+      // For artworks with winners, get their emails using admin API
+      if (artworks && artworks.length > 0) {
+        const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
+        
+        if (usersError) {
+          console.error("Error fetching user emails:", usersError);
+          return artworks as ArtworkWithWinner[];
+        }
 
-        // Merge email data with artwork data
-        return data.map(artwork => ({
+        // Map emails to winners
+        return artworks.map(artwork => ({
           ...artwork,
           winner: artwork.winner ? {
             ...artwork.winner,
-            email: emails?.find(e => e.id === artwork.winner?.id)?.auth_users?.email
+            email: users.find(u => u.id === artwork.winner?.id)?.email
           } : null
         })) as ArtworkWithWinner[];
       }
 
-      return data as ArtworkWithWinner[];
+      return artworks as ArtworkWithWinner[];
     },
   });
 
