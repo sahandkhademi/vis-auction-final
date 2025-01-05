@@ -29,30 +29,29 @@ export const AuctionStatus = ({
   const hasCompletedPayment = isWinner && paymentStatus === 'completed';
   const isEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
-  // Fetch the winner's actual winning bid amount
-  const { data: winningBid } = useQuery({
-    queryKey: ['winningBid', auctionId, winnerId],
+  // Fetch highest bid to determine potential winner
+  const { data: highestBid } = useQuery({
+    queryKey: ['highestBid', auctionId],
     queryFn: async () => {
-      if (!winnerId) return null;
-      
       const { data, error } = await supabase
         .from('bids')
-        .select('amount')
+        .select('user_id, amount')
         .eq('auction_id', auctionId)
-        .eq('user_id', winnerId)
         .order('amount', { ascending: false })
         .limit(1)
         .maybeSingle();
 
       if (error) throw error;
-      return data?.amount || currentBid;
+      return data;
     },
-    enabled: !!winnerId
+    enabled: isEnded && !winnerId // Only fetch if auction ended but winner not set
   });
 
-  const finalPrice = winningBid || currentBid;
+  // If auction has ended but winner not set, check if current user is highest bidder
+  const isPotentialWinner = isEnded && !winnerId && highestBid?.user_id === user?.id;
 
-  console.log('Debug winner recognition:', {
+  // For debugging
+  console.log('Debug auction status:', {
     userId: user?.id,
     winnerId,
     isWinner,
@@ -60,10 +59,10 @@ export const AuctionStatus = ({
     paymentStatus,
     isEnded,
     needsPayment,
-    finalPrice,
+    isPotentialWinner,
+    highestBid,
     currentTime: new Date().toISOString(),
     endDate,
-    showPaymentButton: isWinner && isEnded && paymentStatus === 'pending'
   });
 
   return (
@@ -80,7 +79,7 @@ export const AuctionStatus = ({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-500">Current Price</p>
-          <p className="text-2xl font-bold">€{finalPrice?.toLocaleString()}</p>
+          <p className="text-2xl font-bold">€{currentBid?.toLocaleString()}</p>
         </div>
         <div className="flex flex-col items-end gap-2">
           {!isEnded && endDate && (
@@ -95,7 +94,7 @@ export const AuctionStatus = ({
           >
             {isEnded ? 'Auction Ended' : 'Ongoing'}
           </Badge>
-          {isWinner && (
+          {(isWinner || isPotentialWinner) && (
             <Badge 
               variant="default" 
               className="bg-green-500"
@@ -106,11 +105,11 @@ export const AuctionStatus = ({
         </div>
       </div>
 
-      {isWinner && isEnded && paymentStatus === 'pending' && (
+      {(isWinner || isPotentialWinner) && isEnded && paymentStatus === 'pending' && (
         <div className="mt-4">
           <PaymentButton 
             auctionId={auctionId} 
-            currentPrice={finalPrice}
+            currentPrice={currentBid}
           />
         </div>
       )}
