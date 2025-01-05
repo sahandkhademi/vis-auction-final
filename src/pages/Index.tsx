@@ -21,22 +21,20 @@ const Index = () => {
   const { data: trendingArtworks, isLoading, error } = useQuery({
     queryKey: ["trending-artworks"],
     queryFn: async () => {
-      console.log("Fetching trending artworks...");
-      const { data, error } = await supabase
-        .from("artworks")
-        .select("*")
-        .eq("status", "published")
-        .eq("completion_status", "ongoing")
-        .order("end_date", { ascending: true })
-        .limit(4);
+      try {
+        const { data, error } = await supabase
+          .from("artworks")
+          .select("*")
+          .eq("status", "published")
+          .order("current_price", { ascending: false })
+          .limit(4);
 
-      if (error) {
-        console.error("Error fetching artworks:", error);
-        throw error;
+        if (error) throw error;
+        return data || [];
+      } catch (err) {
+        console.error("Error fetching artworks:", err);
+        throw err;
       }
-      
-      console.log("Fetched artworks:", data);
-      return data;
     },
   });
 
