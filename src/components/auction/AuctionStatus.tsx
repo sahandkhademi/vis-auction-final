@@ -61,7 +61,7 @@ export const AuctionStatus = ({
       if (error) throw error;
       return data;
     },
-    enabled: isEnded && !winnerId // Only fetch if auction ended but winner not set
+    enabled: isEnded && !winnerId
   });
 
   // If auction has ended but winner not set, check if current user is highest bidder
@@ -143,7 +143,7 @@ export const AuctionStatus = ({
         </div>
       </div>
 
-      {needsPayment && isEnded && (
+      {needsPayment && isEnded && !hasCompletedPayment && (
         <div className="mt-4">
           <PaymentButton 
             auctionId={auctionId} 
