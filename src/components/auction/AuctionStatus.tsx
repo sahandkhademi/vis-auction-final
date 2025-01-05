@@ -26,7 +26,7 @@ export const AuctionStatus = ({
   const user = useUser();
   const isWinner = user?.id === winnerId;
   const needsPayment = isWinner && paymentStatus === 'pending' && completionStatus === 'completed';
-  const hasCompletedPayment = isWinner && paymentStatus === 'completed' && completionStatus === 'completed';
+  const hasCompletedPayment = isWinner && paymentStatus === 'completed';
   const isEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
   // Fetch the winner's actual winning bid amount
@@ -55,9 +55,9 @@ export const AuctionStatus = ({
   return (
     <div className="space-y-4">
       {hasCompletedPayment && (
-        <Alert variant="success" className="mb-4">
-          <AlertTitle>Payment Completed!</AlertTitle>
-          <AlertDescription>
+        <Alert className="bg-green-50 border-green-200">
+          <AlertTitle className="text-green-800">Payment Completed!</AlertTitle>
+          <AlertDescription className="text-green-700">
             Thank you for your payment! Your purchase has been confirmed. You should have received a confirmation email with further details.
           </AlertDescription>
         </Alert>
@@ -70,14 +70,25 @@ export const AuctionStatus = ({
         </div>
         <div className="flex flex-col items-end gap-2">
           {!isEnded && endDate && (
-            <div className="text-sm text-gray-500">
-              <p className="mb-1">Time Remaining</p>
+            <div className="text-right">
+              <p className="text-sm text-gray-500 mb-1">Time Remaining</p>
               <CountdownTimer endDate={endDate} />
             </div>
           )}
-          <Badge variant={isEnded ? (paymentStatus === 'completed' ? 'default' : 'secondary') : 'outline'}>
-            {isEnded ? (paymentStatus === 'completed' ? 'Paid' : 'Payment Pending') : 'Ongoing'}
+          <Badge 
+            variant={completionStatus === 'completed' ? 'default' : 'outline'}
+            className={`${completionStatus === 'completed' ? 'bg-blue-500' : ''}`}
+          >
+            {completionStatus === 'completed' ? 'Auction Ended' : 'Ongoing'}
           </Badge>
+          {isWinner && (
+            <Badge 
+              variant="default" 
+              className="bg-green-500"
+            >
+              You Won!
+            </Badge>
+          )}
         </div>
       </div>
 
