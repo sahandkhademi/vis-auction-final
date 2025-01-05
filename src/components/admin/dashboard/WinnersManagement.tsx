@@ -79,7 +79,7 @@ export const WinnersManagement = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Artwork</TableHead>
-              <TableHead>Winner</TableHead>
+              <TableHead>Username</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Payment Status</TableHead>
@@ -92,7 +92,7 @@ export const WinnersManagement = () => {
               <TableRow key={winner.id}>
                 <TableCell>{winner.title}</TableCell>
                 <TableCell>
-                  {winner.profiles?.username || 'Unknown'}
+                  {winner.profiles?.username || 'NULL'}
                 </TableCell>
                 <TableCell>
                   {winner.profiles?.email || 'No email'}
