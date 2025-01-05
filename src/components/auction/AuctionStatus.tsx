@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle2 } from "lucide-react";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -40,7 +41,7 @@ export const AuctionStatus = ({
         .eq('user_id', winnerId)
         .order('amount', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data?.amount || currentBid;
@@ -53,9 +54,10 @@ export const AuctionStatus = ({
   return (
     <div className="space-y-4">
       {hasCompletedPayment && (
-        <Alert variant="success" className="mb-4">
-          <AlertTitle>Payment Completed!</AlertTitle>
-          <AlertDescription>
+        <Alert className="bg-green-50 border-green-200">
+          <CheckCircle2 className="h-4 w-4 text-green-600" />
+          <AlertTitle className="text-green-800">Payment Completed!</AlertTitle>
+          <AlertDescription className="text-green-700">
             Thank you for your payment! Your purchase has been confirmed. You should have received a confirmation email with further details.
           </AlertDescription>
         </Alert>
