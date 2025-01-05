@@ -26,6 +26,7 @@ export const AuctionStatus = ({
   const isWinner = user?.id === winnerId;
   const needsPayment = isWinner && paymentStatus === 'pending' && completionStatus === 'completed';
   const hasCompletedPayment = isWinner && paymentStatus === 'completed' && completionStatus === 'completed';
+  const isEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
   // Fetch the winner's actual winning bid amount
   const { data: winningBid } = useQuery({
@@ -40,7 +41,7 @@ export const AuctionStatus = ({
         .eq('user_id', winnerId)
         .order('amount', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data?.amount || currentBid;
@@ -67,7 +68,7 @@ export const AuctionStatus = ({
           <p className="text-2xl font-bold">€{finalPrice?.toLocaleString()}</p>
         </div>
         <div>
-          {completionStatus === 'completed' ? (
+          {isEnded ? (
             <Badge variant={paymentStatus === 'completed' ? 'default' : 'secondary'}>
               {paymentStatus === 'completed' ? 'Paid' : 'Payment Pending'}
             </Badge>
