@@ -59,12 +59,6 @@ export const AuctionSettings = ({ form, isLoading }: AuctionSettingsProps) => {
               selectedDate.setHours(now.getHours(), now.getMinutes());
             }
             
-            // Ensure the selected date/time is not in the past
-            const now = new Date();
-            if (selectedDate < now) {
-              selectedDate = now;
-            }
-            
             field.onChange(selectedDate.toISOString());
           };
 
@@ -115,7 +109,13 @@ export const AuctionSettings = ({ form, isLoading }: AuctionSettingsProps) => {
                       mode="single"
                       selected={date}
                       onSelect={handleDateSelect}
-                      disabled={(date) => date < new Date()}
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const compareDate = new Date(date);
+                        compareDate.setHours(0, 0, 0, 0);
+                        return compareDate < today;
+                      }}
                       initialFocus
                     />
                   </PopoverContent>
