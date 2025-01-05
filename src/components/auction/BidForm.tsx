@@ -86,14 +86,14 @@ export const BidForm = ({
     setIsSubmitting(true);
 
     try {
-      // Get the current highest bid's user, using maybeSingle() instead of single()
+      // Get the current highest bid's user
       const { data: previousBid } = await supabase
         .from('bids')
         .select('user_id')
         .eq('auction_id', auctionId)
         .order('amount', { ascending: false })
         .limit(1)
-        .maybeSingle();
+        .single();
 
       // Insert the new bid
       const { data: bidData, error: bidError } = await supabase

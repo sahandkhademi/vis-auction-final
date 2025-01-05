@@ -68,13 +68,14 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'bids',
           filter: `auction_id=eq.${auctionId}`
         },
         async (payload) => {
           console.log('Bid change received:', payload);
+          // Refetch all bids to ensure consistent state
           await fetchBids();
         }
       )
