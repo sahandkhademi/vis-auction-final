@@ -11,6 +11,7 @@ import { AdminAnalytics } from "@/components/admin/dashboard/AdminAnalytics";
 import { BulkArtworkManager } from "@/components/admin/dashboard/BulkArtworkManager";
 import { UserManagement } from "@/components/admin/dashboard/UserManagement";
 import { BackupMonitoring } from "@/components/admin/dashboard/BackupMonitoring";
+import { BackupManagement } from "@/components/admin/dashboard/BackupManagement";
 import { WinnersManagement } from "@/components/admin/dashboard/WinnersManagement";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -67,14 +68,15 @@ const AdminDashboard = () => {
       <Tabs defaultValue="analytics" className="space-y-6">
         <Card>
           <CardContent className="pt-6 pb-4">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 min-h-[44px]">
-              <TabsTrigger value="analytics" className="w-full">Analytics</TabsTrigger>
-              <TabsTrigger value="artworks" className="w-full">Artworks</TabsTrigger>
-              <TabsTrigger value="artists" className="w-full">Artists</TabsTrigger>
-              <TabsTrigger value="winners" className="w-full">Winners</TabsTrigger>
-              <TabsTrigger value="users" className="w-full">Users</TabsTrigger>
-              <TabsTrigger value="bulk" className="w-full">Bulk Manager</TabsTrigger>
-              <TabsTrigger value="backups" className="w-full">Backups</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 min-h-[44px]">
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="artworks">Artworks</TabsTrigger>
+              <TabsTrigger value="artists">Artists</TabsTrigger>
+              <TabsTrigger value="winners">Winners</TabsTrigger>
+              <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="bulk">Bulk Manager</TabsTrigger>
+              <TabsTrigger value="backups">Backups</TabsTrigger>
+              <TabsTrigger value="monitoring">Monitoring</TabsTrigger>
             </TabsList>
           </CardContent>
         </Card>
@@ -152,6 +154,17 @@ const AdminDashboard = () => {
           <Card>
             <CardHeader>
               <CardTitle>Backup Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BackupManagement />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="monitoring">
+          <Card>
+            <CardHeader>
+              <CardTitle>System Monitoring</CardTitle>
             </CardHeader>
             <CardContent>
               <BackupMonitoring />
