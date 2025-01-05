@@ -21,7 +21,9 @@ export const WonAuctions = ({ userId }: { userId: string }) => {
   const { data: wonAuctions, isLoading } = useQuery({
     queryKey: ["wonAuctions", userId],
     queryFn: async () => {
-      // First, get auctions where user is explicitly set as winner
+      console.log("Fetching won auctions for user:", userId);
+      
+      // Get all completed auctions where user is explicitly set as winner
       const { data: winnerAuctions, error: winnerError } = await supabase
         .from("artworks")
         .select("id, title, current_price, payment_status, image_url, winner_id, completion_status")
@@ -29,58 +31,72 @@ export const WonAuctions = ({ userId }: { userId: string }) => {
         .eq("completion_status", "completed")
         .order("updated_at", { ascending: false });
 
-      if (winnerError) throw winnerError;
+      if (winnerError) {
+        console.error("Error fetching winner auctions:", winnerError);
+        throw winnerError;
+      }
 
-      // Then, get completed auctions where user has the highest bid
-      const { data: bids, error: bidsError } = await supabase
+      console.log("Explicit winner auctions:", winnerAuctions);
+
+      // Get all completed auctions where the user has placed bids
+      const { data: userBids, error: bidsError } = await supabase
         .from("bids")
-        .select("auction_id, amount")
+        .select(`
+          auction_id,
+          amount,
+          artworks!inner (
+            id,
+            title,
+            current_price,
+            payment_status,
+            image_url,
+            winner_id,
+            completion_status
+          )
+        `)
         .eq("user_id", userId)
+        .eq("artworks.completion_status", "completed")
+        .is("artworks.winner_id", null)
         .order("amount", { ascending: false });
 
-      if (bidsError) throw bidsError;
+      if (bidsError) {
+        console.error("Error fetching user bids:", bidsError);
+        throw bidsError;
+      }
 
-      if (!bids?.length) return winnerAuctions || [];
+      console.log("User bids with auction data:", userBids);
 
-      const auctionIds = bids.map(bid => bid.auction_id);
-      
-      const { data: potentialWins, error: potentialError } = await supabase
-        .from("artworks")
-        .select("id, title, current_price, payment_status, image_url, winner_id, completion_status")
-        .in("id", auctionIds)
-        .eq("completion_status", "completed")
-        .is("winner_id", null)
-        .order("updated_at", { ascending: false });
-
-      if (potentialError) throw potentialError;
-
-      // For each potential win, verify the user has the highest bid
+      // For each auction where user has bid, verify if they have the highest bid
       const verifiedWins = await Promise.all(
-        (potentialWins || []).map(async (auction) => {
+        (userBids || []).map(async (bid) => {
           const { data: highestBid } = await supabase
             .from("bids")
             .select("user_id, amount")
-            .eq("auction_id", auction.id)
+            .eq("auction_id", bid.auction_id)
             .order("amount", { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
           if (highestBid?.user_id === userId) {
-            return auction;
+            return bid.artworks;
           }
           return null;
         })
       );
 
-      // Combine and deduplicate results
+      console.log("Verified wins:", verifiedWins);
+
+      // Combine explicit wins and highest bid wins, removing duplicates
       const allWonAuctions = [
         ...(winnerAuctions || []),
         ...verifiedWins.filter(Boolean)
       ];
-      
+
       const uniqueAuctions = Array.from(
         new Map(allWonAuctions.map(auction => [auction.id, auction])).values()
       );
+
+      console.log("Final unique won auctions:", uniqueAuctions);
       
       return uniqueAuctions as WonAuction[];
     },
