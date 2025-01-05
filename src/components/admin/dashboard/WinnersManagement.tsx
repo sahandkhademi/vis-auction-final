@@ -23,16 +23,37 @@ export const WinnersManagement = () => {
           winner:profiles!artworks_winner_id_fkey (
             id,
             username,
-            avatar_url,
-            auth_users (
-              email
-            )
+            avatar_url
           )
         `)
         .not("winner_id", "is", null)
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
+
+      // Fetch emails in a separate query since we can't directly join with auth.users
+      if (data) {
+        const winnerIds = data.map(artwork => artwork.winner?.id).filter(Boolean);
+        const { data: emails } = await supabase
+          .from("profiles")
+          .select(`
+            id,
+            auth_users!profiles_id_fkey (
+              email
+            )
+          `)
+          .in('id', winnerIds);
+
+        // Merge email data with artwork data
+        return data.map(artwork => ({
+          ...artwork,
+          winner: {
+            ...artwork.winner,
+            email: emails?.find(e => e.id === artwork.winner?.id)?.auth_users?.email
+          }
+        }));
+      }
+
       return data;
     },
   });
@@ -98,7 +119,7 @@ export const WinnersManagement = () => {
             <TableRow key={artwork.id}>
               <TableCell className="font-medium">{artwork.title}</TableCell>
               <TableCell>{artwork.winner?.username || "No username"}</TableCell>
-              <TableCell>{artwork.winner?.auth_users?.email}</TableCell>
+              <TableCell>{artwork.winner?.email}</TableCell>
               <TableCell>
                 ${artwork.current_price?.toLocaleString()}
               </TableCell>
