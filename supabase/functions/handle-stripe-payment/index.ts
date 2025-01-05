@@ -28,9 +28,13 @@ serve(async (req) => {
       );
     }
 
-    // Get the raw body as text
-    const rawBody = await req.text();
-    console.log('Raw webhook body:', rawBody);
+    // Get the raw body as an ArrayBuffer
+    const rawBody = await req.arrayBuffer();
+    // Convert ArrayBuffer to string
+    const rawBodyString = new TextDecoder().decode(rawBody);
+    
+    console.log('Raw webhook body:', rawBodyString);
+    console.log('Stripe signature:', signature);
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
@@ -38,9 +42,9 @@ serve(async (req) => {
 
     let event;
     try {
-      // Use constructEvent asynchronously
+      // Use constructEventAsync with the raw body string
       event = await stripe.webhooks.constructEventAsync(
-        rawBody,
+        rawBodyString,
         signature,
         Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
       );
