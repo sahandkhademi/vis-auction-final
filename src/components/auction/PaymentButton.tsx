@@ -5,19 +5,23 @@ import { toast } from "sonner";
 
 interface PaymentButtonProps {
   auctionId: string;
+  currentPrice: number;
   disabled?: boolean;
 }
 
-export const PaymentButton = ({ auctionId, disabled }: PaymentButtonProps) => {
+export const PaymentButton = ({ auctionId, currentPrice, disabled }: PaymentButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handlePayment = async () => {
     setIsLoading(true);
     try {
-      console.log('🔔 Initiating payment for auction:', auctionId);
+      console.log('🔔 Initiating payment for auction:', auctionId, 'amount:', currentPrice);
       
       const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
-        body: { auctionId },
+        body: { 
+          auctionId,
+          amount: currentPrice 
+        },
       });
 
       console.log('Response from create-stripe-checkout:', { data, error });
