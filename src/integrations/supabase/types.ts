@@ -278,10 +278,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      handle_auction_completion: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       log_backup_operation: {
         Args: {
           p_backup_type: string
