@@ -1,0 +1,49 @@
+import Stripe from 'https://esm.sh/stripe@14.21.0';
+
+export const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
+};
+
+export const createStripeClient = () => {
+  return new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+    apiVersion: '2023-10-16',
+    typescript: true,
+  });
+};
+
+export const handleCheckoutComplete = async (session: Stripe.Checkout.Session, supabaseClient: any) => {
+  if (!session.metadata?.auction_id) {
+    throw new Error('Missing auction_id in session metadata');
+  }
+
+  const auctionId = session.metadata.auction_id;
+  console.log(`[${session.id}] Updating payment status for auction:`, auctionId);
+
+  // Verify the payment intent status
+  const paymentIntent = await createStripeClient().paymentIntents.retrieve(session.payment_intent as string);
+  if (paymentIntent.status !== 'succeeded') {
+    throw new Error(`Payment not successful. Status: ${paymentIntent.status}`);
+  }
+
+  // Update the return_url in the session to include payment_success parameter
+  await createStripeClient().checkout.sessions.update(session.id, {
+    success_url: `${session.success_url}?payment_success=true`,
+  });
+
+  // Update payment status
+  const { error: updateError } = await supabaseClient
+    .from('artworks')
+    .update({ 
+      payment_status: 'completed',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', auctionId);
+
+  if (updateError) {
+    console.error(`[${session.id}] Error updating artwork payment status:`, updateError);
+    throw updateError;
+  }
+
+  console.log(`[${session.id}] Payment status updated successfully`);
+};
