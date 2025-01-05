@@ -46,7 +46,7 @@ serve(async (req) => {
 
     // Send email to winner if email exists
     if (auction.profiles?.email) {
-      console.log('Sending winner email to:', auction.profiles.email);
+      console.log('Attempting to send winner email to:', auction.profiles.email);
       
       const emailResponse = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -79,12 +79,17 @@ serve(async (req) => {
       });
 
       const emailResult = await emailResponse.json();
-      console.log('Email sending result:', emailResult);
+      console.log('Email API Response:', {
+        status: emailResponse.status,
+        result: emailResult
+      });
 
       if (!emailResponse.ok) {
         console.error('Failed to send email:', emailResult);
-        throw new Error('Failed to send winner email');
+        throw new Error(`Failed to send winner email: ${JSON.stringify(emailResult)}`);
       }
+    } else {
+      console.log('No email found for winner:', auction.winner_id);
     }
 
     return new Response(
