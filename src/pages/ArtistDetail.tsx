@@ -70,8 +70,8 @@ const ArtistDetail = () => {
     <div className="min-h-screen bg-white pt-20">
       <div className="max-w-[1400px] mx-auto px-6">
         <div className="py-12">
-          <div className="block md:flex md:items-start md:gap-8">
-            <div className="flex flex-col items-center md:block mb-6 md:mb-0">
+          <div className="flex flex-col md:flex-row items-start gap-8">
+            <div className="flex flex-col items-center md:items-start mb-6 md:mb-0 md:w-48">
               <Avatar className="h-24 w-24">
                 {artist.profile_image_url ? (
                   <AvatarImage src={artist.profile_image_url} alt={artist.name} />
@@ -81,13 +81,15 @@ const ArtistDetail = () => {
                   </AvatarFallback>
                 )}
               </Avatar>
-              <h1 className="text-3xl text-gray-900 mt-4 md:mt-0">{artist.name}</h1>
+              <h1 className="text-3xl mt-4">{artist.name}</h1>
             </div>
-            <p className="text-gray-600 max-w-2xl text-center md:text-left">{artist.bio}</p>
+            <div className="flex-1">
+              <p className="text-gray-600 text-center md:text-left">{artist.bio}</p>
+            </div>
           </div>
 
           <div className="mt-16">
-            <h2 className="text-2xl text-gray-900 mb-8">Artworks by {artist.name}</h2>
+            <h2 className="text-2xl mb-8">Artworks by {artist.name}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {artworks?.map((artwork) => (
                 <AuctionCard
