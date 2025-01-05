@@ -11,6 +11,11 @@ export const EmailTester = () => {
       setIsSending(true);
       const { data: { session } } = await supabase.auth.getSession();
       
+      if (!session) {
+        toast.error("You must be logged in to send test emails");
+        return;
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-email-templates`,
         {
@@ -21,16 +26,17 @@ export const EmailTester = () => {
         }
       );
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to send test emails");
+        throw new Error(result.error || "Failed to send test emails");
       }
 
-      const result = await response.json();
       toast.success("Test emails sent successfully!");
       console.log("Test emails sent to:", result.recipients);
     } catch (error) {
       console.error("Error sending test emails:", error);
-      toast.error("Failed to send test emails");
+      toast.error(error.message || "Failed to send test emails");
     } finally {
       setIsSending(false);
     }

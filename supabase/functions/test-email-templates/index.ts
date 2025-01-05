@@ -8,38 +8,113 @@ const corsHeaders = {
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 
+// Email template styling functions
+const getBaseEmailStyle = () => `
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #ffffff;
+  color: #1a1a1a;
+`;
+
+const getHeadingStyle = () => `
+  color: #1a1a1a;
+  font-size: 24px;
+  margin-bottom: 20px;
+  font-weight: 600;
+`;
+
+const getPriceStyle = () => `
+  color: #C6A07C;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 16px 0;
+`;
+
+const getButtonStyle = () => `
+  display: inline-block;
+  background-color: #C6A07C;
+  color: white;
+  padding: 12px 24px;
+  text-decoration: none;
+  border-radius: 4px;
+  margin: 16px 0;
+`;
+
+const getFooterStyle = () => `
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+  color: #666;
+  font-size: 14px;
+`;
+
+const getTableStyle = () => `
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+`;
+
+const getTdStyle = () => `
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+`;
+
 serve(async (req) => {
+  console.log('Received request to test email templates');
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    if (!RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not set');
+      throw new Error('RESEND_API_KEY is not set');
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get all admin users
-    const { data: adminProfiles } = await supabaseClient
+    console.log('Fetching admin profiles...');
+    const { data: adminProfiles, error: adminError } = await supabaseClient
       .from('profiles')
       .select('id')
       .eq('is_admin', true);
 
+    if (adminError) {
+      console.error('Error fetching admin profiles:', adminError);
+      throw adminError;
+    }
+
     if (!adminProfiles?.length) {
+      console.error('No admin profiles found');
       throw new Error('No admin users found');
     }
 
-    // Get admin users' emails
-    const { data: { users: adminUsers } } = await supabaseClient.auth.admin.listUsers();
+    console.log(`Found ${adminProfiles.length} admin profiles`);
+
+    const { data: { users: adminUsers }, error: usersError } = await supabaseClient.auth.admin.listUsers();
     
+    if (usersError) {
+      console.error('Error fetching admin users:', usersError);
+      throw usersError;
+    }
+
     const adminEmails = adminUsers
       .filter(user => adminProfiles.some(profile => profile.id === user.id))
       .map(user => user.email)
       .filter(Boolean);
 
     if (!adminEmails.length) {
+      console.error('No admin emails found');
       throw new Error('No admin emails found');
     }
+
+    console.log(`Found ${adminEmails.length} admin emails:`, adminEmails);
 
     // Sample data for testing
     const sampleArtwork = {
@@ -128,9 +203,11 @@ serve(async (req) => {
       }
     ];
 
+    console.log('Sending test emails...');
     // Send all test emails
-    const emailPromises = templates.map(template => 
-      fetch('https://api.resend.com/emails', {
+    const emailPromises = templates.map(template => {
+      console.log(`Sending template: ${template.subject}`);
+      return fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -142,10 +219,18 @@ serve(async (req) => {
           subject: template.subject,
           html: template.html
         })
-      })
-    );
+      }).then(async (response) => {
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Failed to send email ${template.subject}:`, errorText);
+          throw new Error(`Failed to send email: ${errorText}`);
+        }
+        return response.json();
+      });
+    });
 
     await Promise.all(emailPromises);
+    console.log('All test emails sent successfully');
 
     return new Response(
       JSON.stringify({ 
