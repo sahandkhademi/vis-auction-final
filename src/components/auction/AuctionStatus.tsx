@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { CountdownTimer } from "./CountdownTimer";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -67,14 +68,16 @@ export const AuctionStatus = ({
           <p className="text-sm text-gray-500">Current Price</p>
           <p className="text-2xl font-bold">€{finalPrice?.toLocaleString()}</p>
         </div>
-        <div>
-          {isEnded ? (
-            <Badge variant={paymentStatus === 'completed' ? 'default' : 'secondary'}>
-              {paymentStatus === 'completed' ? 'Paid' : 'Payment Pending'}
-            </Badge>
-          ) : (
-            <Badge variant="outline">Ongoing</Badge>
+        <div className="flex flex-col items-end gap-2">
+          {!isEnded && endDate && (
+            <div className="text-sm text-gray-500">
+              <p className="mb-1">Time Remaining</p>
+              <CountdownTimer endDate={endDate} />
+            </div>
           )}
+          <Badge variant={isEnded ? (paymentStatus === 'completed' ? 'default' : 'secondary') : 'outline'}>
+            {isEnded ? (paymentStatus === 'completed' ? 'Paid' : 'Payment Pending') : 'Ongoing'}
+          </Badge>
         </div>
       </div>
 
