@@ -16,11 +16,14 @@ export const EmailTester = () => {
         return;
       }
 
-      console.log("Starting test email request...");
+      console.log("Starting test email request with session:", session.user.email);
 
       const { data, error } = await supabase.functions.invoke('test-email-templates', {
         method: 'POST',
-        body: { test: true },
+        body: { 
+          test: true,
+          userEmail: session.user.email // Add user email for testing
+        },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
@@ -30,6 +33,7 @@ export const EmailTester = () => {
       console.log("Response from test-email-templates:", { data, error });
 
       if (error) {
+        console.error("Error details:", error);
         throw new Error(error.message || "Failed to send test emails");
       }
 
