@@ -35,10 +35,28 @@ export const useAuctionSubscription = (
             table: 'bids',
             filter: `auction_id=eq.${id}`
           },
-          (payload) => {
-            const newBid = payload.new as { amount: number };
+          async (payload) => {
+            const newBid = payload.new as { amount: number, user_id: string };
             setCurrentHighestBid(newBid.amount);
             toast.info(`New bid: €${newBid.amount.toLocaleString()}`);
+
+            // Send outbid notification email
+            try {
+              const { error } = await supabase.functions.invoke('send-auction-update', {
+                body: {
+                  type: 'outbid',
+                  userId: newBid.user_id,
+                  auctionId: id,
+                  newBidAmount: newBid.amount
+                }
+              });
+
+              if (error) {
+                console.error('❌ Error sending outbid notification:', error);
+              }
+            } catch (error) {
+              console.error('❌ Error invoking send-auction-update:', error);
+            }
           }
         )
         .subscribe();
@@ -60,10 +78,28 @@ export const useAuctionSubscription = (
             filter: `id=eq.${id}`,
           },
           async (payload) => {
-            const newData = payload.new as { completion_status: string };
+            const newData = payload.new as { completion_status: string, winner_id: string };
             
-            if (newData.completion_status === 'completed') {
+            if (newData.completion_status === 'completed' && newData.winner_id) {
               await handleAuctionCompletion();
+              
+              // Send winner notification email
+              try {
+                const { error } = await supabase.functions.invoke('send-auction-update', {
+                  body: {
+                    type: 'auction_won',
+                    userId: newData.winner_id,
+                    auctionId: id
+                  }
+                });
+
+                if (error) {
+                  console.error('❌ Error sending winner notification:', error);
+                }
+              } catch (error) {
+                console.error('❌ Error invoking send-auction-update:', error);
+              }
+
               await refetch();
               toast.info("This auction has ended");
             }
