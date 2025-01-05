@@ -16,11 +16,11 @@ export const PaymentButton = ({ auctionId, disabled }: PaymentButtonProps) => {
     try {
       console.log('🔔 Initiating payment for auction:', auctionId);
       
-      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+      const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
         body: { auctionId },
       });
 
-      console.log('Response from create-checkout-session:', { data, error });
+      console.log('Response from create-stripe-checkout:', { data, error });
 
       if (error) throw error;
       if (!data?.url) throw new Error('No checkout URL received');
