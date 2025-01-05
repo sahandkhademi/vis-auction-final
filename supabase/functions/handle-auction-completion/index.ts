@@ -26,7 +26,8 @@ serve(async (req) => {
       .select(`
         *,
         profiles!winner_id (
-          email
+          email,
+          username
         )
       `)
       .eq('id', auctionId)
@@ -59,12 +60,12 @@ serve(async (req) => {
           subject: 'Congratulations! You Won the Auction!',
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h1 style="color: #1a1a1a;">🎉 Congratulations!</h1>
+              <h1 style="color: #1a1a1a;">🎉 Congratulations ${auction.profiles.username || ''}!</h1>
               <p>You've won the auction for "${auction.title}"!</p>
               <p style="font-size: 18px; color: #C6A07C; font-weight: bold;">
                 Winning Bid: €${auction.current_price?.toLocaleString()}
               </p>
-              <p>Please complete your payment within 48 hours to secure your win.</p>
+              <p>Please complete your payment within 48 hours to secure your win. If payment is not received within this timeframe, the auction will be awarded to the next highest bidder.</p>
               <a href="${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}/auction/${auction.id}"
                  style="display: inline-block; background-color: #C6A07C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">
                 Complete Payment
