@@ -52,6 +52,16 @@ export const AuctionStatus = ({
 
   const finalPrice = winningBid || currentBid;
 
+  console.log('Debug payment button:', {
+    isWinner,
+    needsPayment,
+    isEnded,
+    completionStatus,
+    paymentStatus,
+    winnerId,
+    userId: user?.id
+  });
+
   return (
     <div className="space-y-4">
       {hasCompletedPayment && (
