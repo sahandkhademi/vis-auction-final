@@ -21,12 +21,18 @@ serve(async (req) => {
   }
 
   try {
-    // Get the stripe signature from the headers
+    // Get the raw body first - crucial for signature verification
+    const rawBody = await req.text();
+    console.log('📦 Received webhook payload length:', rawBody.length);
+
+    // Get the stripe signature - must be exact header from Stripe
     const signature = req.headers.get('stripe-signature');
+    console.log('🔑 Stripe signature present:', !!signature);
+
     if (!signature) {
-      console.error('Missing Stripe signature');
+      console.error('❌ Missing Stripe signature header');
       return new Response(
-        JSON.stringify({ error: 'Missing Stripe signature' }),
+        JSON.stringify({ error: 'Missing signature header' }),
         { 
           status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -34,14 +40,10 @@ serve(async (req) => {
       );
     }
 
-    // Get the raw body
-    const rawBody = await req.text();
-    console.log('Webhook received - Processing event...');
-
     // Get webhook secret from environment
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
     if (!webhookSecret) {
-      console.error('Missing STRIPE_WEBHOOK_SECRET');
+      console.error('❌ Missing STRIPE_WEBHOOK_SECRET environment variable');
       return new Response(
         JSON.stringify({ error: 'Server configuration error' }),
         { 
@@ -51,18 +53,19 @@ serve(async (req) => {
       );
     }
 
-    // Verify the webhook signature
+    // Verify the webhook signature with raw body
     let event;
     try {
+      console.log('🔍 Attempting signature verification...');
       event = stripe.webhooks.constructEvent(
         rawBody,
         signature,
         webhookSecret
       );
-      console.log('✅ Webhook signature verified');
-      console.log('Event type:', event.type);
+      console.log('✅ Webhook verified successfully');
+      console.log('📣 Event type:', event.type);
     } catch (err) {
-      console.error(`⚠️ Webhook signature verification failed:`, err.message);
+      console.error('❌ Webhook signature verification failed:', err.message);
       return new Response(
         JSON.stringify({ error: `Webhook Error: ${err.message}` }),
         { 
@@ -88,20 +91,20 @@ serve(async (req) => {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
-        console.log('💰 Checkout session completed:', session.id);
+        console.log('💰 Processing completed checkout:', session.id);
         
         if (session.metadata?.auction_id) {
-          console.log('Updating artwork payment status for:', session.metadata.auction_id);
+          console.log('🎨 Updating artwork payment status for:', session.metadata.auction_id);
           const { error } = await supabaseAdmin
             .from('artworks')
             .update({ payment_status: 'completed' })
             .eq('id', session.metadata.auction_id);
           
           if (error) {
-            console.error('Error updating artwork payment status:', error);
+            console.error('❌ Error updating artwork payment status:', error);
             throw error;
           }
-          console.log('✅ Updated artwork payment status to completed');
+          console.log('✅ Payment status updated successfully');
         }
         break;
       }
