@@ -31,8 +31,6 @@ serve(async (req) => {
     // Get the raw body as text
     const rawBody = await req.text();
     console.log('Raw webhook body:', rawBody);
-    console.log('Stripe signature:', signature);
-    console.log('Webhook secret:', Deno.env.get('STRIPE_WEBHOOK_SECRET'));
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
@@ -71,7 +69,24 @@ serve(async (req) => {
         const auctionId = session.metadata.auction_id;
         console.log('Updating payment status for auction:', auctionId);
 
-        const { error } = await supabaseClient
+        // First, verify the auction exists and get its current status
+        const { data: auction, error: fetchError } = await supabaseClient
+          .from('artworks')
+          .select('completion_status, payment_status')
+          .eq('id', auctionId)
+          .single();
+
+        if (fetchError) {
+          console.error('Error fetching artwork:', fetchError);
+          throw fetchError;
+        }
+
+        if (!auction) {
+          throw new Error(`Auction ${auctionId} not found`);
+        }
+
+        // Update the payment status
+        const { error: updateError } = await supabaseClient
           .from('artworks')
           .update({ 
             payment_status: 'completed',
@@ -79,9 +94,9 @@ serve(async (req) => {
           })
           .eq('id', auctionId);
 
-        if (error) {
-          console.error('Error updating artwork payment status:', error);
-          throw error;
+        if (updateError) {
+          console.error('Error updating artwork payment status:', updateError);
+          throw updateError;
         }
 
         console.log('Payment status updated successfully for auction:', auctionId);
