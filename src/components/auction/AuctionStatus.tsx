@@ -52,14 +52,17 @@ export const AuctionStatus = ({
 
   const finalPrice = winningBid || currentBid;
 
-  console.log('Debug payment button:', {
+  console.log('Debug winner recognition:', {
+    userId: user?.id,
+    winnerId,
     isWinner,
-    needsPayment,
-    isEnded,
     completionStatus,
     paymentStatus,
-    winnerId,
-    userId: user?.id
+    isEnded,
+    needsPayment,
+    finalPrice,
+    currentTime: new Date().toISOString(),
+    endDate,
   });
 
   return (
