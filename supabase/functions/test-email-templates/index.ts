@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
+import { getEmailTemplates, SampleArtwork } from './email-templates.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,59 +8,6 @@ const corsHeaders = {
 };
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-
-// Email template styling functions
-const getBaseEmailStyle = () => `
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: #ffffff;
-  color: #1a1a1a;
-`;
-
-const getHeadingStyle = () => `
-  color: #1a1a1a;
-  font-size: 24px;
-  margin-bottom: 20px;
-  font-weight: 600;
-`;
-
-const getPriceStyle = () => `
-  color: #C6A07C;
-  font-size: 20px;
-  font-weight: 600;
-  margin: 16px 0;
-`;
-
-const getButtonStyle = () => `
-  display: inline-block;
-  background-color: #C6A07C;
-  color: white;
-  padding: 12px 24px;
-  text-decoration: none;
-  border-radius: 4px;
-  margin: 16px 0;
-`;
-
-const getFooterStyle = () => `
-  margin-top: 32px;
-  padding-top: 16px;
-  border-top: 1px solid #eee;
-  color: #666;
-  font-size: 14px;
-`;
-
-const getTableStyle = () => `
-  width: 100%;
-  border-collapse: collapse;
-  margin: 16px 0;
-`;
-
-const getTdStyle = () => `
-  padding: 12px;
-  border-bottom: 1px solid #eee;
-`;
 
 serve(async (req) => {
   console.log('Received request to test email templates');
@@ -117,91 +65,14 @@ serve(async (req) => {
     console.log(`Found ${adminEmails.length} admin emails:`, adminEmails);
 
     // Sample data for testing
-    const sampleArtwork = {
+    const sampleArtwork: SampleArtwork = {
       title: "Sample Artwork",
       artist: "John Doe",
       current_price: 1000,
       image_url: "https://example.com/image.jpg"
     };
 
-    // Test templates
-    const templates = [
-      {
-        subject: "[Test] Outbid Notification",
-        html: `
-          <div style="${getBaseEmailStyle()}">
-            <h1 style="${getHeadingStyle()}">New Bid Alert</h1>
-            <p>Someone has placed a higher bid on "${sampleArtwork.title}".</p>
-            <p style="${getPriceStyle()}">New Highest Bid: €1,200</p>
-            <p>Don't miss out - place a new bid now to stay in the running!</p>
-            <a href="#" style="${getButtonStyle()}">View Auction</a>
-            <div style="${getFooterStyle()}">
-              <small>This is a test email from VIS Auction.</small>
-            </div>
-          </div>
-        `
-      },
-      {
-        subject: "[Test] Auction Ending Soon",
-        html: `
-          <div style="${getBaseEmailStyle()}">
-            <h1 style="${getHeadingStyle()}">Time is Running Out!</h1>
-            <p>The auction for "${sampleArtwork.title}" is ending soon.</p>
-            <p style="${getPriceStyle()}">Current Price: €${sampleArtwork.current_price.toLocaleString()}</p>
-            <p>Don't miss your chance to win this exceptional piece!</p>
-            <a href="#" style="${getButtonStyle()}">Place Your Bid Now</a>
-            <div style="${getFooterStyle()}">
-              <small>This is a test email from VIS Auction.</small>
-            </div>
-          </div>
-        `
-      },
-      {
-        subject: "[Test] Auction Won",
-        html: `
-          <div style="${getBaseEmailStyle()}">
-            <h1 style="${getHeadingStyle()}">🎉 You're the Winner!</h1>
-            <p>Congratulations! You've won the auction for "${sampleArtwork.title}".</p>
-            <p style="${getPriceStyle()}">Winning Bid: €${sampleArtwork.current_price.toLocaleString()}</p>
-            <p>Please complete your payment to claim your artwork.</p>
-            <a href="#" style="${getButtonStyle()}">Complete Payment</a>
-            <div style="${getFooterStyle()}">
-              <small>This is a test email from VIS Auction.</small>
-            </div>
-          </div>
-        `
-      },
-      {
-        subject: "[Test] Payment Confirmation",
-        html: `
-          <div style="${getBaseEmailStyle()}">
-            <h1 style="${getHeadingStyle()}">🎉 Payment Confirmed!</h1>
-            <p>Thank you for your payment. Here's your purchase confirmation for "${sampleArtwork.title}".</p>
-            <table style="${getTableStyle()}">
-              <tr>
-                <td style="${getTdStyle()}">Artwork</td>
-                <td style="${getTdStyle()}">${sampleArtwork.title}</td>
-              </tr>
-              <tr>
-                <td style="${getTdStyle()}">Artist</td>
-                <td style="${getTdStyle()}">${sampleArtwork.artist}</td>
-              </tr>
-              <tr>
-                <td style="${getTdStyle()}">Amount Paid</td>
-                <td style="${getTdStyle()}" style="${getPriceStyle()}">€${sampleArtwork.current_price.toLocaleString()}</td>
-              </tr>
-              <tr>
-                <td style="${getTdStyle()}">Date</td>
-                <td style="${getTdStyle()}">${new Date().toLocaleDateString()}</td>
-              </tr>
-            </table>
-            <div style="${getFooterStyle()}">
-              <small>This is a test email from VIS Auction. Please keep this email for your records.</small>
-            </div>
-          </div>
-        `
-      }
-    ];
+    const templates = getEmailTemplates(sampleArtwork);
 
     console.log('Sending test emails...');
     // Send all test emails
