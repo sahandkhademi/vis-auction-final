@@ -9,7 +9,9 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  console.log('Received webhook request');
+  console.log('🔔 Webhook received:', new Date().toISOString());
+  console.log('Method:', req.method);
+  console.log('Headers:', Object.fromEntries(req.headers.entries()));
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -20,7 +22,7 @@ serve(async (req) => {
   try {
     // Get the stripe signature from the headers
     const signature = req.headers.get('stripe-signature');
-    console.log('Stripe signature:', signature ? 'Present' : 'Missing');
+    console.log('Stripe signature present:', !!signature);
 
     if (!signature) {
       console.error('Missing Stripe signature');
@@ -35,13 +37,15 @@ serve(async (req) => {
 
     // Get the raw body
     const body = await req.text();
-    console.log('Webhook body:', body);
+    console.log('Webhook body length:', body.length);
+    console.log('Webhook body preview:', body.substring(0, 100));
 
     // Verify the webhook signature
     let event;
     try {
       const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
       console.log('Webhook secret present:', !!webhookSecret);
+      console.log('Webhook secret first 4 chars:', webhookSecret?.substring(0, 4));
       
       event = stripe.webhooks.constructEvent(
         body,
@@ -50,7 +54,7 @@ serve(async (req) => {
       );
       console.log('Event constructed successfully:', event.type);
     } catch (err) {
-      console.error(`Webhook signature verification failed:`, err.message);
+      console.error(`⚠️ Webhook signature verification failed:`, err.message);
       return new Response(
         JSON.stringify({ error: `Webhook Error: ${err.message}` }),
         { 
@@ -70,17 +74,30 @@ serve(async (req) => {
     switch (event.type) {
       case 'payment_intent.succeeded':
         const paymentIntent = event.data.object;
-        console.log('PaymentIntent was successful!', paymentIntent);
+        console.log('💰 PaymentIntent was successful!', paymentIntent.id);
+        // Update artwork payment status
+        if (paymentIntent.metadata.artwork_id) {
+          const { error } = await supabase
+            .from('artworks')
+            .update({ payment_status: 'completed' })
+            .eq('id', paymentIntent.metadata.artwork_id);
+          
+          if (error) {
+            console.error('Error updating artwork payment status:', error);
+          } else {
+            console.log('✅ Updated artwork payment status to completed');
+          }
+        }
         break;
       case 'payment_intent.payment_failed':
         const paymentFailedIntent = event.data.object;
-        console.log('PaymentIntent failed:', paymentFailedIntent);
+        console.log('❌ PaymentIntent failed:', paymentFailedIntent.id);
         break;
       default:
-        console.log(`Unhandled event type ${event.type}`);
+        console.log(`⚠️ Unhandled event type ${event.type}`);
     }
 
-    console.log('Webhook processed successfully');
+    console.log('✅ Webhook processed successfully');
     return new Response(
       JSON.stringify({ received: true }),
       { 
@@ -89,7 +106,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error processing webhook:', error);
+    console.error('❌ Error processing webhook:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { 
