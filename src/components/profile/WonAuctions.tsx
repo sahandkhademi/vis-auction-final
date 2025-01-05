@@ -3,8 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -15,20 +13,51 @@ interface WonAuction {
   current_price: number;
   payment_status: string;
   image_url: string | null;
+  winner_id: string | null;
+  completion_status: string;
 }
 
 export const WonAuctions = ({ userId }: { userId: string }) => {
   const { data: wonAuctions, isLoading } = useQuery({
     queryKey: ["wonAuctions", userId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First, get auctions where user is the winner
+      const { data: winnerAuctions, error: winnerError } = await supabase
         .from("artworks")
-        .select("id, title, current_price, payment_status, image_url")
+        .select("id, title, current_price, payment_status, image_url, winner_id, completion_status")
         .eq("winner_id", userId)
         .order("updated_at", { ascending: false });
 
-      if (error) throw error;
-      return data as WonAuction[];
+      if (winnerError) throw winnerError;
+
+      // Then, get completed auctions where user is the highest bidder
+      const { data: highestBids, error: bidsError } = await supabase
+        .from("bids")
+        .select("auction_id, amount")
+        .eq("user_id", userId)
+        .order("amount", { ascending: false });
+
+      if (bidsError) throw bidsError;
+
+      if (!highestBids?.length) return winnerAuctions || [];
+
+      const auctionIds = highestBids.map(bid => bid.auction_id);
+      
+      const { data: potentialWins, error: potentialError } = await supabase
+        .from("artworks")
+        .select("id, title, current_price, payment_status, image_url, winner_id, completion_status")
+        .in("id", auctionIds)
+        .eq("completion_status", "completed")
+        .is("winner_id", null)
+        .order("updated_at", { ascending: false });
+
+      if (potentialError) throw potentialError;
+
+      // Combine and deduplicate results
+      const allWonAuctions = [...(winnerAuctions || []), ...(potentialWins || [])];
+      const uniqueAuctions = Array.from(new Map(allWonAuctions.map(auction => [auction.id, auction])).values());
+      
+      return uniqueAuctions as WonAuction[];
     },
     enabled: !!userId,
   });
