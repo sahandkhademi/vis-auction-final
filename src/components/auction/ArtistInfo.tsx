@@ -15,7 +15,7 @@ export const ArtistInfo = ({ name, bio, profileImageUrl, artistId }: ArtistInfoP
       <h3 className="text-sm uppercase tracking-wider text-gray-500 mb-6">
         About the Artist
       </h3>
-      <div className="flex flex-col items-center md:items-start md:flex-row gap-4">
+      <div className="flex items-start gap-4">
         <Avatar className="h-12 w-12">
           {profileImageUrl ? (
             <AvatarImage src={profileImageUrl} alt={name} />
@@ -25,7 +25,7 @@ export const ArtistInfo = ({ name, bio, profileImageUrl, artistId }: ArtistInfoP
             </AvatarFallback>
           )}
         </Avatar>
-        <div className="text-center md:text-left">
+        <div>
           <Link to={`/artist/${artistId}`}>
             <h4 className="font-medium text-gray-900 hover:text-blue-600 transition-colors">
               {name}
