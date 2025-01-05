@@ -79,19 +79,23 @@ serve(async (req) => {
     for (const template of templates) {
       console.log(`Sending template: ${template.subject}`);
       try {
+        const emailData = {
+          from: 'Mosaic Auctions <onboarding@resend.dev>',
+          to: adminEmails.map(email => email.trim()),
+          subject: template.subject,
+          html: template.html,
+          reply_to: 'support@mosaicauctions.com'
+        };
+
+        console.log('Sending email with data:', JSON.stringify(emailData, null, 2));
+
         const response = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${RESEND_API_KEY}`
           },
-          body: JSON.stringify({
-            from: 'Mosaic Auctions <onboarding@resend.dev>',
-            to: adminEmails,
-            subject: template.subject,
-            html: template.html,
-            reply_to: 'support@mosaicauctions.com'
-          })
+          body: JSON.stringify(emailData)
         });
 
         const responseText = await response.text();
