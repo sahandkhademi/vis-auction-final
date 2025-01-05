@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from 'https://esm.sh/stripe@14.21.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { getEmailContent } from '../send-auction-update/email-templates.ts';
+import { sendEmail } from '../send-auction-update/email-service.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,7 +44,6 @@ serve(async (req) => {
 
     let event;
     try {
-      // Use constructEventAsync with the raw body string
       event = await stripe.webhooks.constructEventAsync(
         rawBodyString,
         signature,
@@ -77,7 +78,7 @@ serve(async (req) => {
         // First, verify the auction exists and get its current status
         const { data: auction, error: fetchError } = await supabaseClient
           .from('artworks')
-          .select('completion_status, payment_status, title')
+          .select('*, profiles!winner_id(*)')
           .eq('id', auctionId)
           .single();
 
@@ -106,6 +107,17 @@ serve(async (req) => {
 
         console.log('Payment status updated successfully for auction:', auctionId);
 
+        // Send payment confirmation email to the buyer
+        if (auction.profiles?.email) {
+          try {
+            const emailContent = getEmailContent('payment_confirmation', auction);
+            await sendEmail(auction.profiles.email, emailContent);
+            console.log('Payment confirmation email sent to buyer');
+          } catch (error) {
+            console.error('Error sending payment confirmation email:', error);
+          }
+        }
+
         // Get all admin users
         const { data: adminProfiles, error: adminError } = await supabaseClient
           .from('profiles')
@@ -133,16 +145,11 @@ serve(async (req) => {
 
         // Send email to admin users
         if (adminEmails.length > 0) {
-          const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-          if (!RESEND_API_KEY) {
-            throw new Error('RESEND_API_KEY is not set');
-          }
-
           try {
             const emailResponse = await fetch('https://api.resend.com/emails', {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${RESEND_API_KEY}`,
+                'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({
@@ -154,6 +161,7 @@ serve(async (req) => {
                     <h1 style="color: #1a1a1a;">Payment Completed</h1>
                     <p>A payment has been completed for the artwork "${auction.title}".</p>
                     <p>The payment status has been updated to "completed" in the system.</p>
+                    <p>Amount paid: €${auction.current_price?.toLocaleString()}</p>
                   </div>
                 `
               })
