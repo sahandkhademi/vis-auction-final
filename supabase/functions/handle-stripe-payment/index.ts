@@ -15,23 +15,19 @@ serve(async (req) => {
   }
 
   try {
-    // Get the stripe signature from headers
     const signature = req.headers.get('stripe-signature');
     if (!signature) {
       console.error('Missing Stripe signature');
       throw new Error('Missing stripe signature');
     }
 
-    // Get the raw body
     const body = await req.text();
-    console.log('Webhook body length:', body.length);
+    console.log('Webhook body received, length:', body.length);
 
-    // Initialize Stripe
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
 
-    // Verify webhook signature
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
@@ -40,37 +36,52 @@ serve(async (req) => {
 
     console.log('Webhook event type:', event.type);
 
-    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') || '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
     );
 
-    // Handle the event
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object;
-        console.log('Processing completed checkout:', session.id);
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      console.log('Processing completed checkout session:', session.id);
 
-        if (session.metadata?.auction_id) {
-          console.log('Updating artwork payment status for:', session.metadata.auction_id);
-          
-          const { error } = await supabaseClient
-            .from('artworks')
-            .update({ payment_status: 'completed' })
-            .eq('id', session.metadata.auction_id);
+      if (session.metadata?.auction_id) {
+        const auctionId = session.metadata.auction_id;
+        console.log('Updating payment status for auction:', auctionId);
 
-          if (error) {
-            console.error('Error updating artwork payment status:', error);
-            throw error;
-          }
-          console.log('Payment status updated successfully');
+        const { error } = await supabaseClient
+          .from('artworks')
+          .update({ 
+            payment_status: 'completed',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', auctionId);
+
+        if (error) {
+          console.error('Error updating artwork payment status:', error);
+          throw error;
         }
-        break;
-      }
 
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+        console.log('Payment status updated successfully for auction:', auctionId);
+
+        // Create a notification for the seller
+        const { data: artwork } = await supabaseClient
+          .from('artworks')
+          .select('title, artist_id')
+          .eq('id', auctionId)
+          .single();
+
+        if (artwork?.artist_id) {
+          await supabaseClient
+            .from('notifications')
+            .insert({
+              user_id: artwork.artist_id,
+              title: 'Payment Received',
+              message: `Payment has been completed for your artwork: ${artwork.title}`,
+              type: 'payment_received'
+            });
+        }
+      }
     }
 
     return new Response(JSON.stringify({ received: true }), {
