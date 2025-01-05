@@ -33,8 +33,23 @@ export const AuctionStatus = ({
   const hasCompletedPayment = isWinner && paymentStatus === 'completed';
   const isEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
+  // Fetch auction data to get latest payment status
+  const { data: auctionData, refetch: refetchAuction } = useQuery({
+    queryKey: ['auction', auctionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('artworks')
+        .select('payment_status, winner_id')
+        .eq('id', auctionId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   // Fetch highest bid to determine potential winner
-  const { data: highestBid, refetch: refetchBids } = useQuery({
+  const { data: highestBid } = useQuery({
     queryKey: ['highestBid', auctionId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -60,7 +75,7 @@ export const AuctionStatus = ({
       const paymentSuccess = searchParams.get('payment_success');
       if (paymentSuccess === 'true') {
         // Refetch the auction data to get the latest payment status
-        await refetchBids();
+        await refetchAuction();
         toast.success(
           "Payment successful! You'll receive a confirmation email shortly.",
           { duration: 5000 }
@@ -69,7 +84,7 @@ export const AuctionStatus = ({
     };
 
     checkPaymentStatus();
-  }, [searchParams, refetchBids]);
+  }, [searchParams, refetchAuction]);
 
   // For debugging
   console.log('Debug auction status:', {
@@ -84,11 +99,12 @@ export const AuctionStatus = ({
     highestBid,
     currentTime: new Date().toISOString(),
     endDate,
+    auctionData,
   });
 
   return (
     <div className="space-y-4">
-      {hasCompletedPayment && (
+      {(hasCompletedPayment || (auctionData?.payment_status === 'completed' && isWinner)) && (
         <Alert className="bg-green-50 border-green-200">
           <AlertTitle className="text-green-800">Payment Completed!</AlertTitle>
           <AlertDescription className="text-green-700">
@@ -126,7 +142,8 @@ export const AuctionStatus = ({
         </div>
       </div>
 
-      {(isWinner || isPotentialWinner) && isEnded && paymentStatus === 'pending' && (
+      {((isWinner || isPotentialWinner) && isEnded && 
+        (paymentStatus === 'pending' && auctionData?.payment_status !== 'completed')) && (
         <div className="mt-4">
           <PaymentButton 
             auctionId={auctionId} 
