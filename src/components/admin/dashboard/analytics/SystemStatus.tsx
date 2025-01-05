@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { Database, HardDrive, Mail } from "lucide-react";
 
 export const SystemStatus = () => {
   return (
@@ -10,16 +10,25 @@ export const SystemStatus = () => {
       <CardContent>
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <span>Database Connection</span>
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
+            <div className="flex items-center gap-2">
+              <Database className="h-5 w-5 text-muted-foreground" />
+              <span>Database Connection</span>
+            </div>
+            <div className="h-3 w-3 rounded-full bg-green-500" />
           </div>
           <div className="flex justify-between items-center">
-            <span>Storage Service</span>
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
+            <div className="flex items-center gap-2">
+              <HardDrive className="h-5 w-5 text-muted-foreground" />
+              <span>Storage Service</span>
+            </div>
+            <div className="h-3 w-3 rounded-full bg-green-500" />
           </div>
           <div className="flex justify-between items-center">
-            <span>Email Service</span>
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
+            <div className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-muted-foreground" />
+              <span>Email Service</span>
+            </div>
+            <div className="h-3 w-3 rounded-full bg-green-500" />
           </div>
         </div>
       </CardContent>
