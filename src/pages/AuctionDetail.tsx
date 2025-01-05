@@ -15,19 +15,6 @@ const AuctionDetail = () => {
   const [currentHighestBid, setCurrentHighestBid] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check for payment success parameter
-  useEffect(() => {
-    const paymentSuccess = searchParams.get('payment_success');
-    if (paymentSuccess === 'true') {
-      toast.success(
-        "Thank you for your payment! We've received your payment successfully. You'll receive a confirmation email shortly.",
-        {
-          duration: 6000,
-        }
-      );
-    }
-  }, [searchParams]);
-
   const { data: artwork, error: artworkError, refetch } = useQuery({
     queryKey: ['artwork', id],
     queryFn: async () => {
@@ -67,6 +54,7 @@ const AuctionDetail = () => {
       fetchCurrentHighestBid();
       subscribeToNewBids();
       subscribeToAuctionUpdates();
+      subscribeToAuctionCompletion();
     }
   }, [id]);
 
@@ -140,6 +128,35 @@ const AuctionDetail = () => {
             await refetch();
             toast.info("This auction has ended");
           }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  // New subscription specifically for auction completion
+  const subscribeToAuctionCompletion = () => {
+    if (!id) return;
+
+    const channel = supabase
+      .channel('auction-completion')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'artworks',
+          filter: `id=eq.${id} AND completion_status=eq.completed`,
+        },
+        async () => {
+          console.log('Auction completed, refreshing data...');
+          await refetch();
+          toast.info("This auction has ended", {
+            description: "The page will update with the final results."
+          });
         }
       )
       .subscribe();
