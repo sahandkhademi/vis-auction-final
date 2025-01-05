@@ -75,7 +75,7 @@ export const NotificationBadge = () => {
           case 'auction_won':
           case 'outbid':
           case 'auction_expired':
-            navigate(`/auctions/${entityId}`);
+            navigate(`/auction/${entityId}`);
             break;
           case 'payment_success':
             navigate(`/profile`);
