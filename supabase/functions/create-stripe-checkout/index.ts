@@ -52,6 +52,24 @@ serve(async (req) => {
     const origin = req.headers.get('origin') || 'http://localhost:5173';
     console.log('Using origin:', origin);
 
+    // Ensure the origin is a valid URL
+    try {
+      new URL(origin);
+    } catch (e) {
+      console.error('Invalid origin:', origin);
+      throw new Error('Invalid origin URL');
+    }
+
+    // Construct success and cancel URLs
+    const successUrl = new URL(`/auction/${auctionId}`, origin);
+    successUrl.searchParams.append('payment_success', 'true');
+    
+    const cancelUrl = new URL(`/auction/${auctionId}`, origin);
+    cancelUrl.searchParams.append('payment_cancelled', 'true');
+
+    console.log('Success URL:', successUrl.toString());
+    console.log('Cancel URL:', cancelUrl.toString());
+
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -70,8 +88,8 @@ serve(async (req) => {
         },
       ],
       mode: 'payment',
-      success_url: `${origin}/auction/${auctionId}?payment_success=true`,
-      cancel_url: `${origin}/auction/${auctionId}?payment_cancelled=true`,
+      success_url: successUrl.toString(),
+      cancel_url: cancelUrl.toString(),
       metadata: {
         auction_id: auctionId,
       },
