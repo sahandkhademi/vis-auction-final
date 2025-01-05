@@ -34,21 +34,24 @@ serve(async (req) => {
     // Get the raw body
     const body = await req.text();
     console.log('Webhook body length:', body.length);
+    console.log('Webhook signature:', signature);
 
     // Verify the webhook signature
     let event;
     try {
       const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
       if (!webhookSecret) {
+        console.error('❌ Missing STRIPE_WEBHOOK_SECRET');
         throw new Error('Missing STRIPE_WEBHOOK_SECRET');
       }
       
+      console.log('Constructing event with signature...');
       event = stripe.webhooks.constructEvent(
         body,
         signature,
         webhookSecret
       );
-      console.log('Event constructed successfully:', event.type);
+      console.log('✅ Event constructed successfully:', event.type);
     } catch (err) {
       console.error(`⚠️ Webhook signature verification failed:`, err.message);
       return new Response(
@@ -72,6 +75,8 @@ serve(async (req) => {
       }
     );
 
+    console.log('Processing event type:', event.type);
+
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
@@ -90,6 +95,8 @@ serve(async (req) => {
             throw error;
           }
           console.log('✅ Updated artwork payment status to completed');
+        } else {
+          console.error('No auction_id in session metadata');
         }
         break;
       }
