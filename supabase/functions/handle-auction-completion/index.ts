@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,47 +12,77 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseAdmin = createClient(
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // First, get completed auctions that haven't notified winners yet
-    const { data: completedAuctions, error: auctionError } = await supabaseAdmin
+    const { auctionId } = await req.json();
+    console.log('Processing auction completion for:', auctionId);
+
+    // Get auction details with winner information
+    const { data: auction, error: auctionError } = await supabaseClient
       .from('artworks')
-      .select('id, title, winner_id')
-      .eq('completion_status', 'completed')
-      .eq('payment_status', 'pending')
-      .is('winner_id', 'not.null');
+      .select(`
+        *,
+        profiles!winner_id (
+          email
+        )
+      `)
+      .eq('id', auctionId)
+      .single();
 
-    if (auctionError) throw auctionError;
+    if (auctionError) {
+      console.error('Error fetching auction:', auctionError);
+      throw auctionError;
+    }
 
-    // For each completed auction, check if a notification already exists
-    for (const auction of completedAuctions) {
-      const { data: existingNotification } = await supabaseAdmin
-        .from('notifications')
-        .select('id')
-        .eq('user_id', auction.winner_id)
-        .eq('type', 'auction_won')
-        .eq('message', `Congratulations! You won the auction for "${auction.title}"`)
-        .maybeSingle();
+    if (!auction) {
+      throw new Error('Auction not found');
+    }
 
-      // Only create notification if one doesn't exist
-      if (!existingNotification) {
-        await supabaseAdmin
-          .from('notifications')
-          .insert({
-            user_id: auction.winner_id,
-            title: 'Auction Won!',
-            message: `Congratulations! You won the auction for "${auction.title}"`,
-            type: 'auction_won'
-          });
+    console.log('Auction data:', auction);
+
+    // Send email to winner if email exists
+    if (auction.profiles?.email) {
+      console.log('Sending winner email to:', auction.profiles.email);
+      
+      const emailResponse = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: 'VIS Auction <updates@visauction.com>',
+          to: auction.profiles.email,
+          subject: 'Congratulations! You Won the Auction!',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h1 style="color: #1a1a1a;">🎉 Congratulations!</h1>
+              <p>You've won the auction for "${auction.title}"!</p>
+              <p style="font-size: 18px; color: #C6A07C; font-weight: bold;">
+                Winning Bid: €${auction.current_price?.toLocaleString()}
+              </p>
+              <p>Please complete your payment within 48 hours to secure your win.</p>
+              <a href="${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}/auction/${auction.id}"
+                 style="display: inline-block; background-color: #C6A07C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">
+                Complete Payment
+              </a>
+              <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; color: #666;">
+                <small>This email was sent by VIS Auction. You can adjust your notification preferences in your account settings.</small>
+              </div>
+            </div>
+          `
+        })
+      });
+
+      const emailResult = await emailResponse.json();
+      console.log('Email sending result:', emailResult);
+
+      if (!emailResponse.ok) {
+        console.error('Failed to send email:', emailResult);
+        throw new Error('Failed to send winner email');
       }
     }
 
@@ -61,7 +91,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error in handle_auction_completion:', error);
+    console.error('Error in handle-auction-completion:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
