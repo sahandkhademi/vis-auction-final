@@ -27,12 +27,11 @@ export const useAuctionSubscription = (
         console.log('🔍 Checking win conditions:', {
           winnerId: newData.winner_id,
           userId: session.user.id,
-          completionStatus: newData.completion_status,
-          paymentStatus: newData.payment_status
+          completionStatus: newData.completion_status
         });
 
-        // Send notification if this user is the winner
-        if (newData.winner_id === session.user.id) {
+        // Send notification if this user is the winner and auction is completed
+        if (newData.winner_id === session.user.id && newData.completion_status === 'completed') {
           console.log('🎉 Winner match found! Sending win email...');
           
           const { error } = await supabase.functions.invoke('send-auction-win-email', {
@@ -51,7 +50,8 @@ export const useAuctionSubscription = (
           }
         } else {
           console.log('ℹ️ Not sending win email - conditions not met:', {
-            isWinner: newData.winner_id === session.user.id
+            isWinner: newData.winner_id === session.user.id,
+            isCompleted: newData.completion_status === 'completed'
           });
         }
       } catch (error) {
@@ -112,23 +112,6 @@ export const useAuctionSubscription = (
           
           setCurrentHighestBid(newBid.amount);
           toast.info(`New bid: €${newBid.amount.toLocaleString()}`);
-
-          try {
-            const { error } = await supabase.functions.invoke('send-auction-update', {
-              body: {
-                type: 'outbid',
-                userId: newBid.user_id,
-                auctionId: id,
-                newBidAmount: newBid.amount
-              }
-            });
-
-            if (error) {
-              console.error('❌ Error sending outbid notification:', error);
-            }
-          } catch (error) {
-            console.error('❌ Error invoking send-auction-update:', error);
-          }
         }
       )
       .subscribe((status) => {
