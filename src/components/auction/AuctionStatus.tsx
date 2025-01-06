@@ -133,15 +133,15 @@ export const AuctionStatus = ({
                 console.error('❌ Error invoking send-auction-win-email:', emailError);
               }
             }
-            
-            // Refetch auction data to get updated status
+
+            // Force a refetch of auction data
             await refetchAuction();
-            
-            // Schedule page refresh and store the timeout ID
-            console.log('🔄 Scheduling page refresh...');
-            refreshTimeout = setTimeout(() => {
-              console.log('🔄 Executing page refresh...');
-              window.location.reload();
+
+            // Schedule the page refresh with a guaranteed execution
+            console.log('🔄 Scheduling guaranteed page refresh...');
+            window.setTimeout(() => {
+              console.log('🔄 Executing page refresh NOW');
+              window.location.href = window.location.href;
             }, 2000);
           }
         } catch (error) {
@@ -150,9 +150,10 @@ export const AuctionStatus = ({
       }
     };
 
+    // Execute auction completion handler
     handleAuctionCompletion();
 
-    // Cleanup function to clear the timeout if component unmounts
+    // Cleanup function
     return () => {
       if (refreshTimeout) {
         console.log('🧹 Clearing refresh timeout');
