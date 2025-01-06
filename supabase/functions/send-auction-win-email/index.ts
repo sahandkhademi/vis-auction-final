@@ -20,9 +20,9 @@ serve(async (req) => {
   try {
     const requestBody = await req.json();
     console.log('📦 Received request body:', requestBody);
-    const { auctionId } = requestBody;
+    const { auctionId, email, userId } = requestBody;
     
-    console.log('🔍 Processing auction:', auctionId);
+    console.log('🔍 Processing auction:', auctionId, 'for user:', userId, 'with email:', email);
 
     if (!RESEND_API_KEY) {
       console.error('❌ RESEND_API_KEY is not configured');
@@ -36,17 +36,11 @@ serve(async (req) => {
       }
     });
 
-    console.log('🔄 Fetching auction and winner details');
-    // Get auction and winner details
+    console.log('🔄 Fetching auction details');
+    // Get auction details
     const { data: auction, error: auctionError } = await supabase
       .from('artworks')
-      .select(`
-        *,
-        winner:profiles!artworks_winner_id_fkey (
-          email,
-          id
-        )
-      `)
+      .select('*')
       .eq('id', auctionId)
       .single();
 
@@ -57,19 +51,12 @@ serve(async (req) => {
 
     console.log('✅ Found auction:', auction.title);
 
-    if (!auction.winner?.email) {
-      console.error('❌ No winner email found for auction:', auctionId);
-      throw new Error('No winner email found');
-    }
-
-    console.log('✅ Found winner email:', auction.winner.email);
-
     // Check if winner has notifications enabled
     console.log('🔍 Checking notification preferences');
     const { data: preferences } = await supabase
       .from('notification_preferences')
       .select('auction_won_notifications')
-      .eq('user_id', auction.winner.id)
+      .eq('user_id', userId)
       .single();
 
     if (preferences?.auction_won_notifications === false) {
@@ -85,7 +72,7 @@ serve(async (req) => {
     const { error: notificationError } = await supabase
       .from('notifications')
       .insert({
-        user_id: auction.winner.id,
+        user_id: userId,
         title: 'Auction Won!',
         message: `Congratulations! You've won the auction for "${auction.title}"`,
         type: 'auction_won'
@@ -107,7 +94,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: 'VIS Auction <updates@visauction.com>',
-        to: [auction.winner.email],
+        to: [email],
         subject: 'Congratulations! You Won the Auction! 🎉',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">

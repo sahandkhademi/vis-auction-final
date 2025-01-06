@@ -38,7 +38,8 @@ export const useAuctionSubscription = (
             const { error } = await supabase.functions.invoke('send-auction-win-email', {
               body: { 
                 email: session.user.email,
-                auctionId: id
+                auctionId: id,
+                userId: session.user.id  // Include both email and userId
               }
             });
 
