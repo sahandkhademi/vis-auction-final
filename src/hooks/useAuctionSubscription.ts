@@ -25,9 +25,13 @@ export const useAuctionSubscription = (
           console.log('🎉 Sending auction won notification for winner:', newData.winner_id);
           console.log('📧 Calling send-auction-win-email with auctionId:', id);
           
-          // Call the send-auction-win-email function
+          // Call the send-auction-win-email function with explicit logging
+          console.log('🚀 Initiating email function call');
           const { data, error } = await supabase.functions.invoke('send-auction-win-email', {
-            body: { auctionId: id }
+            body: { 
+              auctionId: id,
+              userId: session.user.id  // Add user ID for additional verification
+            }
           });
 
           if (error) {
@@ -41,7 +45,8 @@ export const useAuctionSubscription = (
           console.log('ℹ️ User is not the winner or auction not completed:', {
             isCompleted: newData.completion_status === 'completed',
             winnerId: newData.winner_id,
-            userId: session.user.id
+            userId: session.user.id,
+            status: newData.completion_status
           });
         }
       } catch (error) {
