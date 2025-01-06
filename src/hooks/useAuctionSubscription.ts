@@ -111,7 +111,7 @@ export const useAuctionSubscription = (
     };
 
     const subscribeToAuctionUpdates = () => {
-      console.log('🔄 Setting up auction updates subscription');
+      console.log('🔄 Setting up auction updates subscription for:', id);
       
       const channel = supabase
         .channel('auction-updates')
