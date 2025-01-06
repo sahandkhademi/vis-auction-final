@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
+import { sendEmail } from './email-service.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,13 +29,14 @@ serve(async (req: Request) => {
       }
     );
 
-    // Get auction and winner details
+    // Get auction and winner details with email
     const { data: auction, error: auctionError } = await supabaseClient
       .from('artworks')
       .select(`
         *,
         winner:profiles!artworks_winner_id_fkey (
-          email
+          email,
+          id
         )
       `)
       .eq('id', auctionId)
@@ -58,28 +60,55 @@ serve(async (req: Request) => {
       completionStatus: auction.completion_status
     });
 
-    // Send notification using the same function as outbid notifications
-    console.log('📧 Calling send-auction-update function');
-    const emailResponse = await supabaseClient.functions.invoke('send-auction-update', {
-      body: { 
-        type: 'auction_won',
-        userId: auction.winner_id,
-        auctionId: auction.id,
-        auctionTitle: auction.title
-      }
-    });
+    // Check if winner has notifications enabled
+    const { data: preferences } = await supabaseClient
+      .from('notification_preferences')
+      .select('auction_won_notifications')
+      .eq('user_id', auction.winner.id)
+      .single();
 
-    if (emailResponse.error) {
-      console.error('❌ Error calling send-auction-update:', emailResponse.error);
+    if (preferences?.auction_won_notifications !== false) {
+      // Prepare email content
+      const auctionUrl = `${new URL(req.url).origin.replace('functions.', '')}/auction/${auctionId}`;
+      
+      const emailContent = {
+        subject: "Congratulations! You've Won the Auction!",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h1 style="color: #1a1a1a; font-size: 24px; margin-bottom: 20px;">🎉 You're the Winner!</h1>
+            <p>Congratulations! You've won the auction for "${auction.title}".</p>
+            <p style="font-size: 18px; color: #C6A07C; font-weight: bold;">Winning Bid: €${auction.current_price?.toLocaleString()}</p>
+            <p>Please complete your payment to claim your artwork.</p>
+            <div>
+              <a href="${auctionUrl}" style="display: inline-block; background-color: #C6A07C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">
+                Complete Payment
+              </a>
+            </div>
+            <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; color: #666;">
+              <small>This email was sent by VIS Auction. If you no longer wish to receive these emails, 
+              you can adjust your notification preferences in your account settings.</small>
+            </div>
+          </div>
+        `
+      };
+
+      // Send email directly using Resend
+      try {
+        console.log('📧 Sending email to winner:', auction.winner.email);
+        await sendEmail(auction.winner.email, emailContent);
+        console.log('✅ Email sent successfully');
+      } catch (emailError) {
+        console.error('❌ Error sending email:', emailError);
+      }
     } else {
-      console.log('✅ Notification function called successfully:', emailResponse.data);
+      console.log('ℹ️ Winner has disabled auction won notifications');
     }
 
     // Create a notification in the database
     const { error: notificationError } = await supabaseClient
       .from('notifications')
       .insert({
-        user_id: auction.winner_id,
+        user_id: auction.winner.id,
         title: 'Auction Won!',
         message: `Congratulations! You've won the auction for "${auction.title}"`,
         type: 'auction_won'
@@ -90,17 +119,14 @@ serve(async (req: Request) => {
     }
 
     return new Response(
-      JSON.stringify({ 
-        message: 'Auction completion processed and notifications sent',
-        emailStatus: emailResponse?.data 
-      }),
+      JSON.stringify({ message: 'Auction completion processed and notifications sent' }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     );
   } catch (error) {
-    console.error('❌ Error in handle-auction-completion:', error);
+    console.error('❌ Error in handle-auction-completion function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
