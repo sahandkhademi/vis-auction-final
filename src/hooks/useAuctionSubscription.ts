@@ -20,8 +20,8 @@ export const useAuctionSubscription = (
           return;
         }
 
-        // Send auction won notification if the auction is completed and has a winner
-        if (newData.completion_status === 'completed' && newData.winner_id) {
+        // Only send notification if this user is the winner
+        if (newData.completion_status === 'completed' && newData.winner_id === session.user.id) {
           console.log('🎉 Sending auction won notification for winner:', newData.winner_id);
           const { error } = await supabase.functions.invoke('send-auction-update', {
             body: { 
@@ -36,6 +36,7 @@ export const useAuctionSubscription = (
             toast.error('Error processing auction completion');
           } else {
             console.log('✅ Auction won notification sent successfully');
+            toast.success('Congratulations! You won the auction!');
           }
         }
       } catch (error) {
