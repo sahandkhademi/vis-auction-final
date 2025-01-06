@@ -116,8 +116,8 @@ export const AuctionStatus = ({
                 console.log('📧 Sending win email notification');
                 const { error: emailError } = await supabase.functions.invoke('send-auction-win-email', {
                   body: { 
-                    auctionId,
                     email: user?.email,
+                    auctionId,
                     userId: user?.id
                   }
                 });
@@ -133,7 +133,13 @@ export const AuctionStatus = ({
             }
             
             // Refetch auction data to get updated status
-            refetchAuction();
+            await refetchAuction();
+            
+            // Refresh the page after a short delay to ensure all updates are complete
+            console.log('🔄 Auction ended, refreshing page...');
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
           }
         } catch (error) {
           console.error('❌ Error in auction completion:', error);
