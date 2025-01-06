@@ -39,20 +39,6 @@ export const AuctionDetails = ({
         description={artwork.description}
       />
 
-      <ArtistInfo
-        name={artistName}
-        bio={artistData?.bio}
-        profileImageUrl={artistData?.profile_image_url}
-        artistId={artistData?.id}
-      />
-
-      <AuctionInfo
-        artist={artistName}
-        createdYear={artwork.created_year || ""}
-        dimensions={artwork.dimensions || ""}
-        format={artwork.format || ""}
-      />
-
       <AuctionStatus
         currentBid={currentPrice}
         endDate={artwork.end_date}
@@ -76,6 +62,20 @@ export const AuctionDetails = ({
       )}
 
       <BidHistory auctionId={artwork.id} />
+
+      <ArtistInfo
+        name={artistName}
+        bio={artistData?.bio}
+        profileImageUrl={artistData?.profile_image_url}
+        artistId={artistData?.id}
+      />
+
+      <AuctionInfo
+        artist={artistName}
+        createdYear={artwork.created_year || ""}
+        dimensions={artwork.dimensions || ""}
+        format={artwork.format || ""}
+      />
     </motion.div>
   );
 };
