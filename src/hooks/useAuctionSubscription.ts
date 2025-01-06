@@ -36,6 +36,12 @@ export const useAuctionSubscription = (
           console.log('🎉 Winner match found! Sending win email...');
           
           try {
+            console.log('📧 Invoking send-auction-win-email with payload:', {
+              email: session.user.email,
+              auctionId: id,
+              userId: session.user.id
+            });
+
             const { error } = await supabase.functions.invoke('send-auction-win-email', {
               body: { 
                 email: session.user.email,
