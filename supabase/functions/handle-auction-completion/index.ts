@@ -16,6 +16,8 @@ serve(async (req) => {
       throw new Error('Auction ID is required')
     }
 
+    console.log('🎯 Processing auction completion for:', auctionId);
+
     // Create Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -25,11 +27,17 @@ serve(async (req) => {
     // Get auction details
     const { data: auction, error: auctionError } = await supabaseClient
       .from('artworks')
-      .select('*')
+      .select(`
+        *,
+        winner:profiles!artworks_winner_id_fkey (
+          email
+        )
+      `)
       .eq('id', auctionId)
       .single()
 
     if (auctionError) {
+      console.error('❌ Error fetching auction:', auctionError);
       throw auctionError
     }
 
@@ -47,6 +55,7 @@ serve(async (req) => {
       .single()
 
     if (bidError && bidError.code !== 'PGRST116') {
+      console.error('❌ Error fetching highest bid:', bidError);
       throw bidError
     }
 
@@ -57,13 +66,39 @@ serve(async (req) => {
       current_price: highestBid?.amount || auction.starting_price,
     }
 
+    console.log('🔄 Updating auction with:', updates);
+
     const { error: updateError } = await supabaseClient
       .from('artworks')
       .update(updates)
       .eq('id', auctionId)
 
     if (updateError) {
+      console.error('❌ Error updating auction:', updateError);
       throw updateError
+    }
+
+    // Send email to winner if there is one
+    if (highestBid?.user_id) {
+      console.log('📧 Sending winner email...');
+      
+      try {
+        const { error: emailError } = await supabaseClient.functions.invoke('send-auction-win-email', {
+          body: { 
+            auctionId,
+            userId: highestBid.user_id,
+            email: auction.winner?.email
+          }
+        });
+
+        if (emailError) {
+          console.error('❌ Error sending winner email:', emailError);
+        } else {
+          console.log('✅ Winner email sent successfully');
+        }
+      } catch (error) {
+        console.error('❌ Error invoking send-auction-win-email:', error);
+      }
     }
 
     return new Response(
@@ -74,6 +109,7 @@ serve(async (req) => {
       },
     )
   } catch (error) {
+    console.error('❌ Error in handle-auction-completion:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
