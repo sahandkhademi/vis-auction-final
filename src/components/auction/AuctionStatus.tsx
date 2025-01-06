@@ -1,13 +1,11 @@
-import { PaymentButton } from "./PaymentButton";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { CountdownTimer } from "./CountdownTimer";
 import { useSearchParams } from "react-router-dom";
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { Clock, CheckCircle2, Trophy } from "lucide-react";
+import { AuctionStatusDisplay } from "./AuctionStatusDisplay";
+import { PaymentStatus } from "./PaymentStatus";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -118,6 +116,26 @@ export const AuctionStatus = ({
               toast.success("Congratulations! You've won the auction!", {
                 duration: 5000
               });
+
+              // Send win email
+              try {
+                console.log('📧 Sending win email notification');
+                const { error: emailError } = await supabase.functions.invoke('send-auction-win-email', {
+                  body: { 
+                    auctionId,
+                    email: user?.email,
+                    userId: user?.id
+                  }
+                });
+
+                if (emailError) {
+                  console.error('❌ Error sending win email:', emailError);
+                } else {
+                  console.log('✅ Win email sent successfully');
+                }
+              } catch (emailError) {
+                console.error('❌ Error invoking send-auction-win-email:', emailError);
+              }
             }
             // Refetch auction data to get updated status
             refetchAuction();
@@ -129,7 +147,7 @@ export const AuctionStatus = ({
     };
 
     handleAuctionCompletion();
-  }, [isEnded, completionStatus, auctionId, isWinner, isPotentialWinner, user?.id, highestBid?.user_id, refetchAuction, endDate]);
+  }, [isEnded, completionStatus, auctionId, isWinner, isPotentialWinner, user?.id, highestBid?.user_id, refetchAuction, endDate, user?.email]);
 
   // Check payment status when URL params change
   useEffect(() => {
@@ -149,62 +167,21 @@ export const AuctionStatus = ({
 
   return (
     <div className="space-y-4">
-      {hasCompletedPayment && (
-        <Alert className="bg-green-50 border-green-200">
-          <AlertTitle className="text-green-800">Payment Completed!</AlertTitle>
-          <AlertDescription className="text-green-700">
-            Thank you for your payment! Your purchase has been confirmed. You should have received a confirmation email with further details.
-          </AlertDescription>
-        </Alert>
-      )}
+      <PaymentStatus 
+        hasCompletedPayment={hasCompletedPayment}
+        needsPayment={needsPayment}
+        isEnded={isEnded}
+        auctionId={auctionId}
+        currentBid={currentBid}
+      />
 
-      {!isEnded && (
-        <div className="flex items-center gap-2 text-gray-600">
-          <Clock className="w-4 h-4" />
-          <span className="text-sm font-medium">Ongoing</span>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-500">{isEnded ? "Sold Price" : "Current Price"}</p>
-          <p className="text-2xl font-bold">€{currentBid?.toLocaleString()}</p>
-        </div>
-
-        {!isEnded && endDate && (
-          <div>
-            <p className="text-sm text-gray-500">Time Remaining</p>
-            <div className="text-2xl font-bold text-right">
-              <CountdownTimer endDate={endDate} />
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-col items-end gap-3">
-        {isEnded && (
-          <div className="flex items-center gap-2 text-blue-600">
-            <CheckCircle2 className="w-4 h-4" />
-            <span className="text-sm font-medium">Auction Ended</span>
-          </div>
-        )}
-
-        {(isWinner || isPotentialWinner) && (
-          <div className="flex items-center gap-2 text-emerald-600">
-            <Trophy className="w-4 h-4" />
-            <span className="text-sm font-medium">You Won!</span>
-          </div>
-        )}
-      </div>
-
-      {needsPayment && isEnded && !hasCompletedPayment && (
-        <div className="mt-4">
-          <PaymentButton 
-            auctionId={auctionId} 
-            currentPrice={currentBid}
-          />
-        </div>
-      )}
+      <AuctionStatusDisplay 
+        currentBid={currentBid}
+        endDate={endDate}
+        isEnded={isEnded}
+        isWinner={isWinner}
+        isPotentialWinner={isPotentialWinner}
+      />
     </div>
   );
 };

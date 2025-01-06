@@ -22,6 +22,11 @@ serve(async (req) => {
     console.log('📦 Received request body:', requestBody);
     const { auctionId, email, userId } = requestBody;
     
+    if (!auctionId || !email || !userId) {
+      console.error('❌ Missing required parameters:', { auctionId, email, userId });
+      throw new Error('Missing required parameters: auctionId, email, and userId are required');
+    }
+    
     console.log('🔍 Processing auction:', auctionId, 'for user:', userId, 'with email:', email);
 
     if (!RESEND_API_KEY) {
