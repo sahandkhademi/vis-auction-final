@@ -146,9 +146,18 @@ export const useAuctionSubscription = (
               completion_status: string, 
               winner_id: string, 
               current_price: number,
-              payment_status: string 
+              payment_status: string,
+              end_date: string 
             };
             
+            console.log('📊 Auction update details:', {
+              completionStatus: newData.completion_status,
+              winnerId: newData.winner_id,
+              currentPrice: newData.current_price,
+              paymentStatus: newData.payment_status,
+              endDate: newData.end_date
+            });
+
             if (newData.current_price) {
               setCurrentHighestBid(newData.current_price);
             }
