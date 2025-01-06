@@ -39,7 +39,8 @@ export const AuctionStatus = ({
     winnerId,
     userId: user?.id,
     isWinner,
-    isEnded
+    isEnded,
+    auctionId
   });
 
   // Fetch auction data to get latest payment status
@@ -90,7 +91,6 @@ export const AuctionStatus = ({
 
   useEffect(() => {
     const handleAuctionCompletion = async () => {
-      // Changed condition to check specifically for "ongoing" status
       if (isEnded && completionStatus === 'ongoing') {
         console.log('🔔 Auction completion check:', {
           isEnded,
