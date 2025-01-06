@@ -83,7 +83,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Art Auction Platform <notifications@artauction.com>',
+        from: 'VIS Auction <updates@visauction.com>',
         to: [email],
         subject: 'Congratulations! You Won the Auction',
         html: `
