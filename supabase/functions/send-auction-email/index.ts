@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+
 serve(async (req) => {
   console.log('📧 Starting auction email sender...');
 
@@ -14,6 +16,10 @@ serve(async (req) => {
   }
 
   try {
+    if (!RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY is not configured');
+    }
+
     const { auctionId } = await req.json();
     console.log('📦 Processing auction email for:', auctionId);
 
@@ -63,7 +69,7 @@ serve(async (req) => {
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
