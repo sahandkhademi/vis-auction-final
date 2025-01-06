@@ -24,7 +24,7 @@ export const useAuctionSubscription = (
         if (newData.completion_status === 'completed' && newData.winner_id === session.user.id) {
           console.log('🎉 Sending auction won notification for winner:', newData.winner_id);
           
-          // Call our new dedicated auction win email function
+          // Call our auction win email function
           const { error } = await supabase.functions.invoke('send-auction-win-email', {
             body: { auctionId: id }
           });
