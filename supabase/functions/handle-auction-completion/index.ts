@@ -3,10 +3,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   console.log('🔔 Starting auction completion handler...');
 
   if (req.method === 'OPTIONS') {
@@ -19,7 +19,13 @@ serve(async (req) => {
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     );
 
     // Get auction and winner details
@@ -28,8 +34,7 @@ serve(async (req) => {
       .select(`
         *,
         winner:profiles!artworks_winner_id_fkey (
-          email,
-          username
+          email
         )
       `)
       .eq('id', auctionId)
@@ -53,33 +58,21 @@ serve(async (req) => {
       completionStatus: auction.completion_status
     });
 
-    // Check if winner has email notifications enabled
-    const { data: notificationPrefs } = await supabaseClient
-      .from('notification_preferences')
-      .select('auction_won_notifications')
-      .eq('user_id', auction.winner_id)
-      .single();
-
-    if (notificationPrefs?.auction_won_notifications !== false) {
-      // Call the email sending function
-      console.log('📧 Calling send-auction-email function');
-      const emailResponse = await supabaseClient.functions.invoke('send-auction-email', {
-        body: { 
-          auctionId,
-          type: 'auction_won',
-          recipientEmail: auction.winner.email,
-          auctionTitle: auction.title,
-          finalPrice: auction.current_price
-        }
-      });
-
-      if (emailResponse.error) {
-        console.error('❌ Error calling send-auction-email:', emailResponse.error);
-      } else {
-        console.log('✅ Email function called successfully:', emailResponse.data);
+    // Send notification using the same function as outbid notifications
+    console.log('📧 Calling send-auction-update function');
+    const emailResponse = await supabaseClient.functions.invoke('send-auction-update', {
+      body: { 
+        type: 'auction_won',
+        userId: auction.winner_id,
+        auctionId: auction.id,
+        auctionTitle: auction.title
       }
+    });
+
+    if (emailResponse.error) {
+      console.error('❌ Error calling send-auction-update:', emailResponse.error);
     } else {
-      console.log('ℹ️ Winner has disabled auction won notifications');
+      console.log('✅ Notification function called successfully:', emailResponse.data);
     }
 
     // Create a notification in the database
@@ -111,8 +104,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ error: error.message }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   }
