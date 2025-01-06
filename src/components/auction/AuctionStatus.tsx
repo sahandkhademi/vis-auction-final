@@ -43,32 +43,6 @@ export const AuctionStatus = ({
     auctionId
   });
 
-  // Fetch auction data to get latest status
-  const { data: auctionData, refetch: refetchAuction } = useQuery({
-    queryKey: ['auction', auctionId],
-    queryFn: async () => {
-      console.log('🔄 Fetching latest auction data for:', auctionId);
-      const { data, error } = await supabase
-        .from('artworks')
-        .select('payment_status, winner_id, completion_status')
-        .eq('id', auctionId)
-        .single();
-
-      if (error) {
-        console.error('❌ Error fetching auction data:', error);
-        throw error;
-      }
-      console.log('✅ Latest auction data:', data);
-      
-      // Update local state with new values
-      setLocalCompletionStatus(data.completion_status);
-      setLocalWinnerId(data.winner_id);
-      setLocalPaymentStatus(data.payment_status);
-      
-      return data;
-    },
-  });
-
   // Fetch highest bid to determine potential winner
   const { data: highestBid } = useQuery({
     queryKey: ['highestBid', auctionId],
@@ -92,7 +66,7 @@ export const AuctionStatus = ({
     enabled: isEnded && !localWinnerId
   });
 
-  // Subscribe to auction updates
+  // Subscribe to auction updates and check completion status
   useEffect(() => {
     if (!auctionId) return;
 
@@ -107,7 +81,7 @@ export const AuctionStatus = ({
           table: 'artworks',
           filter: `id=eq.${auctionId}`,
         },
-        async (payload) => {
+        (payload) => {
           console.log('🔄 Received auction update:', payload);
           const newData = payload.new as any;
           
@@ -115,24 +89,29 @@ export const AuctionStatus = ({
           setLocalCompletionStatus(newData.completion_status);
           setLocalWinnerId(newData.winner_id);
           setLocalPaymentStatus(newData.payment_status);
-          
-          // Then refetch to ensure we have the latest data
-          await refetchAuction();
         }
       )
       .subscribe();
 
-    // Check auction status every second if we're near the end time
+    // Check auction status every second
     const checkInterval = setInterval(() => {
       if (endDate) {
         const now = new Date();
         const end = new Date(endDate);
-        const timeUntilEnd = end.getTime() - now.getTime();
         
-        // If we're within 5 seconds of end time or past it
-        if (timeUntilEnd <= 5000 && localCompletionStatus !== 'completed') {
-          console.log('🔄 Checking auction completion status');
-          refetchAuction();
+        // If we've passed the end time and auction isn't marked as completed
+        if (now >= end && localCompletionStatus !== 'completed') {
+          console.log('🔄 End time reached, updating completion status');
+          setLocalCompletionStatus('completed');
+          
+          // Trigger completion handler
+          supabase.functions.invoke('handle-auction-completion', {
+            body: { auctionId }
+          }).then(() => {
+            console.log('✅ Auction completion handler triggered');
+          }).catch(error => {
+            console.error('❌ Error triggering completion handler:', error);
+          });
         }
       }
     }, 1000);
@@ -142,17 +121,28 @@ export const AuctionStatus = ({
       supabase.removeChannel(channel);
       clearInterval(checkInterval);
     };
-  }, [auctionId, endDate, localCompletionStatus, refetchAuction]);
+  }, [auctionId, endDate, localCompletionStatus]);
 
   // If auction has ended but winner not set, check if current user is highest bidder
   const isPotentialWinner = isEnded && !localWinnerId && highestBid?.user_id === user?.id;
 
   // Use custom hooks for auction completion and payment status
   const handleRefetch = async () => {
-    try {
-      await refetchAuction();
-    } catch (error) {
+    const { data, error } = await supabase
+      .from('artworks')
+      .select('payment_status, winner_id, completion_status')
+      .eq('id', auctionId)
+      .single();
+
+    if (error) {
       console.error('Error refetching auction data:', error);
+      return;
+    }
+
+    if (data) {
+      setLocalCompletionStatus(data.completion_status);
+      setLocalWinnerId(data.winner_id);
+      setLocalPaymentStatus(data.payment_status);
     }
   };
 
@@ -170,9 +160,8 @@ export const AuctionStatus = ({
 
   usePaymentStatus(handleRefetch);
 
-  const currentPaymentStatus = localPaymentStatus;
-  const hasCompletedPayment = (isWinner || isPotentialWinner) && currentPaymentStatus === 'completed';
-  const needsPayment = (isWinner || isPotentialWinner) && currentPaymentStatus === 'pending';
+  const hasCompletedPayment = (isWinner || isPotentialWinner) && localPaymentStatus === 'completed';
+  const needsPayment = (isWinner || isPotentialWinner) && localPaymentStatus === 'pending';
 
   return (
     <div className="space-y-4">
