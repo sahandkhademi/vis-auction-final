@@ -10,7 +10,7 @@ export const useAuctionCompletion = (
   isPotentialWinner: boolean,
   userId: string | undefined,
   userEmail: string | undefined,
-  refetchAuction: () => Promise<void>
+  refetchAuction: () => Promise<any>
 ) => {
   useEffect(() => {
     let isProcessing = false;
@@ -58,7 +58,11 @@ export const useAuctionCompletion = (
           }
         }
         
-        await refetchAuction();
+        try {
+          await refetchAuction();
+        } catch (refetchError) {
+          console.error('❌ Error refetching auction data:', refetchError);
+        }
       } catch (error) {
         console.error('❌ Error in auction completion:', error);
       } finally {

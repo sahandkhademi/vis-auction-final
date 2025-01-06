@@ -105,7 +105,9 @@ export const AuctionStatus = ({
     isPotentialWinner,
     user?.id,
     user?.email,
-    refetchAuction
+    async () => {
+      await refetchAuction();
+    }
   );
 
   // Check payment status when URL params change
