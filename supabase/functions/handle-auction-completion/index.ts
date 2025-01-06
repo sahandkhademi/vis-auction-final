@@ -146,23 +146,7 @@ serve(async (req: Request) => {
         console.log('✅ Winner email sent successfully');
       } catch (emailError) {
         console.error('❌ Error sending winner email:', emailError);
-        // Don't throw here, we still want to create the notification
       }
-    }
-
-    // Create notification for the winner
-    const { error: notificationError } = await supabaseClient
-      .from('notifications')
-      .insert({
-        user_id: highestBid.user_id,
-        title: 'Auction Won!',
-        message: `Congratulations! You won the auction for "${auction.title}". The final price was €${highestBid.amount}.`,
-        type: 'auction_won'
-      });
-
-    if (notificationError) {
-      console.error('❌ Error creating notification:', notificationError);
-      // Don't throw here as the main functionality succeeded
     }
 
     console.log('✅ Successfully completed auction:', {
