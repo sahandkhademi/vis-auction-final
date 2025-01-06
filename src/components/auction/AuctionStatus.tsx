@@ -110,8 +110,14 @@ export const AuctionStatus = ({
           } else {
             console.log('✅ Auction completion handled successfully');
             
-            // Only send email notification if user is the winner
+            // Show win notification immediately after successful completion
             if (isWinner || isPotentialWinner || user?.id === highestBid?.user_id) {
+              console.log('🎉 Showing win notification for user:', user?.id);
+              toast.success("Congratulations! You've won the auction!", {
+                duration: 5000
+              });
+
+              // Send win email
               try {
                 console.log('📧 Sending win email notification');
                 const { error: emailError } = await supabase.functions.invoke('send-auction-win-email', {
@@ -131,7 +137,6 @@ export const AuctionStatus = ({
                 console.error('❌ Error invoking send-auction-win-email:', emailError);
               }
             }
-            
             // Refetch auction data to get updated status
             refetchAuction();
           }
@@ -162,6 +167,14 @@ export const AuctionStatus = ({
 
   return (
     <div className="space-y-4">
+      <PaymentStatus 
+        hasCompletedPayment={hasCompletedPayment}
+        needsPayment={needsPayment}
+        isEnded={isEnded}
+        auctionId={auctionId}
+        currentBid={currentBid}
+      />
+
       <AuctionStatusDisplay 
         currentBid={currentBid}
         endDate={endDate}
@@ -169,16 +182,6 @@ export const AuctionStatus = ({
         isWinner={isWinner}
         isPotentialWinner={isPotentialWinner}
       />
-
-      {(hasCompletedPayment || needsPayment) && (
-        <PaymentStatus 
-          hasCompletedPayment={hasCompletedPayment}
-          needsPayment={needsPayment}
-          isEnded={isEnded}
-          auctionId={auctionId}
-          currentBid={currentBid}
-        />
-      )}
     </div>
   );
 };

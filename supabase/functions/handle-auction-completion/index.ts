@@ -80,21 +80,6 @@ serve(async (req: Request) => {
       throw updateError;
     }
 
-    // Only create notification for this specific auction that just completed
-    const { error: notificationError } = await supabaseClient
-      .from('notifications')
-      .insert({
-        user_id: highestBid.user_id,
-        title: 'Auction Won!',
-        message: `Congratulations! You won the auction for "${auction.title}". The final price was €${highestBid.amount}.`,
-        type: 'auction_won'
-      });
-
-    if (notificationError) {
-      console.error('❌ Error creating notification:', notificationError);
-      throw notificationError;
-    }
-
     console.log('✅ Successfully completed auction:', {
       auctionId,
       winnerId: highestBid.user_id,
