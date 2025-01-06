@@ -31,6 +31,13 @@ interface AuctionSettingsProps {
 }
 
 export const AuctionSettings = ({ form, isLoading }: AuctionSettingsProps) => {
+  const setTestEndDate = () => {
+    // Set end date to 1 minute from now
+    const endDate = new Date();
+    endDate.setMinutes(endDate.getMinutes() + 1);
+    form.setValue('end_date', endDate.toISOString());
+  };
+
   return (
     <>
       <FormField
@@ -133,6 +140,15 @@ export const AuctionSettings = ({ form, isLoading }: AuctionSettingsProps) => {
                   </FormControl>
                   <Clock className="absolute right-3 top-2.5 h-4 w-4 opacity-50" />
                 </div>
+
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={setTestEndDate}
+                  className="whitespace-nowrap"
+                >
+                  Test (1min)
+                </Button>
               </div>
             </FormItem>
           );
