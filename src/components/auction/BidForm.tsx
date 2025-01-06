@@ -25,6 +25,7 @@ export const BidForm = ({
 }: BidFormProps) => {
   const [bidAmount, setBidAmount] = useState<number>(currentBid + 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAuctionEnded, setIsAuctionEnded] = useState(false);
   const { toast } = useToast();
   const session = useSession();
   const navigate = useNavigate();
@@ -34,7 +35,50 @@ export const BidForm = ({
     setBidAmount(currentBid + 1);
   }, [currentBid]);
 
-  const isAuctionEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
+  // Check if auction has ended
+  useEffect(() => {
+    const checkAuctionStatus = () => {
+      const isCompleted = completionStatus === 'completed';
+      const isPastEndDate = endDate && new Date(endDate) < new Date();
+      setIsAuctionEnded(isCompleted || isPastEndDate);
+    };
+
+    // Check immediately
+    checkAuctionStatus();
+
+    // Set up interval to check every second
+    const interval = setInterval(checkAuctionStatus, 1000);
+
+    return () => clearInterval(interval);
+  }, [completionStatus, endDate]);
+
+  // Subscribe to auction updates
+  useEffect(() => {
+    if (!auctionId) return;
+
+    const channel = supabase
+      .channel('auction-status')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'artworks',
+          filter: `id=eq.${auctionId}`,
+        },
+        (payload) => {
+          const newData = payload.new as any;
+          if (newData.completion_status === 'completed') {
+            setIsAuctionEnded(true);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [auctionId]);
 
   const notifyPreviousBidder = async (previousBidUserId: string) => {
     try {
