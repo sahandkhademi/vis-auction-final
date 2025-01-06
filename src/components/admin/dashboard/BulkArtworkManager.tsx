@@ -18,10 +18,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const BulkArtworkManager = () => {
   const [selectedArtworks, setSelectedArtworks] = useState<string[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: artworks, refetch } = useQuery({
     queryKey: ["admin-artworks-bulk"],
@@ -75,6 +86,30 @@ export const BulkArtworkManager = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (!selectedArtworks.length) {
+      toast.error("Please select artworks first");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("artworks")
+        .delete()
+        .in("id", selectedArtworks);
+
+      if (error) throw error;
+
+      toast.success(`${selectedArtworks.length} artworks deleted successfully`);
+      setSelectedArtworks([]);
+      setShowDeleteDialog(false);
+      refetch();
+    } catch (error) {
+      console.error("Error deleting artworks:", error);
+      toast.error("Failed to delete artworks");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -94,6 +129,15 @@ export const BulkArtworkManager = () => {
             disabled={!selectedArtworks.length}
           >
             Unpublish Selected
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setShowDeleteDialog(true)}
+            disabled={!selectedArtworks.length}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Selected
           </Button>
         </div>
         <span className="text-sm text-muted-foreground">
@@ -163,6 +207,29 @@ export const BulkArtworkManager = () => {
           </TableBody>
         </Table>
       </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete{" "}
+              {selectedArtworks.length} selected artwork
+              {selectedArtworks.length === 1 ? "" : "s"} and remove their data from
+              our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
