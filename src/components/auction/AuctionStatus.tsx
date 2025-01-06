@@ -121,12 +121,9 @@ export const AuctionStatus = ({
         </div>
         <div className="flex flex-col items-end gap-3">
           {!isEnded && endDate && (
-            <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 min-w-[200px]">
-              <div className="flex items-center gap-2 text-gray-600 mb-2">
-                <Clock className="w-4 h-4 text-gold" />
-                <p className="text-sm font-medium">Time Remaining</p>
-              </div>
-              <div className="text-right font-mono text-lg font-medium text-gray-800">
+            <div>
+              <p className="text-sm text-gray-500">Time Remaining</p>
+              <div className="text-2xl font-bold text-right">
                 <CountdownTimer endDate={endDate} />
               </div>
             </div>

@@ -49,9 +49,5 @@ export const CountdownTimer = ({ endDate }: CountdownTimerProps) => {
     return () => clearInterval(timer);
   }, [endDate]);
 
-  return (
-    <div className="font-mono text-sm font-medium">
-      {timeLeft}
-    </div>
-  );
+  return <>{timeLeft}</>;
 };
