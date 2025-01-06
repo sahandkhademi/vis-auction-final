@@ -109,6 +109,29 @@ export const AuctionStatus = ({
             toast.error('Error completing auction');
           } else {
             console.log('✅ Auction completion handled successfully');
+            
+            // Only send email notification if user is the winner
+            if (isWinner || isPotentialWinner || user?.id === highestBid?.user_id) {
+              try {
+                console.log('📧 Sending win email notification');
+                const { error: emailError } = await supabase.functions.invoke('send-auction-win-email', {
+                  body: { 
+                    auctionId,
+                    email: user?.email,
+                    userId: user?.id
+                  }
+                });
+
+                if (emailError) {
+                  console.error('❌ Error sending win email:', emailError);
+                } else {
+                  console.log('✅ Win email sent successfully');
+                }
+              } catch (emailError) {
+                console.error('❌ Error invoking send-auction-win-email:', emailError);
+              }
+            }
+            
             // Refetch auction data to get updated status
             refetchAuction();
           }
@@ -119,7 +142,7 @@ export const AuctionStatus = ({
     };
 
     handleAuctionCompletion();
-  }, [isEnded, completionStatus, auctionId, refetchAuction, endDate]);
+  }, [isEnded, completionStatus, auctionId, isWinner, isPotentialWinner, user?.id, highestBid?.user_id, refetchAuction, endDate, user?.email]);
 
   // Check payment status when URL params change
   useEffect(() => {
