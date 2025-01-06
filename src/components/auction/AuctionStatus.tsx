@@ -2,7 +2,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { AuctionStatusDisplay } from "./AuctionStatusDisplay";
 import { PaymentStatus } from "./PaymentStatus";
@@ -29,6 +29,18 @@ export const AuctionStatus = ({
   const isWinner = user?.id === winnerId;
   const isEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
+  console.log('🔍 AuctionStatus Props:', {
+    currentBid,
+    endDate,
+    completionStatus,
+    paymentStatus,
+    winnerId,
+    userId: user?.id,
+    isWinner,
+    isEnded,
+    auctionId
+  });
+
   // Fetch auction data to get latest payment status
   const { data: auctionData, refetch: refetchAuction } = useQuery({
     queryKey: ['auction', auctionId],
@@ -47,7 +59,6 @@ export const AuctionStatus = ({
       console.log('✅ Latest auction data:', data);
       return data;
     },
-    refetchInterval: isEnded ? false : 1000, // Poll every second until auction ends
   });
 
   // Fetch highest bid to determine potential winner
@@ -73,50 +84,65 @@ export const AuctionStatus = ({
     enabled: isEnded && !winnerId
   });
 
-  // Subscribe to auction updates
+  // If auction has ended but winner not set, check if current user is highest bidder
+  const isPotentialWinner = isEnded && !winnerId && highestBid?.user_id === user?.id;
+
   useEffect(() => {
-    if (!auctionId) return;
+    const handleAuctionCompletion = async () => {
+      if (isEnded && completionStatus === 'ongoing') {
+        console.log('🔔 Auction completion check:', {
+          isEnded,
+          completionStatus,
+          auctionId,
+          currentTime: new Date(),
+          endDate: endDate ? new Date(endDate) : null
+        });
 
-    console.log('🔄 Setting up auction subscription for:', auctionId);
-    
-    const channel = supabase
-      .channel('auction-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'artworks',
-          filter: `id=eq.${auctionId}`,
-        },
-        async (payload) => {
-          console.log('🔄 Received auction update:', payload);
-          const newData = payload.new as { 
-            completion_status: string,
-            winner_id: string,
-            current_price: number,
-            payment_status: string,
-            end_date: string 
-          };
+        try {
+          console.log('🚀 Invoking handle-auction-completion for:', auctionId);
+          const { error } = await supabase.functions.invoke('handle-auction-completion', {
+            body: { auctionId }
+          });
 
-          if (newData.completion_status === 'completed' && completionStatus !== 'completed') {
-            console.log('🏁 Auction completed, refreshing data');
-            await refetchAuction();
-            toast.info("This auction has ended");
-            // Refresh the page after a short delay
-            setTimeout(() => {
-              window.location.reload();
-            }, 2000);
+          if (error) {
+            console.error('❌ Error completing auction:', error);
+            toast.error('Error completing auction');
+          } else {
+            console.log('✅ Auction completion handled successfully');
+            
+            // Only send email notification if user is the winner
+            if (isWinner || isPotentialWinner || user?.id === highestBid?.user_id) {
+              try {
+                console.log('📧 Sending win email notification');
+                const { error: emailError } = await supabase.functions.invoke('send-auction-win-email', {
+                  body: { 
+                    auctionId,
+                    email: user?.email,
+                    userId: user?.id
+                  }
+                });
+
+                if (emailError) {
+                  console.error('❌ Error sending win email:', emailError);
+                } else {
+                  console.log('✅ Win email sent successfully');
+                }
+              } catch (emailError) {
+                console.error('❌ Error invoking send-auction-win-email:', emailError);
+              }
+            }
+            
+            // Refetch auction data to get updated status
+            refetchAuction();
           }
+        } catch (error) {
+          console.error('❌ Error in auction completion:', error);
         }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('🔄 Cleaning up auction subscription');
-      supabase.removeChannel(channel);
+      }
     };
-  }, [auctionId, refetchAuction, completionStatus]);
+
+    handleAuctionCompletion();
+  }, [isEnded, completionStatus, auctionId, isWinner, isPotentialWinner, user?.id, highestBid?.user_id, refetchAuction, endDate, user?.email]);
 
   // Check payment status when URL params change
   useEffect(() => {
@@ -133,7 +159,6 @@ export const AuctionStatus = ({
   const currentPaymentStatus = auctionData?.payment_status || paymentStatus;
   const hasCompletedPayment = (isWinner || isPotentialWinner) && currentPaymentStatus === 'completed';
   const needsPayment = (isWinner || isPotentialWinner) && currentPaymentStatus === 'pending';
-  const isPotentialWinner = isEnded && !winnerId && highestBid?.user_id === user?.id;
 
   return (
     <div className="space-y-4">

@@ -1,121 +1,125 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders } from "../_shared/cors.ts"
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
 
-console.log("Hello from handle-auction-completion!")
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
-serve(async (req) => {
+serve(async (req: Request) => {
+  console.log('🔔 Starting auction completion handler...');
+
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { auctionId } = await req.json()
+    const { auctionId } = await req.json();
     
     if (!auctionId) {
-      throw new Error('Auction ID is required')
+      console.error('❌ No auctionId provided');
+      throw new Error('auctionId is required');
     }
+    
+    console.log('📦 Processing auction:', auctionId);
 
-    console.log('🎯 Processing auction completion for:', auctionId);
-
-    // Create Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
 
-    // Get auction details
+    // Get auction and highest bid details
     const { data: auction, error: auctionError } = await supabaseClient
       .from('artworks')
-      .select(`
-        *,
-        winner:profiles!artworks_winner_id_fkey (
-          email
-        )
-      `)
+      .select('*')
       .eq('id', auctionId)
-      .single()
+      .single();
 
     if (auctionError) {
       console.error('❌ Error fetching auction:', auctionError);
-      throw auctionError
+      throw auctionError;
     }
 
     if (!auction) {
-      throw new Error('Auction not found')
+      console.error('❌ No auction found with ID:', auctionId);
+      throw new Error('Auction not found');
     }
 
     // Get highest bid
     const { data: highestBid, error: bidError } = await supabaseClient
       .from('bids')
-      .select('*')
+      .select('user_id, amount')
       .eq('auction_id', auctionId)
       .order('amount', { ascending: false })
       .limit(1)
-      .single()
+      .single();
 
-    if (bidError && bidError.code !== 'PGRST116') {
+    if (bidError) {
       console.error('❌ Error fetching highest bid:', bidError);
-      throw bidError
+      throw bidError;
     }
 
-    // Update auction status
-    const updates = {
-      completion_status: 'completed',
-      winner_id: highestBid?.user_id || null,
-      current_price: highestBid?.amount || auction.starting_price,
-    }
-
-    console.log('🔄 Updating auction with:', updates);
-
+    // Update auction with winner and completion status
     const { error: updateError } = await supabaseClient
       .from('artworks')
-      .update(updates)
-      .eq('id', auctionId)
+      .update({
+        completion_status: 'completed',
+        winner_id: highestBid.user_id,
+        current_price: highestBid.amount
+      })
+      .eq('id', auctionId);
 
     if (updateError) {
       console.error('❌ Error updating auction:', updateError);
-      throw updateError
+      throw updateError;
     }
 
-    // Send email to winner if there is one
-    if (highestBid?.user_id) {
-      console.log('📧 Sending winner email...');
-      
-      try {
-        const { error: emailError } = await supabaseClient.functions.invoke('send-auction-win-email', {
-          body: { 
-            auctionId,
-            userId: highestBid.user_id,
-            email: auction.winner?.email
-          }
-        });
+    // Only create notification for this specific auction that just completed
+    const { error: notificationError } = await supabaseClient
+      .from('notifications')
+      .insert({
+        user_id: highestBid.user_id,
+        title: 'Auction Won!',
+        message: `Congratulations! You won the auction for "${auction.title}". The final price was €${highestBid.amount}.`,
+        type: 'auction_won'
+      });
 
-        if (emailError) {
-          console.error('❌ Error sending winner email:', emailError);
-        } else {
-          console.log('✅ Winner email sent successfully');
-        }
-      } catch (error) {
-        console.error('❌ Error invoking send-auction-win-email:', error);
-      }
+    if (notificationError) {
+      console.error('❌ Error creating notification:', notificationError);
+      throw notificationError;
     }
+
+    console.log('✅ Successfully completed auction:', {
+      auctionId,
+      winnerId: highestBid.user_id,
+      finalPrice: highestBid.amount
+    });
 
     return new Response(
-      JSON.stringify({ message: 'Auction completed successfully' }),
+      JSON.stringify({ 
+        message: 'Auction completion processed successfully',
+        winner: highestBid.user_id,
+        finalPrice: highestBid.amount
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
-      },
-    )
+      }
+    );
   } catch (error) {
-    console.error('❌ Error in handle-auction-completion:', error);
+    console.error('❌ Error in handle-auction-completion function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
-      },
-    )
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
-})
+});
