@@ -25,6 +25,7 @@ export const useAuctionSubscription = (
           console.log('🎉 Sending auction won notification for winner:', newData.winner_id);
           console.log('📧 Calling send-auction-win-email with auctionId:', id);
           
+          // Call the send-auction-win-email function
           const { data, error } = await supabase.functions.invoke('send-auction-win-email', {
             body: { auctionId: id }
           });
