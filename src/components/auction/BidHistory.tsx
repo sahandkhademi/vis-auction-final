@@ -36,7 +36,7 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
         .from('bids')
         .select('*')
         .eq('auction_id', auctionId)
-        .order('amount', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (bidsError) {
         console.error('Error fetching bids:', bidsError);
@@ -64,11 +64,11 @@ export const BidHistory = ({ auctionId }: BidHistoryProps) => {
 
     // Set up real-time subscription
     const channel = supabase
-      .channel('bid-changes')
+      .channel('schema-db-changes')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'bids',
           filter: `auction_id=eq.${auctionId}`
