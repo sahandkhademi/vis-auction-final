@@ -87,8 +87,9 @@ serve(async (req) => {
       console.error('❌ Error creating notification:', notificationError);
     }
 
-    // Prepare and send email
-    const auctionUrl = `${new URL(req.url).origin.replace('functions.', '')}/auction/${auctionId}`;
+    // Get the origin from the request URL for the frontend URL
+    const frontendUrl = new URL(req.url).origin.replace('.supabase.co/functions/v1/send-auction-win-email', '');
+    const auctionUrl = `${frontendUrl}/auction/${auctionId}`;
     console.log('📧 Sending email to winner with auction URL:', auctionUrl);
 
     const emailResponse = await fetch('https://api.resend.com/emails', {
