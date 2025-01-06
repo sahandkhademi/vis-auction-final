@@ -120,28 +120,32 @@ export const AuctionStatus = ({
           <p className="text-2xl font-bold">€{currentBid?.toLocaleString()}</p>
         </div>
         <div className="flex flex-col items-end gap-3">
-          {!isEnded && endDate && (
-            <div>
-              <p className="text-sm text-gray-500">Time Remaining</p>
-              <div className="text-2xl font-bold text-right">
-                <CountdownTimer endDate={endDate} />
-              </div>
-            </div>
+          {!isEnded && (
+            <>
+              {!isEnded && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Clock className="w-4 h-4" />
+                  <span className="text-sm font-medium">Ongoing</span>
+                </div>
+              )}
+              
+              {endDate && (
+                <div>
+                  <p className="text-sm text-gray-500">Time Remaining</p>
+                  <div className="text-2xl font-bold text-right">
+                    <CountdownTimer endDate={endDate} />
+                  </div>
+                </div>
+              )}
+            </>
           )}
           
-          <div className="flex items-center gap-2">
-            {isEnded ? (
-              <div className="flex items-center gap-2 text-blue-600">
-                <CheckCircle2 className="w-4 h-4" />
-                <span className="text-sm font-medium">Auction Ended</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-gray-600">
-                <Clock className="w-4 h-4" />
-                <span className="text-sm font-medium">Ongoing</span>
-              </div>
-            )}
-          </div>
+          {isEnded && (
+            <div className="flex items-center gap-2 text-blue-600">
+              <CheckCircle2 className="w-4 h-4" />
+              <span className="text-sm font-medium">Auction Ended</span>
+            </div>
+          )}
 
           {(isWinner || isPotentialWinner) && (
             <div className="flex items-center gap-2 text-emerald-600">
