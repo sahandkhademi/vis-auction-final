@@ -18,8 +18,11 @@ serve(async (req) => {
   }
 
   try {
-    const { auctionId } = await req.json();
-    console.log('📦 Processing auction:', auctionId);
+    const requestBody = await req.json();
+    console.log('📦 Received request body:', requestBody);
+    const { auctionId } = requestBody;
+    
+    console.log('🔍 Processing auction:', auctionId);
 
     if (!RESEND_API_KEY) {
       console.error('❌ RESEND_API_KEY is not configured');
@@ -33,6 +36,7 @@ serve(async (req) => {
       }
     });
 
+    console.log('🔄 Fetching auction and winner details');
     // Get auction and winner details
     const { data: auction, error: auctionError } = await supabase
       .from('artworks')
@@ -51,14 +55,17 @@ serve(async (req) => {
       throw new Error('Failed to fetch auction details');
     }
 
+    console.log('✅ Found auction:', auction.title);
+
     if (!auction.winner?.email) {
       console.error('❌ No winner email found for auction:', auctionId);
       throw new Error('No winner email found');
     }
 
-    console.log('✅ Found auction winner:', auction.winner.email);
+    console.log('✅ Found winner email:', auction.winner.email);
 
     // Check if winner has notifications enabled
+    console.log('🔍 Checking notification preferences');
     const { data: preferences } = await supabase
       .from('notification_preferences')
       .select('auction_won_notifications')
@@ -74,6 +81,7 @@ serve(async (req) => {
     }
 
     // Create notification in database
+    console.log('📝 Creating notification record');
     const { error: notificationError } = await supabase
       .from('notifications')
       .insert({
