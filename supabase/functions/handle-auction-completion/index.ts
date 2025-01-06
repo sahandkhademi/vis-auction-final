@@ -60,7 +60,7 @@ serve(async (req: Request) => {
       completionStatus: auction.completion_status
     });
 
-    // Create notification in the database
+    // Create notification in the database first
     const { error: notificationError } = await supabaseClient
       .from('notifications')
       .insert({
@@ -72,6 +72,8 @@ serve(async (req: Request) => {
 
     if (notificationError) {
       console.error('❌ Error creating notification:', notificationError);
+    } else {
+      console.log('✅ Created auction won notification');
     }
 
     // Check if winner has notifications enabled
@@ -106,7 +108,7 @@ serve(async (req: Request) => {
         `
       };
 
-      // Send email directly using Resend
+      // Send email
       try {
         console.log('📧 Sending email to winner:', auction.winner.email);
         await sendEmail(auction.winner.email, emailContent);

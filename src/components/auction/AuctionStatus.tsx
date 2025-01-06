@@ -81,11 +81,14 @@ export const AuctionStatus = ({
             toast.error('Error completing auction');
           } else {
             console.log('✅ Auction completion handled successfully');
-            if (isWinner || isPotentialWinner) {
+            // Show win notification immediately after successful completion
+            if (isWinner || isPotentialWinner || user?.id === highestBid?.user_id) {
               toast.success("Congratulations! You've won the auction!", {
                 duration: 5000
               });
             }
+            // Refetch auction data to get updated status
+            refetchAuction();
           }
         } catch (error) {
           console.error('❌ Error in auction completion:', error);
@@ -94,7 +97,19 @@ export const AuctionStatus = ({
     };
 
     handleAuctionCompletion();
-  }, [isEnded, completionStatus, auctionId, isWinner, isPotentialWinner]);
+  }, [isEnded, completionStatus, auctionId, isWinner, isPotentialWinner, user?.id, highestBid?.user_id, refetchAuction]);
+
+  // Check payment status when URL params change
+  useEffect(() => {
+    const paymentSuccess = searchParams.get('payment_success');
+    if (paymentSuccess === 'true') {
+      refetchAuction();
+      toast.success(
+        "Payment successful! You'll receive a confirmation email shortly.",
+        { duration: 5000 }
+      );
+    }
+  }, [searchParams, refetchAuction]);
 
   const currentPaymentStatus = auctionData?.payment_status || paymentStatus;
   const hasCompletedPayment = (isWinner || isPotentialWinner) && currentPaymentStatus === 'completed';
