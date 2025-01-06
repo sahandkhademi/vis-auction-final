@@ -34,20 +34,23 @@ export const useAuctionSubscription = (
         if (newData.winner_id === session.user.id && newData.completion_status === 'completed') {
           console.log('🎉 Winner match found! Sending win email...');
           
-          // Call the send-auction-win-email function
-          const { data, error } = await supabase.functions.invoke('send-auction-win-email', {
-            body: { 
-              auctionId: id,
-              userId: session.user.id
-            }
-          });
+          try {
+            const { error } = await supabase.functions.invoke('send-auction-win-email', {
+              body: { 
+                email: session.user.email,
+                auctionId: id
+              }
+            });
 
-          if (error) {
-            console.error('❌ Error sending auction won notification:', error);
-            toast.error('Error processing auction completion');
-          } else {
-            console.log('✅ Auction won notification sent successfully:', data);
-            toast.success('Congratulations! You won the auction!');
+            if (error) {
+              console.error('❌ Error sending auction won notification:', error);
+              toast.error('Error processing auction completion');
+            } else {
+              console.log('✅ Auction won notification sent successfully');
+              toast.success('Congratulations! You won the auction!');
+            }
+          } catch (error) {
+            console.error('❌ Error invoking send-auction-win-email:', error);
           }
         } else {
           console.log('ℹ️ Not sending win email - conditions not met:', {
