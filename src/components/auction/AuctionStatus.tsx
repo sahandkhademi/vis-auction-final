@@ -31,17 +31,33 @@ export const AuctionStatus = ({
   const isWinner = user?.id === winnerId;
   const isEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
+  console.log('🔍 AuctionStatus Props:', {
+    currentBid,
+    endDate,
+    completionStatus,
+    paymentStatus,
+    winnerId,
+    userId: user?.id,
+    isWinner,
+    isEnded
+  });
+
   // Fetch auction data to get latest payment status
   const { data: auctionData, refetch: refetchAuction } = useQuery({
     queryKey: ['auction', auctionId],
     queryFn: async () => {
+      console.log('🔄 Fetching latest auction data for:', auctionId);
       const { data, error } = await supabase
         .from('artworks')
-        .select('payment_status, winner_id')
+        .select('payment_status, winner_id, completion_status')
         .eq('id', auctionId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching auction data:', error);
+        throw error;
+      }
+      console.log('✅ Latest auction data:', data);
       return data;
     },
   });
@@ -50,6 +66,7 @@ export const AuctionStatus = ({
   const { data: highestBid } = useQuery({
     queryKey: ['highestBid', auctionId],
     queryFn: async () => {
+      console.log('🔄 Fetching highest bid for auction:', auctionId);
       const { data, error } = await supabase
         .from('bids')
         .select('user_id, amount')
@@ -58,7 +75,11 @@ export const AuctionStatus = ({
         .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching highest bid:', error);
+        throw error;
+      }
+      console.log('✅ Highest bid data:', data);
       return data;
     },
     enabled: isEnded && !winnerId
@@ -70,8 +91,16 @@ export const AuctionStatus = ({
   useEffect(() => {
     const handleAuctionCompletion = async () => {
       if (isEnded && !completionStatus) {
-        console.log('🔔 Triggering auction completion handler for:', auctionId);
+        console.log('🔔 Auction completion check:', {
+          isEnded,
+          completionStatus,
+          auctionId,
+          currentTime: new Date(),
+          endDate: endDate ? new Date(endDate) : null
+        });
+
         try {
+          console.log('🚀 Invoking handle-auction-completion for:', auctionId);
           const { error } = await supabase.functions.invoke('handle-auction-completion', {
             body: { auctionId }
           });
@@ -81,8 +110,10 @@ export const AuctionStatus = ({
             toast.error('Error completing auction');
           } else {
             console.log('✅ Auction completion handled successfully');
+            
             // Show win notification immediately after successful completion
             if (isWinner || isPotentialWinner || user?.id === highestBid?.user_id) {
+              console.log('🎉 Showing win notification for user:', user?.id);
               toast.success("Congratulations! You've won the auction!", {
                 duration: 5000
               });
@@ -97,7 +128,7 @@ export const AuctionStatus = ({
     };
 
     handleAuctionCompletion();
-  }, [isEnded, completionStatus, auctionId, isWinner, isPotentialWinner, user?.id, highestBid?.user_id, refetchAuction]);
+  }, [isEnded, completionStatus, auctionId, isWinner, isPotentialWinner, user?.id, highestBid?.user_id, refetchAuction, endDate]);
 
   // Check payment status when URL params change
   useEffect(() => {
