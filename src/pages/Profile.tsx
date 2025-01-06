@@ -66,6 +66,30 @@ const Profile = () => {
         variant: "destructive",
       });
     } else {
+      // Send profile update email
+      try {
+        const response = await fetch(
+          "https://dsrjyryrxfruexcwbxea.supabase.co/functions/v1/send-profile-update",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+              email: user.email,
+              username: username,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          console.error("Failed to send profile update email");
+        }
+      } catch (emailError) {
+        console.error("Error sending profile update email:", emailError);
+      }
+
       toast({
         title: "Success",
         description: "Profile updated successfully",
