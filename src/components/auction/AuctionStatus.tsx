@@ -67,41 +67,38 @@ export const AuctionStatus = ({
   // If auction has ended but winner not set, check if current user is highest bidder
   const isPotentialWinner = isEnded && !winnerId && highestBid?.user_id === user?.id;
 
-  // Check payment status on mount and when URL params change
   useEffect(() => {
-    const checkPaymentStatus = async () => {
-      const paymentSuccess = searchParams.get('payment_success');
-      if (paymentSuccess === 'true') {
-        await refetchAuction();
-        toast.success(
-          "Payment successful! You'll receive a confirmation email shortly.",
-          { duration: 5000 }
-        );
+    const handleAuctionCompletion = async () => {
+      if (isEnded && !completionStatus) {
+        console.log('🔔 Triggering auction completion handler for:', auctionId);
+        try {
+          const { error } = await supabase.functions.invoke('handle-auction-completion', {
+            body: { auctionId }
+          });
+
+          if (error) {
+            console.error('❌ Error completing auction:', error);
+            toast.error('Error completing auction');
+          } else {
+            console.log('✅ Auction completion handled successfully');
+            if (isWinner || isPotentialWinner) {
+              toast.success("Congratulations! You've won the auction!", {
+                duration: 5000
+              });
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error in auction completion:', error);
+        }
       }
     };
 
-    checkPaymentStatus();
-  }, [searchParams, refetchAuction]);
+    handleAuctionCompletion();
+  }, [isEnded, completionStatus, auctionId, isWinner, isPotentialWinner]);
 
   const currentPaymentStatus = auctionData?.payment_status || paymentStatus;
   const hasCompletedPayment = (isWinner || isPotentialWinner) && currentPaymentStatus === 'completed';
   const needsPayment = (isWinner || isPotentialWinner) && currentPaymentStatus === 'pending';
-
-  // For debugging
-  console.log('Debug auction status:', {
-    userId: user?.id,
-    winnerId,
-    isWinner,
-    completionStatus,
-    paymentStatus: currentPaymentStatus,
-    isEnded,
-    needsPayment,
-    isPotentialWinner,
-    highestBid,
-    currentTime: new Date().toISOString(),
-    endDate,
-    auctionData,
-  });
 
   return (
     <div className="space-y-4">

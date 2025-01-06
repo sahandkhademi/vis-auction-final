@@ -60,6 +60,20 @@ serve(async (req: Request) => {
       completionStatus: auction.completion_status
     });
 
+    // Create notification in the database
+    const { error: notificationError } = await supabaseClient
+      .from('notifications')
+      .insert({
+        user_id: auction.winner.id,
+        title: 'Auction Won!',
+        message: `Congratulations! You've won the auction for "${auction.title}"`,
+        type: 'auction_won'
+      });
+
+    if (notificationError) {
+      console.error('❌ Error creating notification:', notificationError);
+    }
+
     // Check if winner has notifications enabled
     const { data: preferences } = await supabaseClient
       .from('notification_preferences')
@@ -102,20 +116,6 @@ serve(async (req: Request) => {
       }
     } else {
       console.log('ℹ️ Winner has disabled auction won notifications');
-    }
-
-    // Create a notification in the database
-    const { error: notificationError } = await supabaseClient
-      .from('notifications')
-      .insert({
-        user_id: auction.winner.id,
-        title: 'Auction Won!',
-        message: `Congratulations! You've won the auction for "${auction.title}"`,
-        type: 'auction_won'
-      });
-
-    if (notificationError) {
-      console.error('❌ Error creating notification:', notificationError);
     }
 
     return new Response(
