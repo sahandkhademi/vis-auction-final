@@ -5,7 +5,7 @@ import { AuctionStatusDisplay } from "./AuctionStatusDisplay";
 import { PaymentStatus } from "./PaymentStatus";
 import { useAuctionCompletion } from "./hooks/useAuctionCompletion";
 import { usePaymentStatus } from "./hooks/usePaymentStatus";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -25,15 +25,17 @@ export const AuctionStatus = ({
   auctionId,
 }: AuctionStatusProps) => {
   const user = useUser();
-  const isWinner = user?.id === winnerId;
-  const isEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
+  const [localCompletionStatus, setLocalCompletionStatus] = useState(completionStatus);
+  const [localWinnerId, setLocalWinnerId] = useState(winnerId);
+  const isWinner = user?.id === localWinnerId;
+  const isEnded = localCompletionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
   console.log('🔍 AuctionStatus Props:', {
     currentBid,
     endDate,
-    completionStatus,
+    completionStatus: localCompletionStatus,
     paymentStatus,
-    winnerId,
+    winnerId: localWinnerId,
     userId: user?.id,
     isWinner,
     isEnded,
@@ -56,6 +58,11 @@ export const AuctionStatus = ({
         throw error;
       }
       console.log('✅ Latest auction data:', data);
+      
+      // Update local state with new values
+      setLocalCompletionStatus(data.completion_status);
+      setLocalWinnerId(data.winner_id);
+      
       return data;
     },
   });
@@ -80,7 +87,7 @@ export const AuctionStatus = ({
       console.log('✅ Highest bid data:', data);
       return data;
     },
-    enabled: isEnded && !winnerId
+    enabled: isEnded && !localWinnerId
   });
 
   // Subscribe to auction updates
@@ -100,6 +107,9 @@ export const AuctionStatus = ({
         },
         async (payload) => {
           console.log('🔄 Received auction update:', payload);
+          const newData = payload.new as any;
+          setLocalCompletionStatus(newData.completion_status);
+          setLocalWinnerId(newData.winner_id);
           await refetchAuction();
         }
       )
@@ -118,10 +128,10 @@ export const AuctionStatus = ({
       supabase.removeChannel(channel);
       clearInterval(pollInterval);
     };
-  }, [auctionId, isEnded]);
+  }, [auctionId, isEnded, refetchAuction]);
 
   // If auction has ended but winner not set, check if current user is highest bidder
-  const isPotentialWinner = isEnded && !winnerId && highestBid?.user_id === user?.id;
+  const isPotentialWinner = isEnded && !localWinnerId && highestBid?.user_id === user?.id;
 
   // Use custom hooks for auction completion and payment status
   const handleRefetch = async () => {
@@ -134,7 +144,7 @@ export const AuctionStatus = ({
 
   useAuctionCompletion(
     isEnded,
-    completionStatus,
+    localCompletionStatus,
     auctionId,
     isWinner,
     isPotentialWinner,
