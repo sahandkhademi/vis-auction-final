@@ -88,6 +88,28 @@ export const AuctionStatus = ({
   const isPotentialWinner = isEnded && !winnerId && highestBid?.user_id === user?.id;
 
   useEffect(() => {
+    if (!endDate) return;
+
+    const checkAndRefreshPage = () => {
+      const now = new Date();
+      const end = new Date(endDate);
+      
+      if (now >= end && completionStatus === 'ongoing') {
+        console.log('🔄 Auction ended, refreshing page...');
+        window.location.reload();
+      }
+    };
+
+    // Check immediately
+    checkAndRefreshPage();
+
+    // Set up interval to check every second
+    const interval = setInterval(checkAndRefreshPage, 1000);
+
+    return () => clearInterval(interval);
+  }, [endDate, completionStatus]);
+
+  useEffect(() => {
     const handleAuctionCompletion = async () => {
       if (isEnded && completionStatus === 'ongoing') {
         console.log('🔔 Auction completion check:', {
