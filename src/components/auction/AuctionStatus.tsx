@@ -123,7 +123,7 @@ export const AuctionStatus = ({
 
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-500">Current Price</p>
+          <p className="text-sm text-gray-500">{isEnded ? "Sold Price" : "Current Price"}</p>
           <p className="text-2xl font-bold">€{currentBid?.toLocaleString()}</p>
         </div>
 
