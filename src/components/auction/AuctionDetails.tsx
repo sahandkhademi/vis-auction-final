@@ -28,6 +28,9 @@ export const AuctionDetails = ({
 
   // Subscribe to real-time price updates
   useEffect(() => {
+    console.log('Setting up price subscriptions for auction:', artwork.id);
+    console.log('Initial price:', currentPrice);
+
     const channel = supabase
       .channel('artwork-price-updates')
       .on(
@@ -42,7 +45,7 @@ export const AuctionDetails = ({
           const newData = payload.new as { current_price: number };
           if (newData.current_price) {
             console.log('📈 Received price update:', newData.current_price);
-            setCurrentPrice(newData.current_price);
+            setCurrentPrice(prev => Math.max(prev, newData.current_price));
           }
         }
       )
@@ -62,24 +65,28 @@ export const AuctionDetails = ({
         (payload) => {
           const newBid = payload.new as { amount: number };
           console.log('📈 Received new bid:', newBid.amount);
-          setCurrentPrice(newBid.amount);
+          setCurrentPrice(prev => Math.max(prev, newBid.amount));
         }
       )
       .subscribe();
 
     return () => {
+      console.log('Cleaning up price subscriptions');
       supabase.removeChannel(channel);
       supabase.removeChannel(bidsChannel);
     };
   }, [artwork.id]);
 
-  // Update current price when props change
+  // Update current price when props change, but only if the new price is higher
   useEffect(() => {
     const newPrice = artwork.current_price || currentHighestBid || artwork.starting_price;
-    if (newPrice !== currentPrice) {
+    console.log('Props changed. Current:', currentPrice, 'New:', newPrice);
+    
+    if (newPrice > currentPrice) {
+      console.log('Updating to higher price:', newPrice);
       setCurrentPrice(newPrice);
     }
-  }, [artwork.current_price, currentHighestBid, artwork.starting_price]);
+  }, [artwork.current_price, currentHighestBid, artwork.starting_price, currentPrice]);
 
   return (
     <motion.div
