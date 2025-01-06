@@ -53,22 +53,53 @@ serve(async (req) => {
       completionStatus: auction.completion_status
     });
 
-    // Call the email sending function
-    console.log('📧 Calling send-auction-email function');
-    const emailResponse = await supabaseClient.functions.invoke('send-auction-email', {
-      body: { auctionId }
-    });
+    // Check if winner has email notifications enabled
+    const { data: notificationPrefs } = await supabaseClient
+      .from('notification_preferences')
+      .select('auction_won_notifications')
+      .eq('user_id', auction.winner_id)
+      .single();
 
-    if (emailResponse.error) {
-      console.error('❌ Error calling send-auction-email:', emailResponse.error);
+    if (notificationPrefs?.auction_won_notifications !== false) {
+      // Call the email sending function
+      console.log('📧 Calling send-auction-email function');
+      const emailResponse = await supabaseClient.functions.invoke('send-auction-email', {
+        body: { 
+          auctionId,
+          type: 'auction_won',
+          recipientEmail: auction.winner.email,
+          auctionTitle: auction.title,
+          finalPrice: auction.current_price
+        }
+      });
+
+      if (emailResponse.error) {
+        console.error('❌ Error calling send-auction-email:', emailResponse.error);
+      } else {
+        console.log('✅ Email function called successfully:', emailResponse.data);
+      }
     } else {
-      console.log('✅ Email function called successfully:', emailResponse.data);
+      console.log('ℹ️ Winner has disabled auction won notifications');
+    }
+
+    // Create a notification in the database
+    const { error: notificationError } = await supabaseClient
+      .from('notifications')
+      .insert({
+        user_id: auction.winner_id,
+        title: 'Auction Won!',
+        message: `Congratulations! You've won the auction for "${auction.title}"`,
+        type: 'auction_won'
+      });
+
+    if (notificationError) {
+      console.error('❌ Error creating notification:', notificationError);
     }
 
     return new Response(
       JSON.stringify({ 
-        message: 'Auction completion processed and email notification sent',
-        emailStatus: emailResponse.data 
+        message: 'Auction completion processed and notifications sent',
+        emailStatus: emailResponse?.data 
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
