@@ -45,15 +45,15 @@ const Index = () => {
 
   const createTestAuction = async () => {
     try {
-      const endDate = new Date(Date.now() + 30000); // 30 seconds from now
+      const endDate = new Date(Date.now() + 10000); // 10 seconds from now
 
       const { data, error } = await supabase
         .from("artworks")
         .insert([
           {
-            title: "Test Auction - Ends in 30s",
+            title: "Test Auction - Ends in 10s",
             artist: "Test Artist",
-            description: "This is a test auction that will end in 30 seconds.",
+            description: "This is a test auction that will end in 10 seconds.",
             created_year: "2024",
             dimensions: "100x100cm",
             format: "Digital",
@@ -71,7 +71,7 @@ const Index = () => {
 
       toast({
         title: "Test auction created!",
-        description: "The auction will end in 30 seconds. Place a bid to test notifications.",
+        description: "The auction will end in 10 seconds. Place a bid to test notifications.",
       });
 
       // Navigate to the new auction
