@@ -7,8 +7,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const featuredAuction = {
     title: "Russian Village in Winter",
     artist: "ALESSIO ISSUPOFF",
@@ -18,7 +23,7 @@ const Index = () => {
     timeLeft: "2d 15h 30m"
   };
 
-  const { data: trendingArtworks, isLoading, error } = useQuery({
+  const { data: trendingArtworks, isLoading, error, refetch } = useQuery({
     queryKey: ["trending-artworks"],
     queryFn: async () => {
       try {
@@ -37,6 +42,54 @@ const Index = () => {
       }
     },
   });
+
+  const createTestAuction = async () => {
+    try {
+      const endDate = new Date(Date.now() + 30000); // 30 seconds from now
+
+      const { data, error } = await supabase
+        .from("artworks")
+        .insert([
+          {
+            title: "Test Auction - Ends in 30s",
+            artist: "Test Artist",
+            description: "This is a test auction that will end in 30 seconds.",
+            created_year: "2024",
+            dimensions: "100x100cm",
+            format: "Digital",
+            starting_price: 100,
+            current_price: 100,
+            image_url: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5",
+            status: "published",
+            end_date: endDate.toISOString(),
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Test auction created!",
+        description: "The auction will end in 30 seconds. Place a bid to test notifications.",
+      });
+
+      // Navigate to the new auction
+      if (data) {
+        navigate(`/auction/${data.id}`);
+      }
+
+      // Refresh the trending artworks list
+      refetch();
+    } catch (err) {
+      console.error("Error creating test auction:", err);
+      toast({
+        title: "Error",
+        description: "Failed to create test auction",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white -mt-24">
@@ -58,12 +111,21 @@ const Index = () => {
       >
         <div className="flex items-center justify-between mb-8">
           <h2 className="text-2xl font-medium text-gray-900">Trending lots</h2>
-          <Link 
-            to="/auctions" 
-            className="text-sm text-gray-600 hover:text-gray-900 transition-colors hover:underline"
-          >
-            View all
-          </Link>
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={createTestAuction}
+              variant="secondary"
+              className="text-sm"
+            >
+              Create 30s Test Auction
+            </Button>
+            <Link 
+              to="/auctions" 
+              className="text-sm text-gray-600 hover:text-gray-900 transition-colors hover:underline"
+            >
+              View all
+            </Link>
+          </div>
         </div>
 
         {error && (
