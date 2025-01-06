@@ -88,19 +88,12 @@ export const AuctionStatus = ({
   const isPotentialWinner = isEnded && !winnerId && highestBid?.user_id === user?.id;
 
   useEffect(() => {
-    let refreshTimeout: NodeJS.Timeout;
-    
     const handleAuctionCompletion = async () => {
       if (isEnded && completionStatus === 'ongoing') {
-        console.log('🔔 Auction completion check:', {
-          isEnded,
-          completionStatus,
-          auctionId,
-          currentTime: new Date(),
-          endDate: endDate ? new Date(endDate) : null
-        });
+        console.log('🔔 Starting auction completion process...');
 
         try {
+          // First, invoke the completion handler
           console.log('🚀 Invoking handle-auction-completion for:', auctionId);
           const { error } = await supabase.functions.invoke('handle-auction-completion', {
             body: { auctionId }
@@ -109,58 +102,49 @@ export const AuctionStatus = ({
           if (error) {
             console.error('❌ Error completing auction:', error);
             toast.error('Error completing auction');
-          } else {
-            console.log('✅ Auction completion handled successfully');
-            
-            // Only send email notification if user is the winner
-            if (isWinner || isPotentialWinner || user?.id === highestBid?.user_id) {
-              try {
-                console.log('📧 Sending win email notification');
-                const { error: emailError } = await supabase.functions.invoke('send-auction-win-email', {
-                  body: { 
-                    email: user?.email,
-                    auctionId,
-                    userId: user?.id
-                  }
-                });
-
-                if (emailError) {
-                  console.error('❌ Error sending win email:', emailError);
-                } else {
-                  console.log('✅ Win email sent successfully');
-                }
-              } catch (emailError) {
-                console.error('❌ Error invoking send-auction-win-email:', emailError);
-              }
-            }
-
-            // Force a refetch of auction data
-            await refetchAuction();
-
-            // Schedule the page refresh with a guaranteed execution
-            console.log('🔄 Scheduling guaranteed page refresh...');
-            window.setTimeout(() => {
-              console.log('🔄 Executing page refresh NOW');
-              window.location.href = window.location.href;
-            }, 2000);
+            return;
           }
+
+          console.log('✅ Auction completion handled successfully');
+          
+          // Then, send email notification if user is the winner
+          if (isWinner || isPotentialWinner || user?.id === highestBid?.user_id) {
+            try {
+              console.log('📧 Sending win email notification');
+              const { error: emailError } = await supabase.functions.invoke('send-auction-win-email', {
+                body: { 
+                  email: user?.email,
+                  auctionId,
+                  userId: user?.id
+                }
+              });
+
+              if (emailError) {
+                console.error('❌ Error sending win email:', emailError);
+              } else {
+                console.log('✅ Win email sent successfully');
+              }
+            } catch (emailError) {
+              console.error('❌ Error invoking send-auction-win-email:', emailError);
+            }
+          }
+
+          // Finally, refetch data and schedule the refresh
+          await refetchAuction();
+          
+          // Use a promise to ensure all state updates are complete
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          console.log('🔄 All updates complete, refreshing page...');
+          window.location.href = window.location.href;
         } catch (error) {
           console.error('❌ Error in auction completion:', error);
         }
       }
     };
 
-    // Execute auction completion handler
     handleAuctionCompletion();
-
-    // Cleanup function
-    return () => {
-      if (refreshTimeout) {
-        console.log('🧹 Clearing refresh timeout');
-        clearTimeout(refreshTimeout);
-      }
-    };
-  }, [isEnded, completionStatus, auctionId, isWinner, isPotentialWinner, user?.id, highestBid?.user_id, refetchAuction, endDate, user?.email]);
+  }, [isEnded, completionStatus, auctionId, isWinner, isPotentialWinner, user?.id, highestBid?.user_id, refetchAuction, user?.email]);
 
   // Check payment status when URL params change
   useEffect(() => {
