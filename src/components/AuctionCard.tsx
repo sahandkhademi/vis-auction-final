@@ -39,6 +39,9 @@ export const AuctionCard = ({
     }
   };
 
+  // Determine the price to display - use currentBid if it exists and is greater than 0
+  const displayPrice = currentBid > 0 ? currentBid : startingPrice;
+
   return (
     <Link to={`/auction/${id}`}>
       <motion.div
@@ -72,11 +75,13 @@ export const AuctionCard = ({
               <p className="text-sm text-gray-600 mt-1">{artist}</p>
             )}
             <div className="mt-2 text-xs text-gray-500">
-              {currentBid > 0 ? (
-                <p>Last bid: €{currentBid.toLocaleString()}</p>
-              ) : (
-                <p>Starting price: €{startingPrice?.toLocaleString()}</p>
-              )}
+              <p>
+                {currentBid > 0 ? (
+                  `Current bid: €${displayPrice?.toLocaleString()}`
+                ) : (
+                  `Starting price: €${displayPrice?.toLocaleString()}`
+                )}
+              </p>
               <div className="mt-2">
                 <CountdownTimer endDate={endDate} />
               </div>
