@@ -20,7 +20,7 @@ export const useAuctionSubscription = (
         const { data: { session } } = await supabase.auth.getSession();
         
         if (!session) {
-          console.error('❌ No session found for auction win handler');
+          console.error('❌ No session found');
           return;
         }
 
@@ -30,12 +30,12 @@ export const useAuctionSubscription = (
           completionStatus: newData.completion_status
         });
 
-        // Send notification if this user is the winner and auction is completed
+        // Only send notification if this user is the winner AND auction is completed
         if (newData.winner_id === session.user.id && newData.completion_status === 'completed') {
           console.log('🎉 Winner match found! Sending win email...');
           
-          // Call the send-auction-win-email edge function
-          const { error } = await supabase.functions.invoke('send-auction-win-email', {
+          // Call the send-auction-win-email function
+          const { data, error } = await supabase.functions.invoke('send-auction-win-email', {
             body: { 
               auctionId: id,
               userId: session.user.id
@@ -46,7 +46,7 @@ export const useAuctionSubscription = (
             console.error('❌ Error sending auction won notification:', error);
             toast.error('Error processing auction completion');
           } else {
-            console.log('✅ Auction won notification sent successfully');
+            console.log('✅ Auction won notification sent successfully:', data);
             toast.success('Congratulations! You won the auction!');
           }
         } else {
@@ -60,69 +60,111 @@ export const useAuctionSubscription = (
       }
     };
 
-    console.log('🔄 Setting up auction subscriptions for:', id);
+    const subscribeToNewBids = () => {
+      console.log('🔄 Setting up bid subscription for auction:', id);
+      
+      const channel = supabase
+        .channel('schema-db-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'bids',
+            filter: `auction_id=eq.${id}`
+          },
+          async (payload) => {
+            const newBid = payload.new as { amount: number, user_id: string };
+            console.log('📈 New bid received:', newBid);
+            
+            // Update current price in artworks table
+            const { error: updateError } = await supabase
+              .from('artworks')
+              .update({ current_price: newBid.amount })
+              .eq('id', id);
 
-    // Subscribe to auction updates
-    const auctionChannel = supabase
-      .channel('auction-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'artworks',
-          filter: `id=eq.${id}`,
-        },
-        async (payload) => {
-          console.log('🔄 Received auction update:', payload);
-          const newData = payload.new as { 
-            completion_status: string, 
-            winner_id: string, 
-            current_price: number,
-            payment_status: string 
-          };
-          
-          if (newData.current_price) {
-            console.log('💰 Updating current bid to:', newData.current_price);
-            setCurrentHighestBid(newData.current_price);
+            if (updateError) {
+              console.error('❌ Error updating artwork price:', updateError);
+            }
+
+            setCurrentHighestBid(newBid.amount);
+            toast.info(`New bid: €${newBid.amount.toLocaleString()}`);
+
+            try {
+              const { error } = await supabase.functions.invoke('send-auction-update', {
+                body: {
+                  type: 'outbid',
+                  userId: newBid.user_id,
+                  auctionId: id,
+                  newBidAmount: newBid.amount
+                }
+              });
+
+              if (error) {
+                console.error('❌ Error sending outbid notification:', error);
+              }
+            } catch (error) {
+              console.error('❌ Error invoking send-auction-update:', error);
+            }
           }
-          
-          // Handle auction completion and winner notification
-          await handleAuctionWon(newData);
-          await refetch();
-        }
-      )
-      .subscribe((status) => {
-        console.log('📡 Auction subscription status:', status);
-      });
+        )
+        .subscribe();
 
-    // Subscribe to new bids
-    const bidsChannel = supabase
-      .channel('new-bids')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'bids',
-          filter: `auction_id=eq.${id}`
-        },
-        async (payload) => {
-          const newBid = payload.new as { amount: number, user_id: string };
-          console.log('📈 New bid received:', newBid);
-          
-          setCurrentHighestBid(newBid.amount);
-          toast.info(`New bid: €${newBid.amount.toLocaleString()}`);
-        }
-      )
-      .subscribe((status) => {
-        console.log('📡 Bids subscription status:', status);
-      });
+      return () => {
+        console.log('🔄 Cleaning up bid subscription');
+        supabase.removeChannel(channel);
+      };
+    };
+
+    const subscribeToAuctionUpdates = () => {
+      console.log('🔄 Setting up auction updates subscription for:', id);
+      
+      const channel = supabase
+        .channel('auction-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'artworks',
+            filter: `id=eq.${id}`,
+          },
+          async (payload) => {
+            console.log('🔄 Received auction update:', payload);
+            const newData = payload.new as { 
+              completion_status: string, 
+              winner_id: string, 
+              current_price: number,
+              payment_status: string 
+            };
+            
+            if (newData.current_price) {
+              setCurrentHighestBid(newData.current_price);
+            }
+            
+            // Handle auction completion and winner notification
+            if (newData.completion_status === 'completed') {
+              console.log('🏁 Auction completed, processing winner notification');
+              await handleAuctionWon(newData);
+              await refetch();
+              toast.info("This auction has ended");
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        console.log('🔄 Cleaning up auction updates subscription');
+        supabase.removeChannel(channel);
+      };
+    };
+
+    const unsubscribeFromBids = subscribeToNewBids();
+    const unsubscribeFromUpdates = subscribeToAuctionUpdates();
 
     return () => {
-      console.log('🔄 Cleaning up subscriptions');
-      supabase.removeChannel(auctionChannel);
-      supabase.removeChannel(bidsChannel);
+      unsubscribeFromBids();
+      unsubscribeFromUpdates();
     };
   }, [id, refetch, setCurrentHighestBid]);
 };

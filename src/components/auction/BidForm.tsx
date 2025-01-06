@@ -37,12 +37,6 @@ export const BidForm = ({
   const isAuctionEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
   const notifyPreviousBidder = async (previousBidUserId: string) => {
-    // Don't notify if the previous bidder is the same as the current user
-    if (previousBidUserId === session?.user?.id) {
-      console.log('Skipping outbid notification for self-bid');
-      return;
-    }
-
     try {
       // Send in-app notification
       const { error: notificationError } = await supabase
