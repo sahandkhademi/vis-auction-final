@@ -20,13 +20,12 @@ export const useAuctionSubscription = (
           return;
         }
 
-        // Only send notification if this user is the winner
-        if (newData.winner_id === session.user.id) {
-          console.log('🎉 Sending auction won notification for winner:', newData.winner_id);
-          console.log('📧 Calling send-auction-win-email with auctionId:', id);
+        // Only send notification if this user is the winner AND auction is completed
+        if (newData.winner_id === session.user.id && newData.completion_status === 'completed') {
+          console.log('🎉 Winner match found! Current user:', session.user.id);
+          console.log('📧 Attempting to send win email for auction:', id);
           
-          // Call the send-auction-win-email function with explicit logging
-          console.log('🚀 Initiating email function call');
+          // Call the send-auction-win-email function
           const { data, error } = await supabase.functions.invoke('send-auction-win-email', {
             body: { 
               auctionId: id,
@@ -38,13 +37,16 @@ export const useAuctionSubscription = (
             console.error('❌ Error sending auction won notification:', error);
             toast.error('Error processing auction completion');
           } else {
-            console.log('✅ Auction won notification response:', data);
+            console.log('✅ Auction won notification sent successfully:', data);
             toast.success('Congratulations! You won the auction!');
           }
         } else {
-          console.log('ℹ️ User is not the winner:', {
+          console.log('ℹ️ Conditions not met for sending win email:', {
+            isWinner: newData.winner_id === session.user.id,
+            isCompleted: newData.completion_status === 'completed',
             winnerId: newData.winner_id,
-            userId: session.user.id
+            userId: session.user.id,
+            completionStatus: newData.completion_status
           });
         }
       } catch (error) {
