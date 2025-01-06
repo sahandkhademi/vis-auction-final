@@ -25,7 +25,7 @@ export const AuctionStatusDisplay = ({
         </div>
       )}
 
-      <div className="flex items-center justify-between">
+      <div className="space-y-4">
         <div>
           <p className="text-sm text-gray-500">{isEnded ? "Sold Price" : "Current Price"}</p>
           <p className="text-2xl font-bold">€{currentBid?.toLocaleString()}</p>
@@ -34,14 +34,12 @@ export const AuctionStatusDisplay = ({
         {!isEnded && endDate && (
           <div>
             <p className="text-sm text-gray-500">Time Remaining</p>
-            <div className="text-2xl font-bold text-right">
+            <div className="text-2xl font-bold">
               <CountdownTimer endDate={endDate} />
             </div>
           </div>
         )}
-      </div>
 
-      <div className="flex flex-col items-end gap-3">
         {isEnded && (
           <div className="flex items-center gap-2 text-blue-600">
             <CheckCircle2 className="w-4 h-4" />
