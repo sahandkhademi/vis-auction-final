@@ -22,45 +22,56 @@ export const NotificationBadge = () => {
   const { data: notifications, refetch } = useQuery({
     queryKey: ["notifications"],
     queryFn: async () => {
+      console.log('🔄 Fetching notifications');
       const { data, error } = await supabase
         .from("notifications")
         .select("*")
         .eq("read", false)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching notifications:', error);
+        throw error;
+      }
+      console.log('✅ Notifications fetched:', data);
       return data || [];
     },
   });
 
+  // Subscribe to real-time notifications
   useEffect(() => {
+    console.log('🔄 Setting up notification subscription');
     const channel = supabase
-      .channel("schema-db-changes")
+      .channel('schema-db-changes')
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "*",
-          schema: "public",
-          table: "notifications",
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
         },
-        () => {
+        (payload) => {
+          console.log('📨 Received notification update:', payload);
           refetch();
         }
       )
       .subscribe();
 
     return () => {
+      console.log('🔄 Cleaning up notification subscription');
       supabase.removeChannel(channel);
     };
   }, [refetch]);
 
   useEffect(() => {
     if (notifications) {
+      console.log('🔢 Updating unread count:', notifications.length);
       setUnreadCount(notifications.length);
     }
   }, [notifications]);
 
   const markAsRead = async (id: string, type: string, entityId?: string) => {
+    console.log('📝 Marking notification as read:', id);
     const { error } = await supabase
       .from("notifications")
       .update({ read: true })
@@ -81,7 +92,6 @@ export const NotificationBadge = () => {
             navigate(`/profile`);
             break;
           default:
-            // For unknown types, just mark as read without navigation
             break;
         }
       }
@@ -89,18 +99,21 @@ export const NotificationBadge = () => {
   };
 
   const markAllAsRead = async () => {
+    console.log('📝 Marking all notifications as read');
     const { error } = await supabase
       .from("notifications")
       .update({ read: true })
       .eq("read", false);
 
     if (error) {
+      console.error('❌ Error marking all as read:', error);
       toast({
         title: "Error",
         description: "Failed to mark notifications as read",
         variant: "destructive",
       });
     } else {
+      console.log('✅ All notifications marked as read');
       toast({
         title: "Success",
         description: "All notifications marked as read",
