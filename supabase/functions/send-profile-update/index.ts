@@ -9,12 +9,18 @@ interface ProfileUpdateRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    if (!RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY is not configured");
+    }
+
     const { email, username }: ProfileUpdateRequest = await req.json();
+    console.log("Sending profile update email to:", email);
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -23,7 +29,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Art Auction <onboarding@resend.dev>",
+        from: "VIS Auction <updates@visauction.com>",
         to: [email],
         subject: "Profile Updated Successfully",
         html: `
@@ -48,8 +54,13 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (!res.ok) {
-      throw new Error(`Failed to send email: ${await res.text()}`);
+      const errorText = await res.text();
+      console.error("Failed to send email:", errorText);
+      throw new Error(`Failed to send email: ${errorText}`);
     }
+
+    const data = await res.json();
+    console.log("Email sent successfully:", data);
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -58,7 +69,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error) {
     console.error("Error sending profile update email:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to send profile update email" }),
+      JSON.stringify({ error: error.message }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
