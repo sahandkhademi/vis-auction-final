@@ -90,7 +90,8 @@ export const AuctionStatus = ({
 
   useEffect(() => {
     const handleAuctionCompletion = async () => {
-      if (isEnded && !completionStatus) {
+      // Changed condition to check specifically for "ongoing" status
+      if (isEnded && completionStatus === 'ongoing') {
         console.log('🔔 Auction completion check:', {
           isEnded,
           completionStatus,
