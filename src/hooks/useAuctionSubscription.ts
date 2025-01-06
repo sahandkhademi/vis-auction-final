@@ -27,7 +27,8 @@ export const useAuctionSubscription = (
         console.log('🔍 Checking win conditions:', {
           winnerId: newData.winner_id,
           userId: session.user.id,
-          completionStatus: newData.completion_status
+          completionStatus: newData.completion_status,
+          paymentStatus: newData.payment_status
         });
 
         // Only send notification if this user is the winner AND auction is completed
@@ -39,7 +40,7 @@ export const useAuctionSubscription = (
               body: { 
                 email: session.user.email,
                 auctionId: id,
-                userId: session.user.id  // Include both email and userId
+                userId: session.user.id
               }
             });
 
