@@ -23,7 +23,8 @@ export const AuctionDetails = ({
   const artistData = typeof artwork.artist === 'object' ? artwork.artist : null;
   const artistName = artistData?.name || (typeof artwork.artist === 'string' ? artwork.artist : 'Unknown Artist');
 
-  const currentPrice = currentHighestBid || artwork.starting_price;
+  // Use current_price from artwork if it exists, otherwise fall back to currentHighestBid or starting_price
+  const currentPrice = artwork.current_price || currentHighestBid || artwork.starting_price;
 
   return (
     <motion.div
