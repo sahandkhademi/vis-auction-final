@@ -10,8 +10,8 @@ export const useAuctionSubscription = (
   useEffect(() => {
     if (!id) return;
 
-    const handleAuctionCompletion = async () => {
-      console.log('🔔 Calling handle-auction-completion for auction:', id);
+    const handleAuctionWon = async (newData: any) => {
+      console.log('🏆 Processing auction won notification:', newData);
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
@@ -20,22 +20,26 @@ export const useAuctionSubscription = (
           return;
         }
 
-        const { data, error } = await supabase.functions.invoke('send-auction-update', {
-          body: { 
-            type: 'auction_won',
-            auctionId: id,
-            userId: session.user.id
-          }
-        });
+        // Send auction won notification if the auction is completed and has a winner
+        if (newData.completion_status === 'completed' && newData.winner_id) {
+          console.log('🎉 Sending auction won notification for winner:', newData.winner_id);
+          const { error } = await supabase.functions.invoke('send-auction-update', {
+            body: { 
+              type: 'auction_won',
+              userId: newData.winner_id,
+              auctionId: id
+            }
+          });
 
-        if (error) {
-          console.error('❌ Error sending auction won notification:', error);
-          toast.error('Error processing auction completion');
-        } else {
-          console.log('✅ Auction completion handled successfully:', data);
+          if (error) {
+            console.error('❌ Error sending auction won notification:', error);
+            toast.error('Error processing auction completion');
+          } else {
+            console.log('✅ Auction won notification sent successfully');
+          }
         }
       } catch (error) {
-        console.error('❌ Error in handleAuctionCompletion:', error);
+        console.error('❌ Error in handleAuctionWon:', error);
       }
     };
 
@@ -123,7 +127,7 @@ export const useAuctionSubscription = (
             
             // Handle auction completion and winner notification
             if (newData.completion_status === 'completed' && newData.winner_id) {
-              await handleAuctionCompletion();
+              await handleAuctionWon(newData);
               await refetch();
               toast.info("This auction has ended");
             }
