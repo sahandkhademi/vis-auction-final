@@ -61,8 +61,6 @@ export const AuctionDetails = ({
         </div>
       )}
 
-      <BidHistory auctionId={artwork.id} />
-
       <ArtistInfo
         name={artistName}
         bio={artistData?.bio}
@@ -76,6 +74,8 @@ export const AuctionDetails = ({
         dimensions={artwork.dimensions || ""}
         format={artwork.format || ""}
       />
+
+      <BidHistory auctionId={artwork.id} />
     </motion.div>
   );
 };
