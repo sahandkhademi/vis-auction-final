@@ -129,14 +129,40 @@ export const AuctionStatus = ({
             }
           }
 
-          // Finally, refetch data and schedule the refresh
+          // Finally, refetch data and handle the refresh
           await refetchAuction();
           
-          // Use a promise to ensure all state updates are complete
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Wait for a bit longer to ensure all state updates are complete
+          await new Promise(resolve => setTimeout(resolve, 2000));
           
-          console.log('🔄 All updates complete, refreshing page...');
-          window.location.href = window.location.href;
+          // Subscribe to completion status changes
+          const channel = supabase
+            .channel('auction-completion')
+            .on(
+              'postgres_changes',
+              {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'artworks',
+                filter: `id=eq.${auctionId}`,
+              },
+              async (payload) => {
+                const newData = payload.new as { completion_status: string };
+                if (newData.completion_status === 'completed') {
+                  console.log('🔄 Completion confirmed, refreshing page...');
+                  window.location.reload();
+                }
+              }
+            )
+            .subscribe();
+
+          // Cleanup subscription after 10 seconds if no update received
+          setTimeout(() => {
+            console.log('🔄 Forcing refresh after timeout...');
+            supabase.removeChannel(channel);
+            window.location.reload();
+          }, 10000);
+
         } catch (error) {
           console.error('❌ Error in auction completion:', error);
         }
