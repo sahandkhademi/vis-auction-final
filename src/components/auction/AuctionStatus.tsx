@@ -6,6 +6,8 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { AuctionStatusDisplay } from "./AuctionStatusDisplay";
 import { PaymentStatus } from "./PaymentStatus";
+import { useAuctionCompletion } from "@/hooks/useAuctionCompletion";
+import { usePageRefresh } from "@/hooks/usePageRefresh";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -50,7 +52,7 @@ export const AuctionStatus = ({
         .from('artworks')
         .select('payment_status, winner_id, completion_status')
         .eq('id', auctionId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('❌ Error fetching auction data:', error);
@@ -59,6 +61,8 @@ export const AuctionStatus = ({
       console.log('✅ Latest auction data:', data);
       return data;
     },
+    retry: 3,
+    retryDelay: 1000,
   });
 
   // Fetch highest bid to determine potential winner
@@ -81,90 +85,28 @@ export const AuctionStatus = ({
       console.log('✅ Highest bid data:', data);
       return data;
     },
-    enabled: isEnded && !winnerId
+    enabled: isEnded && !winnerId,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   // If auction has ended but winner not set, check if current user is highest bidder
   const isPotentialWinner = isEnded && !winnerId && highestBid?.user_id === user?.id;
 
-  useEffect(() => {
-    if (!endDate) return;
+  // Handle page refresh when auction ends
+  usePageRefresh(endDate, completionStatus);
 
-    const checkAndRefreshPage = () => {
-      const now = new Date();
-      const end = new Date(endDate);
-      
-      if (now >= end && completionStatus === 'ongoing') {
-        console.log('🔄 Auction ended, refreshing page...');
-        window.location.reload();
-      }
-    };
-
-    // Check immediately
-    checkAndRefreshPage();
-
-    // Set up interval to check every second
-    const interval = setInterval(checkAndRefreshPage, 1000);
-
-    return () => clearInterval(interval);
-  }, [endDate, completionStatus]);
-
-  useEffect(() => {
-    const handleAuctionCompletion = async () => {
-      if (isEnded && completionStatus === 'ongoing') {
-        console.log('🔔 Auction completion check:', {
-          isEnded,
-          completionStatus,
-          auctionId,
-          currentTime: new Date(),
-          endDate: endDate ? new Date(endDate) : null
-        });
-
-        try {
-          console.log('🚀 Invoking handle-auction-completion for:', auctionId);
-          const { error } = await supabase.functions.invoke('handle-auction-completion', {
-            body: { auctionId }
-          });
-
-          if (error) {
-            console.error('❌ Error completing auction:', error);
-            toast.error('Error completing auction');
-          } else {
-            console.log('✅ Auction completion handled successfully');
-            
-            // Only send email notification if user is the winner
-            if (isWinner || isPotentialWinner || user?.id === highestBid?.user_id) {
-              try {
-                console.log('📧 Sending win email notification');
-                const { error: emailError } = await supabase.functions.invoke('send-auction-win-email', {
-                  body: { 
-                    auctionId,
-                    email: user?.email,
-                    userId: user?.id
-                  }
-                });
-
-                if (emailError) {
-                  console.error('❌ Error sending win email:', emailError);
-                } else {
-                  console.log('✅ Win email sent successfully');
-                }
-              } catch (emailError) {
-                console.error('❌ Error invoking send-auction-win-email:', emailError);
-              }
-            }
-            
-            // Refetch auction data to get updated status
-            refetchAuction();
-          }
-        } catch (error) {
-          console.error('❌ Error in auction completion:', error);
-        }
-      }
-    };
-
-    handleAuctionCompletion();
-  }, [isEnded, completionStatus, auctionId, isWinner, isPotentialWinner, user?.id, highestBid?.user_id, refetchAuction, endDate, user?.email]);
+  // Handle auction completion
+  useAuctionCompletion(
+    isEnded,
+    completionStatus,
+    auctionId,
+    isWinner,
+    isPotentialWinner,
+    user?.id,
+    user?.email,
+    refetchAuction
+  );
 
   // Check payment status when URL params change
   useEffect(() => {
