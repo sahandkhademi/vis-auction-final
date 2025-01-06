@@ -12,15 +12,30 @@ export const useAuctionSubscription = (
 
     const handleAuctionCompletion = async () => {
       console.log('🔔 Calling handle-auction-completion for auction:', id);
-      const { data, error } = await supabase.functions.invoke('handle-auction-completion', {
-        body: { auctionId: id }
-      });
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.error('❌ No session found');
+          return;
+        }
 
-      if (error) {
-        console.error('❌ Error calling handle-auction-completion:', error);
-        toast.error('Error processing auction completion');
-      } else {
-        console.log('✅ Auction completion handled successfully:', data);
+        const { data, error } = await supabase.functions.invoke('send-auction-update', {
+          body: { 
+            type: 'auction_won',
+            auctionId: id,
+            userId: session.user.id
+          }
+        });
+
+        if (error) {
+          console.error('❌ Error sending auction won notification:', error);
+          toast.error('Error processing auction completion');
+        } else {
+          console.log('✅ Auction completion handled successfully:', data);
+        }
+      } catch (error) {
+        console.error('❌ Error in handleAuctionCompletion:', error);
       }
     };
 
@@ -109,39 +124,6 @@ export const useAuctionSubscription = (
             // Handle auction completion and winner notification
             if (newData.completion_status === 'completed' && newData.winner_id) {
               await handleAuctionCompletion();
-              
-              try {
-                // Send winner notification
-                const { error: winnerError } = await supabase.functions.invoke('send-auction-update', {
-                  body: {
-                    type: 'auction_won',
-                    userId: newData.winner_id,
-                    auctionId: id
-                  }
-                });
-
-                if (winnerError) {
-                  console.error('❌ Error sending winner notification:', winnerError);
-                }
-
-                // If payment is pending, send payment required notification
-                if (newData.payment_status === 'pending') {
-                  const { error: paymentError } = await supabase.functions.invoke('send-auction-update', {
-                    body: {
-                      type: 'payment_required',
-                      userId: newData.winner_id,
-                      auctionId: id
-                    }
-                  });
-
-                  if (paymentError) {
-                    console.error('❌ Error sending payment notification:', paymentError);
-                  }
-                }
-              } catch (error) {
-                console.error('❌ Error invoking send-auction-update:', error);
-              }
-
               await refetch();
               toast.info("This auction has ended");
             }
