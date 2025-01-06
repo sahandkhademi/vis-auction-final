@@ -6,8 +6,6 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 import { AuctionStatusDisplay } from "./AuctionStatusDisplay";
 import { PaymentStatus } from "./PaymentStatus";
-import { useAuctionCompletion } from "@/hooks/useAuctionCompletion";
-import { usePageRefresh } from "@/hooks/usePageRefresh";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -52,7 +50,7 @@ export const AuctionStatus = ({
         .from('artworks')
         .select('payment_status, winner_id, completion_status')
         .eq('id', auctionId)
-        .maybeSingle();
+        .single();
 
       if (error) {
         console.error('❌ Error fetching auction data:', error);
@@ -61,8 +59,6 @@ export const AuctionStatus = ({
       console.log('✅ Latest auction data:', data);
       return data;
     },
-    retry: 3,
-    retryDelay: 1000,
   });
 
   // Fetch highest bid to determine potential winner
@@ -85,30 +81,68 @@ export const AuctionStatus = ({
       console.log('✅ Highest bid data:', data);
       return data;
     },
-    enabled: isEnded && !winnerId,
-    retry: 3,
-    retryDelay: 1000,
+    enabled: isEnded && !winnerId
   });
 
   // If auction has ended but winner not set, check if current user is highest bidder
   const isPotentialWinner = isEnded && !winnerId && highestBid?.user_id === user?.id;
 
-  // Handle page refresh when auction ends
-  usePageRefresh(endDate, completionStatus);
+  useEffect(() => {
+    const handleAuctionCompletion = async () => {
+      if (isEnded && completionStatus === 'ongoing') {
+        console.log('🔔 Auction completion check:', {
+          isEnded,
+          completionStatus,
+          auctionId,
+          currentTime: new Date(),
+          endDate: endDate ? new Date(endDate) : null
+        });
 
-  // Handle auction completion
-  useAuctionCompletion(
-    isEnded,
-    completionStatus,
-    auctionId,
-    isWinner,
-    isPotentialWinner,
-    user?.id,
-    user?.email,
-    async () => {
-      await refetchAuction();
-    }
-  );
+        try {
+          console.log('🚀 Invoking handle-auction-completion for:', auctionId);
+          const { error } = await supabase.functions.invoke('handle-auction-completion', {
+            body: { auctionId }
+          });
+
+          if (error) {
+            console.error('❌ Error completing auction:', error);
+            toast.error('Error completing auction');
+          } else {
+            console.log('✅ Auction completion handled successfully');
+            
+            // Only send email notification if user is the winner
+            if (isWinner || isPotentialWinner || user?.id === highestBid?.user_id) {
+              try {
+                console.log('📧 Sending win email notification');
+                const { error: emailError } = await supabase.functions.invoke('send-auction-win-email', {
+                  body: { 
+                    auctionId,
+                    email: user?.email,
+                    userId: user?.id
+                  }
+                });
+
+                if (emailError) {
+                  console.error('❌ Error sending win email:', emailError);
+                } else {
+                  console.log('✅ Win email sent successfully');
+                }
+              } catch (emailError) {
+                console.error('❌ Error invoking send-auction-win-email:', emailError);
+              }
+            }
+            
+            // Refetch auction data to get updated status
+            refetchAuction();
+          }
+        } catch (error) {
+          console.error('❌ Error in auction completion:', error);
+        }
+      }
+    };
+
+    handleAuctionCompletion();
+  }, [isEnded, completionStatus, auctionId, isWinner, isPotentialWinner, user?.id, highestBid?.user_id, refetchAuction, endDate, user?.email]);
 
   // Check payment status when URL params change
   useEffect(() => {
