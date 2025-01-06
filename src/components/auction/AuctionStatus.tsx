@@ -114,6 +114,15 @@ export const AuctionStatus = ({
         </Alert>
       )}
 
+      {needsPayment && (
+        <Alert className="bg-yellow-50 border-yellow-200">
+          <AlertTitle className="text-yellow-800">Payment Required</AlertTitle>
+          <AlertDescription className="text-yellow-700">
+            Congratulations on winning the auction! Please complete your payment within 48 hours to secure your purchase.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-500">Current Price</p>

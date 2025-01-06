@@ -95,17 +95,24 @@ export const useAuctionSubscription = (
           },
           async (payload) => {
             console.log('🔄 Received auction update:', payload);
-            const newData = payload.new as { completion_status: string, winner_id: string, current_price: number };
+            const newData = payload.new as { 
+              completion_status: string, 
+              winner_id: string, 
+              current_price: number,
+              payment_status: string 
+            };
             
             if (newData.current_price) {
               setCurrentHighestBid(newData.current_price);
             }
             
+            // Handle auction completion and winner notification
             if (newData.completion_status === 'completed' && newData.winner_id) {
               await handleAuctionCompletion();
               
               try {
-                const { error } = await supabase.functions.invoke('send-auction-update', {
+                // Send winner notification
+                const { error: winnerError } = await supabase.functions.invoke('send-auction-update', {
                   body: {
                     type: 'auction_won',
                     userId: newData.winner_id,
@@ -113,8 +120,23 @@ export const useAuctionSubscription = (
                   }
                 });
 
-                if (error) {
-                  console.error('❌ Error sending winner notification:', error);
+                if (winnerError) {
+                  console.error('❌ Error sending winner notification:', winnerError);
+                }
+
+                // If payment is pending, send payment required notification
+                if (newData.payment_status === 'pending') {
+                  const { error: paymentError } = await supabase.functions.invoke('send-auction-update', {
+                    body: {
+                      type: 'payment_required',
+                      userId: newData.winner_id,
+                      auctionId: id
+                    }
+                  });
+
+                  if (paymentError) {
+                    console.error('❌ Error sending payment notification:', paymentError);
+                  }
                 }
               } catch (error) {
                 console.error('❌ Error invoking send-auction-update:', error);
