@@ -70,7 +70,7 @@ serve(async (req) => {
     }
 
     // Frontend URL for the auction
-    const frontendUrl = 'https://art-auction-platform.vercel.app';
+    const frontendUrl = 'https://preview--vis-auction-final.lovable.app';
     const auctionUrl = `${frontendUrl}/auction/${auctionId}`;
 
     console.log('🔗 Generated auction URL:', auctionUrl);
