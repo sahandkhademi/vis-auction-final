@@ -60,52 +60,58 @@ serve(async (req: Request) => {
       .limit(1)
       .single();
 
-    if (bidError) {
+    if (bidError && bidError.code !== 'PGRST116') { // Ignore "no rows returned" error
       console.error('❌ Error fetching highest bid:', bidError);
       throw bidError;
     }
 
-    // Update auction with winner and completion status
-    const { error: updateError } = await supabaseClient
-      .from('artworks')
-      .update({
-        completion_status: 'completed',
-        winner_id: highestBid.user_id,
-        current_price: highestBid.amount
-      })
-      .eq('id', auctionId);
+    if (highestBid) {
+      // Update auction with winner and completion status
+      const { error: updateError } = await supabaseClient
+        .from('artworks')
+        .update({
+          completion_status: 'completed',
+          winner_id: highestBid.user_id,
+          current_price: highestBid.amount
+        })
+        .eq('id', auctionId);
 
-    if (updateError) {
-      console.error('❌ Error updating auction:', updateError);
-      throw updateError;
-    }
+      if (updateError) {
+        console.error('❌ Error updating auction:', updateError);
+        throw updateError;
+      }
 
-    // Only create notification for this specific auction that just completed
-    const { error: notificationError } = await supabaseClient
-      .from('notifications')
-      .insert({
-        user_id: highestBid.user_id,
-        title: 'Auction Won!',
-        message: `Congratulations! You won the auction for "${auction.title}". The final price was €${highestBid.amount}.`,
-        type: 'auction_won'
-      });
+      // Send email notification
+      try {
+        console.log('📧 Sending win email notification');
+        const { error: emailError } = await supabaseClient.functions.invoke('send-auction-win-email', {
+          body: { 
+            auctionId,
+            userId: highestBid.user_id
+          }
+        });
 
-    if (notificationError) {
-      console.error('❌ Error creating notification:', notificationError);
-      throw notificationError;
+        if (emailError) {
+          console.error('❌ Error sending win email:', emailError);
+        } else {
+          console.log('✅ Win email sent successfully');
+        }
+      } catch (emailError) {
+        console.error('❌ Error invoking send-auction-win-email:', emailError);
+      }
     }
 
     console.log('✅ Successfully completed auction:', {
       auctionId,
-      winnerId: highestBid.user_id,
-      finalPrice: highestBid.amount
+      winnerId: highestBid?.user_id,
+      finalPrice: highestBid?.amount
     });
 
     return new Response(
       JSON.stringify({ 
         message: 'Auction completion processed successfully',
-        winner: highestBid.user_id,
-        finalPrice: highestBid.amount
+        winner: highestBid?.user_id,
+        finalPrice: highestBid?.amount
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

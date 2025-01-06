@@ -38,9 +38,11 @@ export const NotificationBadge = () => {
     },
   });
 
-  // Subscribe to real-time notifications
+  // Subscribe to real-time notifications with debounced refetch
   useEffect(() => {
     console.log('🔄 Setting up notification subscription');
+    let timeoutId: number;
+
     const channel = supabase
       .channel('schema-db-changes')
       .on(
@@ -52,17 +54,28 @@ export const NotificationBadge = () => {
         },
         (payload) => {
           console.log('📨 Received notification update:', payload);
-          refetch();
+          // Clear any existing timeout
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+          // Set a new timeout to refetch after a short delay
+          timeoutId = setTimeout(() => {
+            refetch();
+          }, 100) as unknown as number;
         }
       )
       .subscribe();
 
     return () => {
       console.log('🔄 Cleaning up notification subscription');
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       supabase.removeChannel(channel);
     };
   }, [refetch]);
 
+  // Update unread count whenever notifications change
   useEffect(() => {
     if (notifications) {
       console.log('🔢 Updating unread count:', notifications.length);
