@@ -88,6 +88,8 @@ export const AuctionStatus = ({
   const isPotentialWinner = isEnded && !winnerId && highestBid?.user_id === user?.id;
 
   useEffect(() => {
+    let refreshTimeout: NodeJS.Timeout;
+    
     const handleAuctionCompletion = async () => {
       if (isEnded && completionStatus === 'ongoing') {
         console.log('🔔 Auction completion check:', {
@@ -135,9 +137,10 @@ export const AuctionStatus = ({
             // Refetch auction data to get updated status
             await refetchAuction();
             
-            // Refresh the page after a short delay to ensure all updates are complete
-            console.log('🔄 Auction ended, refreshing page...');
-            setTimeout(() => {
+            // Schedule page refresh and store the timeout ID
+            console.log('🔄 Scheduling page refresh...');
+            refreshTimeout = setTimeout(() => {
+              console.log('🔄 Executing page refresh...');
               window.location.reload();
             }, 2000);
           }
@@ -148,6 +151,14 @@ export const AuctionStatus = ({
     };
 
     handleAuctionCompletion();
+
+    // Cleanup function to clear the timeout if component unmounts
+    return () => {
+      if (refreshTimeout) {
+        console.log('🧹 Clearing refresh timeout');
+        clearTimeout(refreshTimeout);
+      }
+    };
   }, [isEnded, completionStatus, auctionId, isWinner, isPotentialWinner, user?.id, highestBid?.user_id, refetchAuction, endDate, user?.email]);
 
   // Check payment status when URL params change
