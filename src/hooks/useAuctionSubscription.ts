@@ -25,6 +25,8 @@ export const useAuctionSubscription = (
     };
 
     const subscribeToNewBids = () => {
+      console.log('🔄 Setting up bid subscription for auction:', id);
+      
       const channel = supabase
         .channel('schema-db-changes')
         .on(
@@ -37,10 +39,21 @@ export const useAuctionSubscription = (
           },
           async (payload) => {
             const newBid = payload.new as { amount: number, user_id: string };
+            console.log('📈 New bid received:', newBid);
+            
+            // Update current price in artworks table
+            const { error: updateError } = await supabase
+              .from('artworks')
+              .update({ current_price: newBid.amount })
+              .eq('id', id);
+
+            if (updateError) {
+              console.error('❌ Error updating artwork price:', updateError);
+            }
+
             setCurrentHighestBid(newBid.amount);
             toast.info(`New bid: €${newBid.amount.toLocaleString()}`);
 
-            // Send outbid notification email
             try {
               const { error } = await supabase.functions.invoke('send-auction-update', {
                 body: {
@@ -62,11 +75,14 @@ export const useAuctionSubscription = (
         .subscribe();
 
       return () => {
+        console.log('🔄 Cleaning up bid subscription');
         supabase.removeChannel(channel);
       };
     };
 
     const subscribeToAuctionUpdates = () => {
+      console.log('🔄 Setting up auction updates subscription');
+      
       const channel = supabase
         .channel('auction-updates')
         .on(
@@ -78,12 +94,16 @@ export const useAuctionSubscription = (
             filter: `id=eq.${id}`,
           },
           async (payload) => {
-            const newData = payload.new as { completion_status: string, winner_id: string };
+            console.log('🔄 Received auction update:', payload);
+            const newData = payload.new as { completion_status: string, winner_id: string, current_price: number };
+            
+            if (newData.current_price) {
+              setCurrentHighestBid(newData.current_price);
+            }
             
             if (newData.completion_status === 'completed' && newData.winner_id) {
               await handleAuctionCompletion();
               
-              // Send winner notification email
               try {
                 const { error } = await supabase.functions.invoke('send-auction-update', {
                   body: {
@@ -108,6 +128,7 @@ export const useAuctionSubscription = (
         .subscribe();
 
       return () => {
+        console.log('🔄 Cleaning up auction updates subscription');
         supabase.removeChannel(channel);
       };
     };
