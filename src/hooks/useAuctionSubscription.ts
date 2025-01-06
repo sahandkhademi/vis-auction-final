@@ -23,9 +23,9 @@ export const useAuctionSubscription = (
         // Only send notification if this user is the winner
         if (newData.completion_status === 'completed' && newData.winner_id === session.user.id) {
           console.log('🎉 Sending auction won notification for winner:', newData.winner_id);
+          console.log('📧 Calling send-auction-win-email with auctionId:', id);
           
-          // Call our auction win email function
-          const { error } = await supabase.functions.invoke('send-auction-win-email', {
+          const { data, error } = await supabase.functions.invoke('send-auction-win-email', {
             body: { auctionId: id }
           });
 
@@ -33,9 +33,15 @@ export const useAuctionSubscription = (
             console.error('❌ Error sending auction won notification:', error);
             toast.error('Error processing auction completion');
           } else {
-            console.log('✅ Auction won notification sent successfully');
+            console.log('✅ Auction won notification response:', data);
             toast.success('Congratulations! You won the auction!');
           }
+        } else {
+          console.log('ℹ️ User is not the winner or auction not completed:', {
+            isCompleted: newData.completion_status === 'completed',
+            winnerId: newData.winner_id,
+            userId: session.user.id
+          });
         }
       } catch (error) {
         console.error('❌ Error in handleAuctionWon:', error);
@@ -125,7 +131,8 @@ export const useAuctionSubscription = (
             }
             
             // Handle auction completion and winner notification
-            if (newData.completion_status === 'completed' && newData.winner_id) {
+            if (newData.completion_status === 'completed') {
+              console.log('🏁 Auction completed, processing winner notification');
               await handleAuctionWon(newData);
               await refetch();
               toast.info("This auction has ended");

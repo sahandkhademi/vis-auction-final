@@ -11,14 +11,20 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  console.log('🚀 Starting send-auction-win-email function');
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { auctionId } = await req.json();
-    console.log('🎉 Processing auction win email for auction:', auctionId);
+    console.log('📦 Processing auction:', auctionId);
+
+    if (!RESEND_API_KEY) {
+      console.error('❌ RESEND_API_KEY is not configured');
+      throw new Error('RESEND_API_KEY is not configured');
+    }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
@@ -82,11 +88,8 @@ serve(async (req) => {
     }
 
     // Prepare and send email
-    if (!RESEND_API_KEY) {
-      throw new Error('RESEND_API_KEY is not configured');
-    }
-
     const auctionUrl = `${new URL(req.url).origin.replace('functions.', '')}/auction/${auctionId}`;
+    console.log('📧 Sending email to winner with auction URL:', auctionUrl);
 
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -131,7 +134,8 @@ serve(async (req) => {
       throw new Error(`Failed to send email: ${error}`);
     }
 
-    console.log('✅ Email sent successfully to winner');
+    const result = await emailResponse.json();
+    console.log('✅ Email sent successfully:', result);
 
     return new Response(
       JSON.stringify({ message: 'Auction win notification sent successfully' }),
