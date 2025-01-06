@@ -44,7 +44,43 @@ const AuctionDetail = () => {
     enabled: !!id,
   });
 
-  // Use custom hook for subscriptions
+  // Subscribe to auction updates
+  useEffect(() => {
+    if (!id) return;
+
+    console.log('🔄 Setting up auction completion subscription');
+    
+    const channel = supabase
+      .channel('auction-completion')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'artworks',
+          filter: `id=eq.${id}`,
+        },
+        async (payload) => {
+          console.log('🔄 Received auction update:', payload);
+          const newData = payload.new as { completion_status: string };
+          
+          // If auction has completed, refresh the page data
+          if (newData.completion_status === 'completed') {
+            console.log('🏁 Auction completed, refreshing data');
+            await refetch();
+            toast.info("This auction has ended");
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔄 Cleaning up auction completion subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [id, refetch]);
+
+  // Use custom hook for bid subscriptions
   useAuctionSubscription(id, refetch, setCurrentHighestBid);
 
   const fetchCurrentHighestBid = async () => {
