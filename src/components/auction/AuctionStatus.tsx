@@ -167,14 +167,6 @@ export const AuctionStatus = ({
 
   return (
     <div className="space-y-4">
-      <PaymentStatus 
-        hasCompletedPayment={hasCompletedPayment}
-        needsPayment={needsPayment}
-        isEnded={isEnded}
-        auctionId={auctionId}
-        currentBid={currentBid}
-      />
-
       <AuctionStatusDisplay 
         currentBid={currentBid}
         endDate={endDate}
@@ -182,6 +174,16 @@ export const AuctionStatus = ({
         isWinner={isWinner}
         isPotentialWinner={isPotentialWinner}
       />
+
+      {(hasCompletedPayment || needsPayment) && (
+        <PaymentStatus 
+          hasCompletedPayment={hasCompletedPayment}
+          needsPayment={needsPayment}
+          isEnded={isEnded}
+          auctionId={auctionId}
+          currentBid={currentBid}
+        />
+      )}
     </div>
   );
 };
