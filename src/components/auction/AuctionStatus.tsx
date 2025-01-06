@@ -105,16 +105,33 @@ export const AuctionStatus = ({
       )
       .subscribe();
 
+    // Set up a polling mechanism as a backup
+    const pollInterval = setInterval(async () => {
+      if (isEnded) {
+        console.log('🔄 Polling for auction updates');
+        await refetchAuction();
+      }
+    }, 5000); // Poll every 5 seconds if ended
+
     return () => {
       console.log('🔄 Cleaning up auction update subscription');
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
     };
-  }, [auctionId, refetchAuction]);
+  }, [auctionId, isEnded]);
 
   // If auction has ended but winner not set, check if current user is highest bidder
   const isPotentialWinner = isEnded && !winnerId && highestBid?.user_id === user?.id;
 
   // Use custom hooks for auction completion and payment status
+  const handleRefetch = async () => {
+    try {
+      await refetchAuction();
+    } catch (error) {
+      console.error('Error refetching auction data:', error);
+    }
+  };
+
   useAuctionCompletion(
     isEnded,
     completionStatus,
@@ -124,10 +141,10 @@ export const AuctionStatus = ({
     user?.id,
     user?.email,
     highestBid?.user_id,
-    refetchAuction
+    handleRefetch
   );
 
-  usePaymentStatus(refetchAuction);
+  usePaymentStatus(handleRefetch);
 
   const currentPaymentStatus = auctionData?.payment_status || paymentStatus;
   const hasCompletedPayment = (isWinner || isPotentialWinner) && currentPaymentStatus === 'completed';
