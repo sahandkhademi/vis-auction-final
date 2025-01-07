@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
-import { getEmailTemplates, SampleArtwork } from './email-templates.ts';
+import { getEmailTemplates } from './email-templates.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,15 +22,18 @@ serve(async (req) => {
     if (!RESEND_API_KEY) {
       console.error('RESEND_API_KEY is not set');
       return new Response(
-        JSON.stringify({ error: 'Server configuration error' }),
+        JSON.stringify({ error: 'Email service not configured' }),
         { headers: corsHeaders, status: 500 }
       );
     }
 
-    console.log('Starting to send test emails...');
+    const { userEmail, forceSend } = await req.json();
+    const recipientEmail = userEmail || TEST_EMAIL;
+
+    console.log('Starting to send test emails to:', recipientEmail);
 
     // Sample data for testing
-    const sampleArtwork: SampleArtwork = {
+    const sampleArtwork = {
       title: "Sample Artwork",
       artist: "John Doe",
       current_price: 1000,
@@ -45,8 +48,8 @@ serve(async (req) => {
       console.log(`Sending template: ${template.subject}`);
       try {
         const emailData = {
-          from: 'VIS Auction <onboarding@resend.dev>',
-          to: [TEST_EMAIL],
+          from: 'VIS Auction <updates@visauction.com>',
+          to: [recipientEmail],
           subject: template.subject,
           html: template.html,
           reply_to: 'support@visauction.com'
@@ -81,7 +84,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true,
         message: 'Test emails sent successfully', 
-        recipients: [TEST_EMAIL]
+        recipients: [recipientEmail]
       }),
       { headers: corsHeaders, status: 200 }
     );

@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7'
+import { getAbandonedWinTemplate } from './email-templates.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,28 +45,14 @@ Deno.serve(async (req) => {
 
     if (preferencesError) throw preferencesError
 
+    const auctionUrl = `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}/auction/${auction.id}`
+
     // Send emails to users who have notifications enabled
     for (const user of users) {
       const userPrefs = preferences.find(p => p.user_id === user.id)
       if (!userPrefs?.auction_won_notifications) continue
 
       const isNewWinner = user.id === newWinnerId
-      const emailContent = isNewWinner ? {
-        subject: "You're the New Winner!",
-        html: `
-          <h1>Congratulations!</h1>
-          <p>The previous winner didn't complete their payment for "${auction.title}". 
-          You're now the winner with your bid of $${auction.current_price}!</p>
-          <p>Please complete your payment within 48 hours to claim your artwork.</p>
-        `
-      } : {
-        subject: "Auction Win Expired",
-        html: `
-          <p>Your win for "${auction.title}" has expired due to non-payment within 48 hours.</p>
-          <p>The artwork has been awarded to the next highest bidder.</p>
-        `
-      }
-
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -73,10 +60,10 @@ Deno.serve(async (req) => {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: 'Mosaic Auctions <onboarding@resend.dev>',
+          from: 'VIS Auction <updates@visauction.com>',
           to: [user.email],
-          subject: emailContent.subject,
-          html: emailContent.html,
+          subject: isNewWinner ? "You're the New Winner!" : "Auction Win Expired",
+          html: getAbandonedWinTemplate(auction.title, auction.current_price, isNewWinner, auctionUrl)
         }),
       })
     }

@@ -1,13 +1,11 @@
-import { PaymentButton } from "./PaymentButton";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { CountdownTimer } from "./CountdownTimer";
-import { useSearchParams } from "react-router-dom";
-import { useEffect } from "react";
-import { toast } from "sonner";
-import { Clock, CheckCircle2, Trophy } from "lucide-react";
+import { AuctionStatusDisplay } from "./AuctionStatusDisplay";
+import { PaymentStatus } from "./PaymentStatus";
+import { useAuctionCompletion } from "./hooks/useAuctionCompletion";
+import { usePaymentStatus } from "./hooks/usePaymentStatus";
+import { useEffect, useState } from "react";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -27,29 +25,29 @@ export const AuctionStatus = ({
   auctionId,
 }: AuctionStatusProps) => {
   const user = useUser();
-  const [searchParams] = useSearchParams();
-  const isWinner = user?.id === winnerId;
-  const isEnded = completionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
+  const [localCompletionStatus, setLocalCompletionStatus] = useState(completionStatus);
+  const [localWinnerId, setLocalWinnerId] = useState(winnerId);
+  const [localPaymentStatus, setLocalPaymentStatus] = useState(paymentStatus);
+  const isWinner = user?.id === localWinnerId;
+  const isEnded = localCompletionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
-  // Fetch auction data to get latest payment status
-  const { data: auctionData, refetch: refetchAuction } = useQuery({
-    queryKey: ['auction', auctionId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('artworks')
-        .select('payment_status, winner_id')
-        .eq('id', auctionId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
+  console.log('🔍 AuctionStatus Props:', {
+    currentBid,
+    endDate,
+    completionStatus: localCompletionStatus,
+    paymentStatus: localPaymentStatus,
+    winnerId: localWinnerId,
+    userId: user?.id,
+    isWinner,
+    isEnded,
+    auctionId
   });
 
   // Fetch highest bid to determine potential winner
   const { data: highestBid } = useQuery({
     queryKey: ['highestBid', auctionId],
     queryFn: async () => {
+      console.log('🔄 Fetching highest bid for auction:', auctionId);
       const { data, error } = await supabase
         .from('bids')
         .select('user_id, amount')
@@ -58,108 +56,131 @@ export const AuctionStatus = ({
         .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching highest bid:', error);
+        throw error;
+      }
+      console.log('✅ Highest bid data:', data);
       return data;
     },
-    enabled: isEnded && !winnerId
+    enabled: isEnded && !localWinnerId
   });
+
+  // Subscribe to auction updates and check completion status
+  useEffect(() => {
+    if (!auctionId) return;
+
+    console.log('🔄 Setting up auction update subscription');
+    const channel = supabase
+      .channel('auction-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'artworks',
+          filter: `id=eq.${auctionId}`,
+        },
+        (payload) => {
+          console.log('🔄 Received auction update:', payload);
+          const newData = payload.new as any;
+          
+          // Immediately update local state
+          setLocalCompletionStatus(newData.completion_status);
+          setLocalWinnerId(newData.winner_id);
+          setLocalPaymentStatus(newData.payment_status);
+        }
+      )
+      .subscribe();
+
+    // Check auction status every second
+    const checkInterval = setInterval(() => {
+      if (endDate) {
+        const now = new Date();
+        const end = new Date(endDate);
+        
+        // If we've passed the end time and auction isn't marked as completed
+        if (now >= end && localCompletionStatus !== 'completed') {
+          console.log('🔄 End time reached, updating completion status');
+          setLocalCompletionStatus('completed');
+          
+          // Trigger completion handler
+          supabase.functions.invoke('handle-auction-completion', {
+            body: { auctionId }
+          }).then(() => {
+            console.log('✅ Auction completion handler triggered');
+          }).catch(error => {
+            console.error('❌ Error triggering completion handler:', error);
+          });
+        }
+      }
+    }, 1000);
+
+    return () => {
+      console.log('🔄 Cleaning up auction update subscription');
+      supabase.removeChannel(channel);
+      clearInterval(checkInterval);
+    };
+  }, [auctionId, endDate, localCompletionStatus]);
 
   // If auction has ended but winner not set, check if current user is highest bidder
-  const isPotentialWinner = isEnded && !winnerId && highestBid?.user_id === user?.id;
+  const isPotentialWinner = isEnded && !localWinnerId && highestBid?.user_id === user?.id;
 
-  // Check payment status on mount and when URL params change
-  useEffect(() => {
-    const checkPaymentStatus = async () => {
-      const paymentSuccess = searchParams.get('payment_success');
-      if (paymentSuccess === 'true') {
-        await refetchAuction();
-        toast.success(
-          "Payment successful! You'll receive a confirmation email shortly.",
-          { duration: 5000 }
-        );
-      }
-    };
+  // Use custom hooks for auction completion and payment status
+  const handleRefetch = async () => {
+    const { data, error } = await supabase
+      .from('artworks')
+      .select('payment_status, winner_id, completion_status')
+      .eq('id', auctionId)
+      .single();
 
-    checkPaymentStatus();
-  }, [searchParams, refetchAuction]);
+    if (error) {
+      console.error('Error refetching auction data:', error);
+      return;
+    }
 
-  const currentPaymentStatus = auctionData?.payment_status || paymentStatus;
-  const hasCompletedPayment = (isWinner || isPotentialWinner) && currentPaymentStatus === 'completed';
-  const needsPayment = (isWinner || isPotentialWinner) && currentPaymentStatus === 'pending';
+    if (data) {
+      setLocalCompletionStatus(data.completion_status);
+      setLocalWinnerId(data.winner_id);
+      setLocalPaymentStatus(data.payment_status);
+    }
+  };
 
-  // For debugging
-  console.log('Debug auction status:', {
-    userId: user?.id,
-    winnerId,
-    isWinner,
-    completionStatus,
-    paymentStatus: currentPaymentStatus,
+  useAuctionCompletion(
     isEnded,
-    needsPayment,
+    localCompletionStatus,
+    auctionId,
+    isWinner,
     isPotentialWinner,
-    highestBid,
-    currentTime: new Date().toISOString(),
-    endDate,
-    auctionData,
-  });
+    user?.id,
+    user?.email,
+    highestBid?.user_id,
+    handleRefetch
+  );
+
+  usePaymentStatus(handleRefetch);
+
+  const hasCompletedPayment = (isWinner || isPotentialWinner) && localPaymentStatus === 'completed';
+  const needsPayment = (isWinner || isPotentialWinner) && localPaymentStatus === 'pending';
 
   return (
     <div className="space-y-4">
-      {hasCompletedPayment && (
-        <Alert className="bg-green-50 border-green-200">
-          <AlertTitle className="text-green-800">Payment Completed!</AlertTitle>
-          <AlertDescription className="text-green-700">
-            Thank you for your payment! Your purchase has been confirmed. You should have received a confirmation email with further details.
-          </AlertDescription>
-        </Alert>
-      )}
+      <AuctionStatusDisplay 
+        currentBid={currentBid}
+        endDate={endDate}
+        isEnded={isEnded}
+        isWinner={isWinner}
+        isPotentialWinner={isPotentialWinner}
+      />
 
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-500">Current Price</p>
-          <p className="text-2xl font-bold">€{currentBid?.toLocaleString()}</p>
-        </div>
-        <div className="flex flex-col items-end gap-3">
-          {!isEnded && endDate && (
-            <div className="text-right">
-              <div className="flex items-center gap-2 text-gray-600 mb-1">
-                <Clock className="w-4 h-4" />
-                <p className="text-sm">Time Remaining</p>
-              </div>
-              <CountdownTimer endDate={endDate} />
-            </div>
-          )}
-          
-          <div className="flex items-center gap-2">
-            {isEnded ? (
-              <div className="flex items-center gap-2 text-blue-600">
-                <CheckCircle2 className="w-4 h-4" />
-                <span className="text-sm font-medium">Auction Ended</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-gray-600">
-                <Clock className="w-4 h-4" />
-                <span className="text-sm font-medium">Ongoing</span>
-              </div>
-            )}
-          </div>
-
-          {(isWinner || isPotentialWinner) && (
-            <div className="flex items-center gap-2 text-emerald-600">
-              <Trophy className="w-4 h-4" />
-              <span className="text-sm font-medium">You Won!</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {needsPayment && isEnded && !hasCompletedPayment && (
-        <div className="mt-4">
-          <PaymentButton 
-            auctionId={auctionId} 
-            currentPrice={currentBid}
-          />
-        </div>
+      {(hasCompletedPayment || needsPayment) && (
+        <PaymentStatus 
+          hasCompletedPayment={hasCompletedPayment}
+          needsPayment={needsPayment}
+          isEnded={isEnded}
+          auctionId={auctionId}
+          currentBid={currentBid}
+        />
       )}
     </div>
   );

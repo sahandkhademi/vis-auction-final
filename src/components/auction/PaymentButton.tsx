@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 
 interface PaymentButtonProps {
@@ -66,6 +66,7 @@ export const PaymentButton = ({ auctionId, currentPrice, disabled }: PaymentButt
       
       <Alert variant="destructive" className="bg-destructive/10 border-none">
         <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Payment Required</AlertTitle>
         <AlertDescription className="text-sm text-destructive">
           If payment is not completed within 48 hours, you will lose your winning bid and the next highest bidder will be selected.
         </AlertDescription>

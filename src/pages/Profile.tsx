@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { UserRound } from "lucide-react";
 import { ProfileTabs } from "@/components/profile/ProfileTabs";
 
@@ -23,7 +23,6 @@ const Profile = () => {
   const [updating, setUpdating] = useState(false);
   const [username, setUsername] = useState("");
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     const getUser = async () => {
@@ -60,18 +59,31 @@ const Profile = () => {
       .eq("id", user.id);
 
     if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update profile",
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-      setProfile(prev => ({ ...prev!, username }));
+      toast.error("Failed to update profile");
+      setUpdating(false);
+      return;
     }
+
+    // Send profile update email using edge function
+    try {
+      const { error: emailError } = await supabase.functions.invoke('send-profile-update', {
+        body: {
+          email: user.email,
+          username: username,
+        }
+      });
+
+      if (emailError) {
+        console.error('Failed to send profile update email:', emailError);
+      }
+
+      toast.success("Profile updated successfully");
+      setProfile(prev => ({ ...prev!, username }));
+    } catch (err) {
+      console.error('Error in profile update:', err);
+      toast.error("Profile updated but failed to send confirmation email");
+    }
+    
     setUpdating(false);
   };
 

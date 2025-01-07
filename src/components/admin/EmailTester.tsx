@@ -16,20 +16,20 @@ export const EmailTester = () => {
         return;
       }
 
-      console.log("Starting test email request...");
+      console.log("Starting test email request with session:", session.user.email);
 
       const { data, error } = await supabase.functions.invoke('test-email-templates', {
-        method: 'POST',
-        body: { test: true },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
+        body: { 
+          test: true,
+          userEmail: session.user.email,
+          forceSend: true // Add this to ensure email is sent regardless of preferences
         },
       });
 
       console.log("Response from test-email-templates:", { data, error });
 
       if (error) {
+        console.error("Error details:", error);
         throw new Error(error.message || "Failed to send test emails");
       }
 
@@ -37,7 +37,7 @@ export const EmailTester = () => {
         throw new Error("No response data received");
       }
 
-      toast.success("Test emails sent successfully!");
+      toast.success("Test emails sent successfully! Please check your inbox and spam folder.");
       console.log("Test emails sent to:", data.recipients);
     } catch (error) {
       console.error("Error sending test emails:", error);
@@ -51,7 +51,7 @@ export const EmailTester = () => {
     <div className="space-y-4">
       <h2 className="text-xl">Email Template Tester</h2>
       <p className="text-muted-foreground">
-        Send test emails to all admin accounts to preview the email templates.
+        Send test emails to preview all email templates. Emails will be sent to your account email address.
       </p>
       <Button 
         onClick={handleTestEmails} 
@@ -59,6 +59,9 @@ export const EmailTester = () => {
       >
         {isSending ? "Sending..." : "Send Test Emails"}
       </Button>
+      <p className="text-sm text-muted-foreground">
+        Note: If you don't receive the emails, please check your spam folder.
+      </p>
     </div>
   );
 };

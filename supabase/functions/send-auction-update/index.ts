@@ -15,6 +15,8 @@ serve(async (req: Request) => {
   }
 
   try {
+    console.log('🔔 Starting email notification process...');
+    
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -27,15 +29,15 @@ serve(async (req: Request) => {
     );
 
     const { userId, auctionId, type, newBidAmount, auctionTitle } = await req.json() as EmailData;
-    console.log('Processing email notification:', { userId, auctionId, type, newBidAmount, auctionTitle });
+    console.log('📧 Processing email notification:', { userId, auctionId, type, newBidAmount, auctionTitle });
 
     // Get the user's email
     const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
     if (userError || !user?.email) {
-      console.error('Error fetching user:', userError);
+      console.error('❌ Error fetching user:', userError);
       throw new Error('User not found or no email available');
     }
-    console.log('Found user email:', user.email);
+    console.log('✅ Found user email:', user.email);
 
     // Get user's notification preferences
     const { data: preferences, error: prefError } = await supabaseAdmin
@@ -45,10 +47,10 @@ serve(async (req: Request) => {
       .single();
 
     if (prefError) {
-      console.error('Error fetching preferences:', prefError);
+      console.error('❌ Error fetching preferences:', prefError);
       throw prefError;
     }
-    console.log('User preferences:', preferences);
+    console.log('✅ User preferences:', preferences);
 
     // Get auction details
     const { data: auction, error: auctionError } = await supabaseAdmin
@@ -58,10 +60,10 @@ serve(async (req: Request) => {
       .single();
 
     if (auctionError) {
-      console.error('Error fetching auction:', auctionError);
+      console.error('❌ Error fetching auction:', auctionError);
       throw auctionError;
     }
-    console.log('Found auction:', auction);
+    console.log('✅ Found auction:', auction);
 
     // Check if notifications are enabled for this type
     let shouldSend = false;
@@ -78,7 +80,7 @@ serve(async (req: Request) => {
     }
 
     if (!shouldSend) {
-      console.log('Notification type disabled by user preferences');
+      console.log('⚠️ Notification type disabled by user preferences');
       return new Response(
         JSON.stringify({ message: 'Notification type disabled by user preferences' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -86,19 +88,20 @@ serve(async (req: Request) => {
     }
 
     const auctionUrl = `${new URL(req.url).origin.replace('functions.', '')}/auction/${auctionId}`;
-    console.log('Auction URL:', auctionUrl);
+    console.log('🔗 Auction URL:', auctionUrl);
 
     const emailContent = getEmailContent(type, auction, newBidAmount, auctionUrl);
-    const response = await sendEmail(user.email, emailContent);
+    console.log('📝 Email content prepared:', emailContent);
 
-    console.log('Email sent successfully:', response);
+    const response = await sendEmail(user.email, emailContent);
+    console.log('✅ Email sent successfully:', response);
 
     return new Response(
       JSON.stringify({ message: 'Email sent successfully' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error in send-auction-update function:', error);
+    console.error('❌ Error in send-auction-update function:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

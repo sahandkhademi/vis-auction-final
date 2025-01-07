@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,11 +7,11 @@ import { useQuery } from "@tanstack/react-query";
 import { ArtworkImage } from "@/components/auction/ArtworkImage";
 import { AuctionDetails } from "@/components/auction/AuctionDetails";
 import { ArtworkWithArtist } from "@/types/auction";
+import { useAuctionSubscription } from "@/hooks/useAuctionSubscription";
 
 const AuctionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [currentHighestBid, setCurrentHighestBid] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -39,24 +39,49 @@ const AuctionDetail = () => {
         throw linkedError;
       }
 
-      if (artworkWithLinkedArtist?.artist) {
-        console.log('Found artwork with linked artist:', artworkWithLinkedArtist);
-        return artworkWithLinkedArtist as ArtworkWithArtist;
-      }
-
       return artworkWithLinkedArtist as ArtworkWithArtist;
     },
     enabled: !!id,
   });
 
+  // Subscribe to auction updates
   useEffect(() => {
-    if (id) {
-      fetchCurrentHighestBid();
-      subscribeToNewBids();
-      subscribeToAuctionUpdates();
-      subscribeToAuctionCompletion();
-    }
-  }, [id]);
+    if (!id) return;
+
+    console.log('🔄 Setting up auction completion subscription');
+    
+    const channel = supabase
+      .channel('auction-completion')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'artworks',
+          filter: `id=eq.${id}`,
+        },
+        async (payload) => {
+          console.log('🔄 Received auction update:', payload);
+          const newData = payload.new as { completion_status: string };
+          
+          // If auction has completed, refresh the page data
+          if (newData.completion_status === 'completed') {
+            console.log('🏁 Auction completed, refreshing data');
+            await refetch();
+            toast.info("This auction has ended");
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('🔄 Cleaning up auction completion subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [id, refetch]);
+
+  // Use custom hook for bid subscriptions
+  useAuctionSubscription(id, refetch, setCurrentHighestBid);
 
   const fetchCurrentHighestBid = async () => {
     if (!id) return;
@@ -77,93 +102,6 @@ const AuctionDetail = () => {
     if (data) {
       setCurrentHighestBid(data.amount);
     }
-  };
-
-  const subscribeToNewBids = () => {
-    if (!id) return;
-
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'bids',
-          filter: `auction_id=eq.${id}`
-        },
-        (payload) => {
-          const newBid = payload.new as { amount: number };
-          if (newBid.amount > (currentHighestBid || 0)) {
-            setCurrentHighestBid(newBid.amount);
-            toast.info(`New highest bid: €${newBid.amount.toLocaleString()}`);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
-
-  const subscribeToAuctionUpdates = () => {
-    if (!id) return;
-
-    const channel = supabase
-      .channel('auction-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'artworks',
-          filter: `id=eq.${id}`,
-        },
-        async (payload) => {
-          const newData = payload.new as { completion_status: string };
-          
-          // If auction status changes to completed, refresh the page data
-          if (newData.completion_status === 'completed') {
-            await refetch();
-            toast.info("This auction has ended");
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
-
-  // New subscription specifically for auction completion
-  const subscribeToAuctionCompletion = () => {
-    if (!id) return;
-
-    const channel = supabase
-      .channel('auction-completion')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'artworks',
-          filter: `id=eq.${id} AND completion_status=eq.completed`,
-        },
-        async () => {
-          console.log('Auction completed, refreshing data...');
-          await refetch();
-          toast.info("This auction has ended", {
-            description: "The page will update with the final results."
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   };
 
   if (artworkError) {
