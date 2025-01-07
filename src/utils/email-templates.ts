@@ -9,7 +9,7 @@ export const getBaseEmailStyle = () => `
 
 export const getButtonStyle = () => `
   display: inline-block;
-  background-color: #C6A07C;
+  background-color: #00337F;
   color: white;
   padding: 12px 24px;
   text-decoration: none;
@@ -27,7 +27,7 @@ export const getHeadingStyle = () => `
 
 export const getPriceStyle = () => `
   font-size: 18px;
-  color: #C6A07C;
+  color: #00337F;
   font-weight: bold;
 `;
 
