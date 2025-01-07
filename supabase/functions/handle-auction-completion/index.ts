@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.7';
+import { getAuctionWinTemplate } from '../../../src/utils/email-templates.ts';
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
@@ -106,6 +107,7 @@ serve(async (req: Request) => {
       console.log('📧 Sending winner email to:', winner.email);
       
       try {
+        const auctionUrl = `${SUPABASE_URL?.replace('.supabase.co', '')}/auction/${auction.id}`;
         const emailResponse = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -116,24 +118,7 @@ serve(async (req: Request) => {
             from: 'VIS Auction <updates@visauction.com>',
             to: [winner.email],
             subject: 'Congratulations! You Won the Auction!',
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h1 style="color: #1a1a1a;">🎉 Congratulations!</h1>
-                <p>You've won the auction for "${auction.title}"!</p>
-                <p style="font-size: 18px; color: #C6A07C; font-weight: bold;">
-                  Final price: €${highestBid.amount.toLocaleString()}
-                </p>
-                <p>Please complete your payment within 48 hours to secure your win.</p>
-                <a href="${SUPABASE_URL?.replace('.supabase.co', '')}/auction/${auction.id}"
-                   style="display: inline-block; background-color: #C6A07C; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">
-                  Complete Payment
-                </a>
-                <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; color: #666;">
-                  <small>This email was sent by VIS Auction. If you no longer wish to receive these emails, 
-                  you can adjust your notification preferences in your account settings.</small>
-                </div>
-              </div>
-            `
+            html: getAuctionWinTemplate(auction.title, highestBid.amount, auctionUrl)
           })
         });
 
