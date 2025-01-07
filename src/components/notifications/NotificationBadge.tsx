@@ -38,7 +38,7 @@ export const NotificationBadge = () => {
     },
   });
 
-  // Set up real-time subscription for notifications
+  // Set up real-time subscription for notifications with immediate state updates
   useEffect(() => {
     console.log('🔄 Setting up notification subscription');
     const channel = supabase
@@ -46,14 +46,47 @@ export const NotificationBadge = () => {
       .on(
         'postgres_changes',
         {
-          event: '*', // Listen for all events (INSERT, UPDATE, DELETE)
+          event: 'INSERT',
           schema: 'public',
           table: 'notifications',
         },
-        async (payload) => {
-          console.log('🔄 Received notification change:', payload);
-          // Refetch notifications to update the badge count
-          await refetch();
+        (payload) => {
+          console.log('📥 New notification received:', payload);
+          // Immediately update the unread count for new notifications
+          setUnreadCount(prevCount => prevCount + 1);
+          refetch();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'notifications',
+        },
+        (payload: any) => {
+          console.log('🔄 Notification updated:', payload);
+          // If a notification is marked as read, decrease the count
+          if (payload.old.read === false && payload.new.read === true) {
+            setUnreadCount(prevCount => Math.max(0, prevCount - 1));
+          }
+          refetch();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'notifications',
+        },
+        (payload: any) => {
+          console.log('🗑️ Notification deleted:', payload);
+          // If an unread notification is deleted, decrease the count
+          if (!payload.old.read) {
+            setUnreadCount(prevCount => Math.max(0, prevCount - 1));
+          }
+          refetch();
         }
       )
       .subscribe(status => {
@@ -66,6 +99,7 @@ export const NotificationBadge = () => {
     };
   }, [refetch]);
 
+  // Initialize unread count from fetched data
   useEffect(() => {
     if (notifications) {
       console.log('🔄 Updating unread count:', notifications.length);
@@ -81,7 +115,8 @@ export const NotificationBadge = () => {
       .eq("id", id);
       
     if (!error) {
-      refetch();
+      // Immediately update the local state
+      setUnreadCount(prevCount => Math.max(0, prevCount - 1));
       
       // Navigate based on notification type
       if (entityId) {
@@ -120,6 +155,7 @@ export const NotificationBadge = () => {
       });
     } else {
       console.log('✅ All notifications marked as read');
+      setUnreadCount(0); // Immediately update the local state
       toast({
         title: "Success",
         description: "All notifications marked as read",
