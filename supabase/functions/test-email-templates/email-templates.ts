@@ -13,8 +13,10 @@ export const getEmailTemplates = (sampleArtwork: SampleArtwork) => [
     html: `
       <div style="${getBaseEmailStyle()}">
         <div style="display: flex; align-items: center; margin-bottom: 24px;">
-          <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" alt="Vienna International School" style="width: 32px; height: 32px;" />
-          <span style="margin-left: 12px; font-family: ui-serif, Georgia, Cambria, Times New Roman, Times, serif; font-size: 20px; color: #1a1a1a;">VIS Auction</span>
+          <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" 
+               alt="Vienna International School" 
+               style="width: 32px; height: 32px; margin-right: 12px;" />
+          <span style="font-family: ui-serif, Georgia, Cambria, Times New Roman, Times, serif; font-size: 20px; color: #1a1a1a;">VIS Auction</span>
         </div>
         <h1 style="${getHeadingStyle()}">New Bid Alert</h1>
         <p>Someone has placed a higher bid on "${sampleArtwork.title}".</p>
@@ -32,8 +34,10 @@ export const getEmailTemplates = (sampleArtwork: SampleArtwork) => [
     html: `
       <div style="${getBaseEmailStyle()}">
         <div style="display: flex; align-items: center; margin-bottom: 24px;">
-          <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" alt="Vienna International School" style="width: 32px; height: 32px;" />
-          <span style="margin-left: 12px; font-family: ui-serif, Georgia, Cambria, Times New Roman, Times, serif; font-size: 20px; color: #1a1a1a;">VIS Auction</span>
+          <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" 
+               alt="Vienna International School" 
+               style="width: 32px; height: 32px; margin-right: 12px;" />
+          <span style="font-family: ui-serif, Georgia, Cambria, Times New Roman, Times, serif; font-size: 20px; color: #1a1a1a;">VIS Auction</span>
         </div>
         <h1 style="${getHeadingStyle()}">Time is Running Out</h1>
         <p>The auction for "${sampleArtwork.title}" is ending soon.</p>
@@ -51,8 +55,10 @@ export const getEmailTemplates = (sampleArtwork: SampleArtwork) => [
     html: `
       <div style="${getBaseEmailStyle()}">
         <div style="display: flex; align-items: center; margin-bottom: 24px;">
-          <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" alt="Vienna International School" style="width: 32px; height: 32px;" />
-          <span style="margin-left: 12px; font-family: ui-serif, Georgia, Cambria, Times New Roman, Times, serif; font-size: 20px; color: #1a1a1a;">VIS Auction</span>
+          <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" 
+               alt="Vienna International School" 
+               style="width: 32px; height: 32px; margin-right: 12px;" />
+          <span style="font-family: ui-serif, Georgia, Cambria, Times New Roman, Times, serif; font-size: 20px; color: #1a1a1a;">VIS Auction</span>
         </div>
         <h1 style="${getHeadingStyle()}">Congratulations</h1>
         <p>You've won the auction for "${sampleArtwork.title}".</p>
@@ -70,11 +76,13 @@ export const getEmailTemplates = (sampleArtwork: SampleArtwork) => [
     html: `
       <div style="${getBaseEmailStyle()}">
         <div style="display: flex; align-items: center; margin-bottom: 24px;">
-          <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" alt="Vienna International School" style="width: 32px; height: 32px;" />
-          <span style="margin-left: 12px; font-family: ui-serif, Georgia, Cambria, Times New Roman, Times, serif; font-size: 20px; color: #1a1a1a;">VIS Auction</span>
+          <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" 
+               alt="Vienna International School" 
+               style="width: 32px; height: 32px; margin-right: 12px;" />
+          <span style="font-family: ui-serif, Georgia, Cambria, Times New Roman, Times, serif; font-size: 20px; color: #1a1a1a;">VIS Auction</span>
         </div>
         <h1 style="${getHeadingStyle()}">Payment Confirmed</h1>
-        <p>Thank you for your payment. Here's your purchase confirmation for "${sampleArtwork.title}".</p>
+        <p>Thank you for your payment for "${sampleArtwork.title}".</p>
         <table style="${getTableStyle()}">
           <tr>
             <td style="${getTdStyle()}">Artwork</td>
@@ -94,7 +102,7 @@ export const getEmailTemplates = (sampleArtwork: SampleArtwork) => [
           </tr>
         </table>
         <div style="${getFooterStyle()}">
-          <small>This is a test email from VIS Auction. Please keep this email for your records.</small>
+          <small>This is a test email from VIS Auction.</small>
         </div>
       </div>
     `
