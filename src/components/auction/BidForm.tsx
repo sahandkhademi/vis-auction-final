@@ -206,10 +206,8 @@ export const BidForm = ({
 
       if (bidError) {
         console.error("Bid insertion error:", bidError);
-        toast({
-          title: "Failed to place bid",
-          description: bidError.message || "Please try again",
-          variant: "destructive",
+        toast.error("Failed to place bid", {
+          description: bidError.message || "Please try again"
         });
         return;
       }
@@ -222,10 +220,8 @@ export const BidForm = ({
 
       if (updateError) {
         console.error("Artwork update error:", updateError);
-        toast({
-          title: "Bid placed but price not updated",
-          description: "Please refresh the page",
-          variant: "destructive",
+        toast.error("Bid placed but price not updated", {
+          description: "Please refresh the page"
         });
         return;
       }

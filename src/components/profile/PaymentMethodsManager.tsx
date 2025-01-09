@@ -41,7 +41,7 @@ const PaymentMethodForm = () => {
 
       const { error: setupError } = await stripe.confirmCardSetup(data.clientSecret, {
         payment_method: {
-          card: elements.getElement(PaymentElement),
+          card: elements.getElement('card'),
           billing_details: {
             email: session.user.email,
           },
