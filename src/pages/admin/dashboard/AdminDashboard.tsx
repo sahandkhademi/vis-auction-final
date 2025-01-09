@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Monitor } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Accordion,
   AccordionContent,
@@ -26,8 +27,12 @@ const BackupMonitoring = lazy(() => import("./backup/BackupMonitoring"));
 const WinnersManagement = lazy(() => import("./winners/WinnersManagement"));
 
 const LoadingFallback = () => (
-  <div className="flex items-center justify-center p-8">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+  <div className="space-y-4 p-8">
+    <div className="space-y-2">
+      <Skeleton className="h-4 w-3/4" />
+      <Skeleton className="h-4 w-1/2" />
+    </div>
+    <Skeleton className="h-[200px] w-full" />
   </div>
 );
 

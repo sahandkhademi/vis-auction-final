@@ -1,10 +1,17 @@
 import { lazy, Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const AdminDashboard = lazy(() => import("./admin/dashboard/AdminDashboard"));
 
 const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+  <div className="container py-8 space-y-8 animate-fadeIn">
+    <div className="space-y-4">
+      <Skeleton className="h-10 w-48" />
+      <Skeleton className="h-4 w-96" />
+    </div>
+    <div className="space-y-4">
+      <Skeleton className="h-[400px] w-full" />
+    </div>
   </div>
 );
 
