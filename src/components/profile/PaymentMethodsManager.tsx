@@ -9,12 +9,12 @@ import { toast } from "sonner";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
-  PaymentElement,
   useStripe,
   useElements,
   CardElement,
 } from "@stripe/react-stripe-js";
 
+// Initialize Stripe with the publishable key from Supabase secrets
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const PaymentMethodForm = () => {
@@ -67,7 +67,7 @@ const PaymentMethodForm = () => {
       <CardElement />
       <Button
         onClick={setupPaymentMethod}
-        disabled={isLoading}
+        disabled={isLoading || !stripe || !elements}
         className="w-full"
       >
         {isLoading ? (
@@ -89,7 +89,6 @@ const PaymentMethodForm = () => {
 export const PaymentMethodsManager = () => {
   const session = useSession();
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPaymentMethods = async () => {
@@ -147,11 +146,9 @@ export const PaymentMethodsManager = () => {
           </Alert>
         )}
 
-        {clientSecret && (
-          <Elements stripe={stripePromise} options={{ clientSecret }}>
-            <PaymentMethodForm />
-          </Elements>
-        )}
+        <Elements stripe={stripePromise}>
+          <PaymentMethodForm />
+        </Elements>
       </CardContent>
     </Card>
   );
