@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,17 +7,29 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { loadStripe } from "@stripe/stripe-js";
+import {
+  Elements,
+  PaymentElement,
+  useStripe,
+  useElements,
+} from "@stripe/stripe-js/pure";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
-export const PaymentMethodsManager = () => {
-  const session = useSession();
+const PaymentMethodForm = () => {
+  const stripe = useStripe();
+  const elements = useElements();
   const [isLoading, setIsLoading] = useState(false);
-  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const session = useSession();
 
   const setupPaymentMethod = async () => {
     if (!session?.user) {
       toast.error("Please sign in to add a payment method");
+      return;
+    }
+
+    if (!stripe || !elements) {
+      toast.error("Stripe has not been initialized");
       return;
     }
 
@@ -26,13 +38,10 @@ export const PaymentMethodsManager = () => {
       const { data, error } = await supabase.functions.invoke('setup-payment-method');
       
       if (error) throw error;
-      
-      const stripe = await stripePromise;
-      if (!stripe) throw new Error('Stripe failed to load');
 
       const { error: setupError } = await stripe.confirmCardSetup(data.clientSecret, {
         payment_method: {
-          card: elements.getElement('card'),
+          card: elements.getElement(PaymentElement),
           billing_details: {
             email: session.user.email,
           },
@@ -44,7 +53,6 @@ export const PaymentMethodsManager = () => {
       }
 
       toast.success("Payment method added successfully");
-      fetchPaymentMethods();
     } catch (error) {
       console.error('Error setting up payment method:', error);
       toast.error("Failed to set up payment method");
@@ -53,22 +61,55 @@ export const PaymentMethodsManager = () => {
     }
   };
 
-  const fetchPaymentMethods = async () => {
-    if (!session?.user) return;
+  return (
+    <div className="space-y-4">
+      <PaymentElement />
+      <Button
+        onClick={setupPaymentMethod}
+        disabled={isLoading}
+        className="w-full"
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Setting up...
+          </>
+        ) : (
+          <>
+            <CreditCard className="mr-2 h-4 w-4" />
+            Add Payment Method
+          </>
+        )}
+      </Button>
+    </div>
+  );
+};
 
-    try {
-      const { data, error } = await supabase
-        .from('user_payment_methods')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .eq('is_valid', true);
+export const PaymentMethodsManager = () => {
+  const session = useSession();
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
-      if (error) throw error;
-      setPaymentMethods(data || []);
-    } catch (error) {
-      console.error('Error fetching payment methods:', error);
-    }
-  };
+  useEffect(() => {
+    const fetchPaymentMethods = async () => {
+      if (!session?.user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('user_payment_methods')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .eq('is_valid', true);
+
+        if (error) throw error;
+        setPaymentMethods(data || []);
+      } catch (error) {
+        console.error('Error fetching payment methods:', error);
+      }
+    };
+
+    fetchPaymentMethods();
+  }, [session?.user]);
 
   return (
     <Card>
@@ -105,23 +146,11 @@ export const PaymentMethodsManager = () => {
           </Alert>
         )}
 
-        <Button
-          onClick={setupPaymentMethod}
-          disabled={isLoading}
-          className="w-full"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Setting up...
-            </>
-          ) : (
-            <>
-              <CreditCard className="mr-2 h-4 w-4" />
-              Add Payment Method
-            </>
-          )}
-        </Button>
+        {clientSecret && (
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <PaymentMethodForm />
+          </Elements>
+        )}
       </CardContent>
     </Card>
   );

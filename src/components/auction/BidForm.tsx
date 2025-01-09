@@ -235,16 +235,17 @@ export const BidForm = ({
         await notifyPreviousBidder(previousBid.user_id);
       }
 
-      toast({
-        title: "Bid placed successfully!",
-        description: `Your bid of €${bidAmount.toLocaleString()} has been placed`,
+      toast.success("Bid placed successfully!", {
+        description: `Your bid of €${bidAmount.toLocaleString()} has been placed`
       });
 
       onBidPlaced();
       setBidAmount(bidAmount + 1);
     } catch (error: any) {
       console.error("Error placing bid:", error);
-      toast.error(error.message || "Failed to place bid");
+      toast.error("Failed to place bid", {
+        description: error.message
+      });
     } finally {
       setIsSubmitting(false);
     }

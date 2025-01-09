@@ -21,7 +21,7 @@ export const ProfileTabs = ({ user }: { user: any }) => {
       </TabsContent>
 
       <TabsContent value="notifications">
-        <NotificationPreferences />
+        <NotificationPreferences user={user} />
       </TabsContent>
 
       <TabsContent value="payments">
