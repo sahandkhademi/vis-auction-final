@@ -3,7 +3,6 @@ import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from "embla-carousel-react"
 import { ArrowLeft, ArrowRight } from "lucide-react"
-
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -60,6 +59,7 @@ const Carousel = React.forwardRef<
       {
         ...opts,
         axis: orientation === "horizontal" ? "x" : "y",
+        loop: true,
       },
       plugins
     )
@@ -82,6 +82,24 @@ const Carousel = React.forwardRef<
     const scrollNext = React.useCallback(() => {
       api?.scrollNext()
     }, [api])
+
+    // Auto-play functionality
+    React.useEffect(() => {
+      if (!api) return
+
+      api.on("select", onSelect)
+      
+      // Set up auto-play interval
+      const autoplayInterval = setInterval(() => {
+        api.scrollNext()
+      }, 5000) // Change slide every 5 seconds
+
+      // Cleanup
+      return () => {
+        api.off("select", onSelect)
+        clearInterval(autoplayInterval)
+      }
+    }, [api, onSelect])
 
     const handleKeyDown = React.useCallback(
       (event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -134,7 +152,6 @@ const Carousel = React.forwardRef<
       >
         <div
           ref={ref}
-          onKeyDownCapture={handleKeyDown}
           className={cn("relative", className)}
           role="region"
           aria-roledescription="carousel"
