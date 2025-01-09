@@ -12,7 +12,6 @@ import { BulkArtworkManager } from "@/components/admin/dashboard/BulkArtworkMana
 import { UserManagement } from "@/components/admin/dashboard/UserManagement";
 import { BackupMonitoring } from "@/components/admin/dashboard/BackupMonitoring";
 import { WinnersManagement } from "@/components/admin/dashboard/WinnersManagement";
-import { BannerManagement } from "@/components/admin/dashboard/BannerManagement";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Monitor } from "lucide-react";
@@ -69,29 +68,26 @@ const AdminDashboard = () => {
         <Card>
           <CardContent className="pt-6 pb-4">
             <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 min-h-[44px]">
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="artworks">Artworks</TabsTrigger>
-              <TabsTrigger value="artists">Artists</TabsTrigger>
-              <TabsTrigger value="winners">Winners</TabsTrigger>
-              <TabsTrigger value="users">Users</TabsTrigger>
-              <TabsTrigger value="bulk">Bulk Manager</TabsTrigger>
-              <TabsTrigger value="backups">Backups</TabsTrigger>
+              <TabsTrigger value="analytics" className="w-full">Analytics</TabsTrigger>
+              <TabsTrigger value="artworks" className="w-full">Artworks</TabsTrigger>
+              <TabsTrigger value="artists" className="w-full">Artists</TabsTrigger>
+              <TabsTrigger value="winners" className="w-full">Winners</TabsTrigger>
+              <TabsTrigger value="users" className="w-full">Users</TabsTrigger>
+              <TabsTrigger value="bulk" className="w-full">Bulk Manager</TabsTrigger>
+              <TabsTrigger value="backups" className="w-full">Backups</TabsTrigger>
             </TabsList>
           </CardContent>
         </Card>
 
         <TabsContent value="analytics">
-          <div className="grid gap-6">
-            <BannerManagement />
-            <Card>
-              <CardHeader>
-                <CardTitle>Analytics Overview</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <AdminAnalytics />
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Analytics Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AdminAnalytics />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="artworks">

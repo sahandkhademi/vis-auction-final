@@ -1,6 +1,5 @@
 import { FeaturedAuction } from "@/components/FeaturedAuction";
 import { AuctionCard } from "@/components/AuctionCard";
-import { HomepageBanners } from "@/components/HomepageBanners";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +14,14 @@ import { useNavigate } from "react-router-dom";
 const Index = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const featuredAuction = {
+    title: "Russian Village in Winter",
+    artist: "ALESSIO ISSUPOFF",
+    description: "A masterpiece capturing the serene beauty of a Russian winter landscape.",
+    image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
+    currentBid: 15000,
+    timeLeft: "2d 15h 30m"
+  };
 
   const { data: trendingArtworks, isLoading, error, refetch } = useQuery({
     queryKey: ["trending-artworks"],
@@ -67,10 +74,12 @@ const Index = () => {
         description: "The auction will end in 10 seconds. Place a bid to test notifications.",
       });
 
+      // Navigate to the new auction
       if (data) {
         navigate(`/auction/${data.id}`);
       }
 
+      // Refresh the trending artworks list
       refetch();
     } catch (err) {
       console.error("Error creating test auction:", err);
@@ -90,7 +99,7 @@ const Index = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <HomepageBanners />
+          <FeaturedAuction {...featuredAuction} />
         </motion.div>
       </AnimatePresence>
       
@@ -101,14 +110,14 @@ const Index = () => {
         className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-16"
       >
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-medium text-gray-900">Trending Auctions</h2>
+          <h2 className="text-2xl font-medium text-gray-900">Trending lots</h2>
           <div className="flex items-center gap-4">
             <Button
               onClick={createTestAuction}
               variant="secondary"
               className="text-sm"
             >
-              Create Test Auction
+              Create 30s Test Auction
             </Button>
             <Link 
               to="/auctions" 
