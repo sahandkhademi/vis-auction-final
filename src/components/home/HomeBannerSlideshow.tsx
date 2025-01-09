@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/carousel";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
 import Autoplay from "embla-carousel-autoplay";
 
 export const HomeBannerSlideshow = () => {
