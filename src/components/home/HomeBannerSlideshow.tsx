@@ -13,8 +13,10 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Autoplay from "embla-carousel-autoplay";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const HomeBannerSlideshow = () => {
+  const isMobile = useIsMobile();
   const { data: banners, isLoading, error } = useQuery({
     queryKey: ["homepage-banners"],
     queryFn: async () => {
@@ -61,60 +63,66 @@ export const HomeBannerSlideshow = () => {
     : undefined;
 
   return (
-    <Carousel 
-      className="relative h-[80vh]"
-      opts={{
-        align: "start",
-        loop: true,
-      }}
-      plugins={autoplayOptions}
-    >
-      <CarouselContent className="-ml-0">
-        <AnimatePresence>
-          {banners.map((banner) => (
-            <CarouselItem key={banner.id} className="pl-0">
-              <div className="relative h-[80vh] overflow-hidden">
-                <div className="absolute inset-0">
-                  <img
-                    src={banner.image_url}
-                    alt={banner.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30" />
-                </div>
-                
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
-                  className="relative h-full flex items-end"
-                >
-                  <div className="max-w-[1400px] mx-auto px-6 pb-20 w-full">
-                    <div className="max-w-2xl text-white space-y-4">
-                      <h1 className="text-4xl font-serif">{banner.title}</h1>
-                      {banner.description && (
-                        <p className="text-sm text-gray-200 max-w-lg">
-                          {banner.description}
-                        </p>
-                      )}
-                      {banner.button_text && banner.button_link && (
-                        <Button 
-                          className="mt-6 bg-white text-black hover:bg-white/90 transition-colors duration-300"
-                          onClick={() => window.location.href = banner.button_link}
-                        >
-                          {banner.button_text}
-                        </Button>
-                      )}
-                    </div>
+    <div className="group relative">
+      <Carousel 
+        className="h-[80vh]"
+        opts={{
+          align: "start",
+          loop: true,
+        }}
+        plugins={autoplayOptions}
+      >
+        <CarouselContent className="-ml-0">
+          <AnimatePresence>
+            {banners.map((banner) => (
+              <CarouselItem key={banner.id} className="pl-0">
+                <div className="relative h-[80vh] overflow-hidden">
+                  <div className="absolute inset-0">
+                    <img
+                      src={banner.image_url}
+                      alt={banner.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30" />
                   </div>
-                </motion.div>
-              </div>
-            </CarouselItem>
-          ))}
-        </AnimatePresence>
-      </CarouselContent>
-      <CarouselPrevious className="left-4" />
-      <CarouselNext className="right-4" />
-    </Carousel>
+                  
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                    className="relative h-full flex items-end"
+                  >
+                    <div className="max-w-[1400px] mx-auto px-6 pb-20 w-full">
+                      <div className="max-w-2xl text-white space-y-4">
+                        <h1 className="text-4xl font-serif">{banner.title}</h1>
+                        {banner.description && (
+                          <p className="text-sm text-gray-200 max-w-lg">
+                            {banner.description}
+                          </p>
+                        )}
+                        {banner.button_text && banner.button_link && (
+                          <Button 
+                            className="mt-6 bg-white text-black hover:bg-white/90 transition-colors duration-300"
+                            onClick={() => window.location.href = banner.button_link}
+                          >
+                            {banner.button_text}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              </CarouselItem>
+            ))}
+          </AnimatePresence>
+        </CarouselContent>
+        {!isMobile && (
+          <>
+            <CarouselPrevious className="hidden group-hover:flex left-4 transition-opacity duration-300" />
+            <CarouselNext className="hidden group-hover:flex right-4 transition-opacity duration-300" />
+          </>
+        )}
+      </Carousel>
+    </div>
   );
 };
