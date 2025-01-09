@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Search, User, LayoutDashboard } from "lucide-react";
+import { Search, User, LayoutGrid } from "lucide-react";
 import { NotificationBadge } from "@/components/notifications/NotificationBadge";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
@@ -42,14 +42,14 @@ export const UserActions = ({ user, setOpen }: UserActionsProps) => {
       {user ? (
         <div className="flex items-center space-x-2">
           {profile?.is_admin && (
-            <Link to="/admin">
+            <Link to="/admin" className="hidden md:block">
               <Button 
                 variant="ghost" 
                 size="icon" 
                 className="text-gray-600 hover:text-gray-900"
                 aria-label="Admin Dashboard"
               >
-                <LayoutDashboard className="h-5 w-5" />
+                <LayoutGrid className="h-5 w-5" />
               </Button>
             </Link>
           )}
