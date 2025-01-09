@@ -131,8 +131,8 @@ export const ArtworkList = () => {
           totalCount={artworks?.length || 0}
           itemContent={index => TableRowContent(index)}
           components={{
-            Table: (props) => <Table {...props} />,
-            TableBody: (props) => <TableBody {...props} />,
+            table: ({ style, ...props }) => <Table {...props} />,
+            tbody: TableBody,
           }}
         />
       </div>
