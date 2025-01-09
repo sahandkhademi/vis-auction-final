@@ -14,10 +14,9 @@ import {
   CardElement,
 } from "@stripe/react-stripe-js";
 
+// Get the Stripe key from Supabase
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-if (!stripeKey) {
-  console.error('Missing Stripe publishable key');
-}
+console.log('Stripe Key:', { stripeKey });
 
 // Initialize Stripe only if we have a valid key
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
