@@ -15,9 +15,9 @@ const Index = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const featuredAuction = {
-    title: "Russian Village in Winter",
-    artist: "ALESSIO ISSUPOFF",
-    description: "A masterpiece capturing the serene beauty of a Russian winter landscape.",
+    title: "Vase of Flowers",
+    artist: "JAN DAVIDSZ DE HEEM",
+    description: "Compared to flower still-lifes of the early seventeenth century, this painting is a real floral explosion.",
     image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
     currentBid: 15000,
     timeLeft: "2d 15h 30m"
@@ -117,7 +117,7 @@ const Index = () => {
               variant="secondary"
               className="text-sm"
             >
-              Create 30s Test Auction
+              Create Test Auction
             </Button>
             <Link 
               to="/auctions" 
