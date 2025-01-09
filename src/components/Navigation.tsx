@@ -109,7 +109,7 @@ const Navigation = () => {
                 <CommandItem
                   key={artwork.id}
                   onSelect={() => {
-                    navigate(`/auctions/${artwork.id}`);
+                    navigate(`/auction/${artwork.id}`);
                     setOpen(false);
                   }}
                   role="option"
@@ -125,7 +125,7 @@ const Navigation = () => {
                 <CommandItem
                   key={artist.id}
                   onSelect={() => {
-                    navigate(`/artists/${artist.id}`);
+                    navigate(`/artist/${artist.id}`);
                     setOpen(false);
                   }}
                   role="option"
