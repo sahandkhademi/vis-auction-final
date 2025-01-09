@@ -14,11 +14,13 @@ import {
   CardElement,
 } from "@stripe/react-stripe-js";
 
-// Initialize Stripe with the publishable key from environment variables
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+if (!stripeKey) {
+  console.error('Missing Stripe publishable key');
+}
 
-// Log the key for debugging (will be removed in production)
-console.log('Stripe Key:', import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+// Initialize Stripe only if we have a valid key
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 const PaymentMethodForm = () => {
   const stripe = useStripe();
@@ -114,7 +116,7 @@ export const PaymentMethodsManager = () => {
     fetchPaymentMethods();
   }, [session?.user]);
 
-  if (!stripePromise) {
+  if (!stripeKey) {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
@@ -161,9 +163,11 @@ export const PaymentMethodsManager = () => {
           </Alert>
         )}
 
-        <Elements stripe={stripePromise}>
-          <PaymentMethodForm />
-        </Elements>
+        {stripePromise && (
+          <Elements stripe={stripePromise}>
+            <PaymentMethodForm />
+          </Elements>
+        )}
       </CardContent>
     </Card>
   );
