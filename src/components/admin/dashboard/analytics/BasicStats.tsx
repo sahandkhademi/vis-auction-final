@@ -2,29 +2,37 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUpIcon, ArrowDownIcon } from "lucide-react";
-import { subDays } from "date-fns";
+import { subDays, startOfDay, endOfDay } from "date-fns";
 
 export const BasicStats = () => {
   const { data: totalAuctions } = useQuery({
     queryKey: ["totalAuctions"],
     queryFn: async () => {
+      const currentDate = new Date();
+      const previousDate = subDays(currentDate, 7);
+
       const { count: currentCount } = await supabase
         .from("artworks")
         .select("*", { count: "exact", head: true });
 
-      const previousDate = subDays(new Date(), 7).toISOString();
       const { count: previousCount } = await supabase
         .from("artworks")
         .select("*", { count: "exact", head: true })
-        .lt("created_at", previousDate);
+        .lte("created_at", endOfDay(previousDate).toISOString());
+
+      const weeklyCount = await supabase
+        .from("artworks")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", startOfDay(previousDate).toISOString())
+        .lte("created_at", endOfDay(currentDate).toISOString());
 
       const percentageChange = previousCount 
-        ? ((currentCount! - previousCount) / previousCount) * 100 
-        : 0;
+        ? (((weeklyCount.count || 0) / previousCount) * 100).toFixed(1)
+        : "0";
 
       return {
         current: currentCount || 0,
-        change: percentageChange.toFixed(1),
+        change: percentageChange,
       };
     },
   });
@@ -32,27 +40,37 @@ export const BasicStats = () => {
   const { data: activeAuctions } = useQuery({
     queryKey: ["activeAuctions"],
     queryFn: async () => {
+      const currentDate = new Date();
+      const previousDate = subDays(currentDate, 7);
+
       const { count: currentCount } = await supabase
         .from("artworks")
         .select("*", { count: "exact", head: true })
         .eq("status", "published")
         .eq("completion_status", "ongoing");
 
-      const previousDate = subDays(new Date(), 7).toISOString();
       const { count: previousCount } = await supabase
         .from("artworks")
         .select("*", { count: "exact", head: true })
         .eq("status", "published")
         .eq("completion_status", "ongoing")
-        .lt("created_at", previousDate);
+        .lte("created_at", endOfDay(previousDate).toISOString());
+
+      const weeklyCount = await supabase
+        .from("artworks")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "published")
+        .eq("completion_status", "ongoing")
+        .gte("created_at", startOfDay(previousDate).toISOString())
+        .lte("created_at", endOfDay(currentDate).toISOString());
 
       const percentageChange = previousCount 
-        ? ((currentCount! - previousCount) / previousCount) * 100 
-        : 0;
+        ? (((weeklyCount.count || 0) / previousCount) * 100).toFixed(1)
+        : "0";
 
       return {
         current: currentCount || 0,
-        change: percentageChange.toFixed(1),
+        change: percentageChange,
       };
     },
   });
@@ -60,23 +78,31 @@ export const BasicStats = () => {
   const { data: totalUsers } = useQuery({
     queryKey: ["totalUsers"],
     queryFn: async () => {
+      const currentDate = new Date();
+      const previousDate = subDays(currentDate, 7);
+
       const { count: currentCount } = await supabase
         .from("profiles")
         .select("*", { count: "exact", head: true });
 
-      const previousDate = subDays(new Date(), 7).toISOString();
       const { count: previousCount } = await supabase
         .from("profiles")
         .select("*", { count: "exact", head: true })
-        .lt("created_at", previousDate);
+        .lte("created_at", endOfDay(previousDate).toISOString());
+
+      const weeklyCount = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", startOfDay(previousDate).toISOString())
+        .lte("created_at", endOfDay(currentDate).toISOString());
 
       const percentageChange = previousCount 
-        ? ((currentCount! - previousCount) / previousCount) * 100 
-        : 0;
+        ? (((weeklyCount.count || 0) / previousCount) * 100).toFixed(1)
+        : "0";
 
       return {
         current: currentCount || 0,
-        change: percentageChange.toFixed(1),
+        change: percentageChange,
       };
     },
   });
