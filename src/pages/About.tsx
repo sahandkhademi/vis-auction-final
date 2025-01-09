@@ -12,7 +12,7 @@ const About = () => {
           </p>
 
           <div className="bg-secondary/50 rounded-lg p-6 my-8">
-            <h2 className="text-xl font-bold mb-4">Our Mission</h2>
+            <h2 className="text-3xl font-extrabold mb-4">Our Mission</h2>
             <p className="text-gray-700">
               Our mission was to create a platform to connect the young artists community at VIS with parents looking to invest in unique art pieces for their homes.
             </p>
