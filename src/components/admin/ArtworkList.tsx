@@ -136,7 +136,7 @@ export const ArtworkList = () => {
             ),
           }}
           fixedHeaderContent={() => <TableHeader />}
-          itemContent={(_, index) => TableRowContent(index)}
+          itemContent={(_index, _item) => TableRowContent(_index)}
         />
       </div>
     </div>
