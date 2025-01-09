@@ -17,7 +17,6 @@ interface BannerFormData {
   button_text?: string;
   button_link?: string;
   active: boolean;
-  display_order?: number;
   autoplay: boolean;
   autoplay_interval?: number;
 }
@@ -38,7 +37,6 @@ export const BannerForm = ({ defaultValues, onSuccess }: BannerFormProps) => {
       button_text: "",
       button_link: "",
       active: true,
-      display_order: 0,
       autoplay: false,
       autoplay_interval: 5000,
       ...defaultValues,
@@ -58,9 +56,20 @@ export const BannerForm = ({ defaultValues, onSuccess }: BannerFormProps) => {
         if (error) throw error;
         toast.success("Banner updated successfully");
       } else {
+        // For new banners, set the display_order to the highest current order + 1
+        const { data: existingBanners, error: fetchError } = await supabase
+          .from("homepage_banners")
+          .select("display_order")
+          .order("display_order", { ascending: false })
+          .limit(1);
+
+        if (fetchError) throw fetchError;
+
+        const nextOrder = existingBanners?.[0]?.display_order ?? 0;
+        
         const { error } = await supabase
           .from("homepage_banners")
-          .insert([data]);
+          .insert([{ ...data, display_order: nextOrder + 1 }]);
 
         if (error) throw error;
         toast.success("Banner created successfully");
@@ -116,15 +125,6 @@ export const BannerForm = ({ defaultValues, onSuccess }: BannerFormProps) => {
             <Input
               {...form.register("button_link")}
               placeholder="Enter button link"
-            />
-          </div>
-
-          <div>
-            <Label>Display Order</Label>
-            <Input
-              type="number"
-              {...form.register("display_order")}
-              placeholder="Enter display order"
             />
           </div>
 
