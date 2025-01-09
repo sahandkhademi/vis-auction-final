@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useVirtual } from "react-virtual";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -37,17 +37,24 @@ export const ArtworkList = () => {
   const rowVirtualizer = useVirtual({
     size: artworks?.length || 0,
     parentRef,
-    estimateSize: () => 60,
+    estimateSize: useCallback(() => 60, []),
     overscan: 5,
   });
 
   // Ensure table header alignment with virtualized body
   useEffect(() => {
-    if (parentRef.current && tableRef.current) {
-      const tableWidth = tableRef.current.offsetWidth;
-      parentRef.current.style.width = `${tableWidth}px`;
-    }
-  }, [artworks]);
+    const updateWidth = () => {
+      if (parentRef.current && tableRef.current) {
+        const tableWidth = tableRef.current.offsetWidth;
+        parentRef.current.style.width = `${tableWidth}px`;
+      }
+    };
+
+    updateWidth();
+    // Add resize listener to handle window size changes
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
 
   const handleDelete = async (id: string) => {
     const confirmation = window.confirm(
