@@ -12,6 +12,7 @@ import {
   PaymentElement,
   useStripe,
   useElements,
+  CardElement,
 } from "@stripe/react-stripe-js";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -41,7 +42,7 @@ const PaymentMethodForm = () => {
 
       const { error: setupError } = await stripe.confirmCardSetup(data.clientSecret, {
         payment_method: {
-          card: elements.getElement('card'),
+          card: elements.getElement(CardElement),
           billing_details: {
             email: session.user.email,
           },
@@ -63,7 +64,7 @@ const PaymentMethodForm = () => {
 
   return (
     <div className="space-y-4">
-      <PaymentElement />
+      <CardElement />
       <Button
         onClick={setupPaymentMethod}
         disabled={isLoading}
