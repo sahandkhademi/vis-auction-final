@@ -15,7 +15,7 @@ const Footer = () => {
               <h3 className="text-xl font-serif text-gray-900">VIS Auction</h3>
             </div>
             <p className="text-sm text-gray-600">
-              Connecting young artists with patreons.
+              Your premier destination for digital art auctions and collectibles.
             </p>
           </div>
           
