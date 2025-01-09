@@ -118,8 +118,8 @@ export const HomeBannerSlideshow = () => {
         </CarouselContent>
         {!isMobile && (
           <>
-            <CarouselPrevious className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden group-hover:flex left-4" />
-            <CarouselNext className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden group-hover:flex right-4" />
+            <CarouselPrevious className="opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 left-4" />
+            <CarouselNext className="opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 right-4" />
           </>
         )}
       </Carousel>
