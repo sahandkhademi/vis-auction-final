@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Virtuoso } from "react-virtuoso";
+import { Virtuoso, TableVirtuoso } from "react-virtuoso";
 import {
   Table,
   TableBody,
@@ -126,14 +126,16 @@ export const ArtworkList = () => {
       </Table>
 
       <div style={{ height: "600px" }}>
-        <Virtuoso
+        <TableVirtuoso
           style={{ height: "100%" }}
+          data={artworks || []}
           totalCount={artworks?.length || 0}
-          itemContent={index => TableRowContent(index)}
           components={{
-            table: ({ style, ...props }) => <Table {...props} />,
-            tbody: TableBody,
+            Table: (props) => <Table {...props} />,
+            TableBody,
           }}
+          fixedHeaderContent={() => null}
+          itemContent={index => TableRowContent(index)}
         />
       </div>
     </div>
