@@ -15,7 +15,7 @@ import {
 } from "@stripe/react-stripe-js";
 
 // Initialize Stripe with the publishable key from Supabase secrets
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY || '');
 
 const PaymentMethodForm = () => {
   const stripe = useStripe();
