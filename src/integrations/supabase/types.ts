@@ -217,6 +217,51 @@ export type Database = {
           },
         ]
       }
+      homepage_banners: {
+        Row: {
+          active: boolean | null
+          autoplay: boolean | null
+          autoplay_interval: number | null
+          button_link: string | null
+          button_text: string | null
+          created_at: string
+          description: string | null
+          display_order: number | null
+          id: string
+          image_url: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          autoplay?: boolean | null
+          autoplay_interval?: number | null
+          button_link?: string | null
+          button_text?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          image_url: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          autoplay?: boolean | null
+          autoplay_interval?: number | null
+          button_link?: string | null
+          button_text?: string | null
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           auction_ending_notifications: boolean | null

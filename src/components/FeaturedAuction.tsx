@@ -24,7 +24,7 @@ export const FeaturedAuction = ({
           alt={title}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30" />
       </div>
       
       <motion.div 
@@ -40,7 +40,7 @@ export const FeaturedAuction = ({
             <p className="text-sm text-gray-200 max-w-lg">{description}</p>
             
             <Button className="mt-6 bg-white text-black hover:bg-white/90 transition-colors duration-300">
-              VIEW LOTS
+              VIEW Auction
             </Button>
           </div>
         </div>

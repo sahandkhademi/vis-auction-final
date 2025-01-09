@@ -1,34 +1,36 @@
 export const getBaseEmailStyle = () => `
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   max-width: 600px;
   margin: 0 auto;
-  padding: 32px;
+  padding: 20px;
   background-color: #ffffff;
+  color: #1a1a1a;
   border: 1px solid #e5e7eb;
-`;
-
-export const getButtonStyle = () => `
-  display: inline-block;
-  background-color: #C6A07C;
-  color: white;
-  padding: 12px 24px;
-  text-decoration: none;
-  border-radius: 0;
-  margin: 20px 0;
-  font-weight: 500;
 `;
 
 export const getHeadingStyle = () => `
   color: #1a1a1a;
   font-size: 24px;
   margin-bottom: 20px;
-  font-weight: 500;
+  font-weight: 600;
 `;
 
 export const getPriceStyle = () => `
-  font-size: 18px;
-  color: #C6A07C;
-  font-weight: bold;
+  color: #00337F;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 16px 0;
+`;
+
+export const getButtonStyle = () => `
+  display: inline-block;
+  background-color: #00337F;
+  color: white;
+  padding: 12px 24px;
+  text-decoration: none;
+  border-radius: 0;
+  margin: 16px 0;
+  font-weight: 500;
 `;
 
 export const getLogoContainerStyle = () => `
@@ -50,8 +52,8 @@ export const getBrandTextStyle = () => `
 `;
 
 export const getFooterStyle = () => `
-  margin-top: 30px;
-  padding-top: 20px;
+  margin-top: 32px;
+  padding-top: 16px;
   border-top: 1px solid #e5e7eb;
   color: #666;
   font-size: 14px;
@@ -75,8 +77,7 @@ export const getAuctionWinTemplate = (title: string, price: number, auctionUrl?:
       </a>
     ` : ''}
     <div style="${getFooterStyle()}">
-      <small>This email was sent by VIS Auction. If you no longer wish to receive these emails, 
-      you can adjust your notification preferences in your account settings.</small>
+      <small>This is a test email from VIS Auction.</small>
     </div>
   </div>
 `;
