@@ -12,7 +12,7 @@ import {
   PaymentElement,
   useStripe,
   useElements,
-} from "@stripe/stripe-js/pure";
+} from "@stripe/react-stripe-js";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
