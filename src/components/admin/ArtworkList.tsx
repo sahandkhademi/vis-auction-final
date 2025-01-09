@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Virtuoso, TableVirtuoso } from "react-virtuoso";
+import { TableVirtuoso } from "react-virtuoso";
 import {
   Table,
   TableBody,
@@ -64,6 +64,17 @@ export const ArtworkList = () => {
     }
   };
 
+  const TableHeader = () => (
+    <TableRow>
+      <TableHead>Title</TableHead>
+      <TableHead>Artist</TableHead>
+      <TableHead>Price</TableHead>
+      <TableHead>Status</TableHead>
+      <TableHead>Created</TableHead>
+      <TableHead className="text-right">Actions</TableHead>
+    </TableRow>
+  );
+
   const TableRowContent = (index: number) => {
     const artwork = artworks?.[index];
     if (!artwork) return null;
@@ -112,30 +123,20 @@ export const ArtworkList = () => {
 
   return (
     <div className="relative">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Artist</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-      </Table>
-
       <div style={{ height: "600px" }}>
         <TableVirtuoso
-          style={{ height: "100%" }}
           data={artworks || []}
-          totalCount={artworks?.length || 0}
           components={{
-            Table: (props) => <Table {...props} />,
-            TableBody,
+            Table: ({ style, ...props }) => (
+              <Table {...props} />
+            ),
+            TableHead: TableHeader,
+            TableRow: ({ children, ...props }) => (
+              <TableRow {...props}>{children}</TableRow>
+            ),
           }}
-          fixedHeaderContent={() => null}
-          itemContent={index => TableRowContent(index)}
+          fixedHeaderContent={() => <TableHeader />}
+          itemContent={(_, index) => TableRowContent(index)}
         />
       </div>
     </div>
