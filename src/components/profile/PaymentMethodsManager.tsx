@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CreditCard, Loader2 } from "lucide-react";
+import { AlertCircle, CreditCard, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -14,9 +14,9 @@ import {
   CardElement,
 } from "@stripe/react-stripe-js";
 
-// Get the Stripe key from Supabase
+// Get the Stripe key from environment variables
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-console.log('Stripe Key:', { stripeKey });
+console.log('Stripe Key Status:', stripeKey ? 'Found' : 'Missing');
 
 // Initialize Stripe only if we have a valid key
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
@@ -119,9 +119,23 @@ export const PaymentMethodsManager = () => {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>
-          Stripe configuration is missing. Please check your environment variables.
+        <AlertTitle>Configuration Missing</AlertTitle>
+        <AlertDescription className="space-y-4">
+          <p>
+            The Stripe publishable key is not configured. This is required for payment processing.
+          </p>
+          <p className="text-sm">
+            Please contact support or check the documentation for setup instructions.
+          </p>
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="mt-2"
+            onClick={() => window.open('https://dashboard.stripe.com/apikeys', '_blank')}
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Get Stripe Keys
+          </Button>
         </AlertDescription>
       </Alert>
     );
