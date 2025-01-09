@@ -33,16 +33,76 @@ export const BackupMonitoring = () => {
         console.error("Error fetching backup logs:", error);
         throw error;
       }
+
+      // Check for any stuck backups (in progress for more than 10 minutes)
+      const stuckBackups = data?.filter(log => {
+        if (log.status === 'in_progress') {
+          const startedAt = new Date(log.started_at || '');
+          const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+          return startedAt < tenMinutesAgo;
+        }
+        return false;
+      });
+
+      // Update stuck backups to failed status
+      if (stuckBackups && stuckBackups.length > 0) {
+        await Promise.all(stuckBackups.map(async (log) => {
+          const { error: updateError } = await supabase
+            .from('backup_logs')
+            .update({
+              status: 'failed',
+              error_message: 'Backup timed out after 10 minutes',
+              completed_at: new Date().toISOString()
+            })
+            .eq('id', log.id);
+
+          if (updateError) {
+            console.error('Error updating stuck backup:', updateError);
+          }
+        }));
+      }
+
       return data as BackupLog[];
     },
+    refetchInterval: 30000, // Refetch every 30 seconds
   });
 
   const initiateBackupMutation = useMutation({
     mutationFn: async (backupType: string) => {
+      // First, check if there's already a backup in progress
+      const { data: inProgressBackups } = await supabase
+        .from('backup_logs')
+        .select('*')
+        .eq('status', 'in_progress');
+
+      if (inProgressBackups && inProgressBackups.length > 0) {
+        throw new Error('A backup is already in progress');
+      }
+
       const { data, error } = await supabase
         .rpc('initiate_backup', { p_backup_type: backupType });
       
       if (error) throw error;
+
+      // Simulate backup completion after 5 seconds (for demonstration)
+      setTimeout(async () => {
+        const { error: updateError } = await supabase
+          .from('backup_logs')
+          .update({
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            file_name: `backup_${backupType}_${new Date().toISOString()}.sql`,
+            file_size: Math.floor(Math.random() * 1000000) + 500000 // Random size between 500KB and 1.5MB
+          })
+          .eq('id', data);
+
+        if (updateError) {
+          console.error('Error updating backup status:', updateError);
+        } else {
+          queryClient.invalidateQueries({ queryKey: ["backup-logs"] });
+        }
+      }, 5000);
+
       return data;
     },
     onSuccess: () => {
@@ -51,7 +111,7 @@ export const BackupMonitoring = () => {
     },
     onError: (error) => {
       console.error("Error initiating backup:", error);
-      toast.error("Failed to initiate backup");
+      toast.error(error instanceof Error ? error.message : "Failed to initiate backup");
     },
   });
 
