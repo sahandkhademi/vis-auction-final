@@ -15,6 +15,12 @@ import { WinnersManagement } from "@/components/admin/dashboard/WinnersManagemen
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Monitor } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -60,21 +66,19 @@ const AdminDashboard = () => {
       <div>
         <h1 className="text-3xl mb-2">Admin Dashboard</h1>
         <p className="text-muted-foreground">
-          Manage your gallery's artworks, artists, and operations
+          Manage your gallery's content and operations
         </p>
       </div>
 
       <Tabs defaultValue="analytics" className="space-y-6">
         <Card>
           <CardContent className="pt-6 pb-4">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 min-h-[44px]">
-              <TabsTrigger value="analytics" className="w-full">Analytics</TabsTrigger>
-              <TabsTrigger value="artworks" className="w-full">Artworks</TabsTrigger>
-              <TabsTrigger value="artists" className="w-full">Artists</TabsTrigger>
-              <TabsTrigger value="winners" className="w-full">Winners</TabsTrigger>
-              <TabsTrigger value="users" className="w-full">Users</TabsTrigger>
-              <TabsTrigger value="bulk" className="w-full">Bulk Manager</TabsTrigger>
-              <TabsTrigger value="backups" className="w-full">Backups</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2 min-h-[44px]">
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="content">Content</TabsTrigger>
+              <TabsTrigger value="winners">Winners</TabsTrigger>
+              <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="backups">Backups</TabsTrigger>
             </TabsList>
           </CardContent>
         </Card>
@@ -90,49 +94,48 @@ const AdminDashboard = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="artworks">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Artwork Management</CardTitle>
-              <Button onClick={() => navigate("/admin/artwork/new")}>
-                <Plus className="mr-2 h-4 w-4" /> New Artwork
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <ArtworkList />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="bulk">
+        <TabsContent value="content">
           <Card>
             <CardHeader>
-              <CardTitle>Bulk Artwork Management</CardTitle>
+              <CardTitle>Content Management</CardTitle>
             </CardHeader>
             <CardContent>
-              <BulkArtworkManager />
-            </CardContent>
-          </Card>
-        </TabsContent>
+              <Accordion type="single" collapsible className="space-y-4">
+                <AccordionItem value="artworks" className="border rounded-lg">
+                  <AccordionTrigger className="px-4">
+                    <div className="flex justify-between items-center w-full">
+                      <span>Artwork Management</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="flex justify-end mb-4">
+                      <Button onClick={() => navigate("/admin/artwork/new")}>
+                        <Plus className="mr-2 h-4 w-4" /> New Artwork
+                      </Button>
+                    </div>
+                    <ArtworkList />
+                    <div className="mt-8">
+                      <h3 className="text-lg font-semibold mb-4">Bulk Operations</h3>
+                      <BulkArtworkManager />
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
 
-        <TabsContent value="artists">
-          <Card>
-            <CardHeader>
-              <CardTitle>Artist Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ArtistList />
-            </CardContent>
-          </Card>
-        </TabsContent>
+                <AccordionItem value="artists" className="border rounded-lg">
+                  <AccordionTrigger className="px-4">Artist Management</AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <ArtistList />
+                  </AccordionContent>
+                </AccordionItem>
 
-        <TabsContent value="users">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <UserManagement />
+                <AccordionItem value="banners" className="border rounded-lg">
+                  <AccordionTrigger className="px-4">Banner Management</AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    {/* Banner management will be implemented here */}
+                    <p className="text-muted-foreground">Banner management coming soon...</p>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </CardContent>
           </Card>
         </TabsContent>
@@ -144,6 +147,17 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <WinnersManagement />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="users">
+          <Card>
+            <CardHeader>
+              <CardTitle>User Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <UserManagement />
             </CardContent>
           </Card>
         </TabsContent>
