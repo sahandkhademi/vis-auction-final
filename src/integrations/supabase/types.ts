@@ -84,6 +84,7 @@ export type Database = {
           format: string | null
           id: string
           image_url: string | null
+          payment_intent_id: string | null
           payment_status: string | null
           starting_price: number
           status: string | null
@@ -106,6 +107,7 @@ export type Database = {
           format?: string | null
           id?: string
           image_url?: string | null
+          payment_intent_id?: string | null
           payment_status?: string | null
           starting_price: number
           status?: string | null
@@ -128,6 +130,7 @@ export type Database = {
           format?: string | null
           id?: string
           image_url?: string | null
+          payment_intent_id?: string | null
           payment_status?: string | null
           starting_price?: number
           status?: string | null
@@ -343,6 +346,39 @@ export type Database = {
           id?: string
           is_admin?: boolean | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      user_payment_methods: {
+        Row: {
+          card_brand: string
+          created_at: string
+          id: string
+          is_valid: boolean | null
+          last_four: string
+          stripe_payment_method_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_brand: string
+          created_at?: string
+          id?: string
+          is_valid?: boolean | null
+          last_four: string
+          stripe_payment_method_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_brand?: string
+          created_at?: string
+          id?: string
+          is_valid?: boolean | null
+          last_four?: string
+          stripe_payment_method_id?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
