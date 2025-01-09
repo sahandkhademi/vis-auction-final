@@ -7,16 +7,12 @@ import {
   Carousel,
   CarouselContent,
   CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
 } from "@/components/ui/carousel";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Autoplay from "embla-carousel-autoplay";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 export const HomeBannerSlideshow = () => {
-  const isMobile = useIsMobile();
   const { data: banners, isLoading, error } = useQuery({
     queryKey: ["homepage-banners"],
     queryFn: async () => {
@@ -53,17 +49,15 @@ export const HomeBannerSlideshow = () => {
 
   // Find the first banner with autoplay enabled to determine autoplay settings
   const autoplayBanner = banners.find(banner => banner.autoplay);
-  const autoplayOptions = autoplayBanner
-    ? [
-        Autoplay({
-          delay: autoplayBanner.autoplay_interval || 5000,
-          stopOnInteraction: false,
-        }),
-      ]
-    : undefined;
+  const autoplayOptions = [
+    Autoplay({
+      delay: autoplayBanner?.autoplay_interval || 5000,
+      stopOnInteraction: false,
+    }),
+  ];
 
   return (
-    <div className="group relative">
+    <div className="relative">
       <Carousel 
         className="h-[80vh]"
         opts={{
@@ -116,12 +110,6 @@ export const HomeBannerSlideshow = () => {
             ))}
           </AnimatePresence>
         </CarouselContent>
-        {!isMobile && (
-          <>
-            <CarouselPrevious className="opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 left-4" />
-            <CarouselNext className="opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 right-4" />
-          </>
-        )}
       </Carousel>
     </div>
   );
