@@ -110,7 +110,7 @@ const Index = () => {
         className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-16"
       >
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-medium text-gray-900">Trending lots</h2>
+          <h2 className="text-2xl font-medium text-gray-900">Trending Auctions</h2>
           <div className="flex items-center gap-4">
             <Button
               onClick={createTestAuction}
