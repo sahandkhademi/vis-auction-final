@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 
 interface BannerFormData {
+  id?: string;
   title: string;
   description?: string;
   image_url: string;
