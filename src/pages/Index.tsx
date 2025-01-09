@@ -15,9 +15,9 @@ const Index = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const featuredAuction = {
-    title: "Russian Village in Winter",
-    artist: "ALESSIO ISSUPOFF",
-    description: "A masterpiece capturing the serene beauty of a Russian winter landscape.",
+    title: "Vase of Flowers",
+    artist: "JAN DAVIDSZ DE HEEM",
+    description: "Compared to flower still-lifes of the early seventeenth century, this painting is a real floral explosion.",
     image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
     currentBid: 15000,
     timeLeft: "2d 15h 30m"
@@ -110,14 +110,14 @@ const Index = () => {
         className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-16"
       >
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-medium text-gray-900">Trending lots</h2>
+          <h2 className="text-2xl font-medium text-gray-900">Trending Auctions</h2>
           <div className="flex items-center gap-4">
             <Button
               onClick={createTestAuction}
               variant="secondary"
               className="text-sm"
             >
-              Create 30s Test Auction
+              Create Test Auction
             </Button>
             <Link 
               to="/auctions" 
