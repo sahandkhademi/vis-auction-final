@@ -141,6 +141,9 @@ export const BannerList = () => {
       const updates = newOrder.map((banner, index) => ({
         id: banner.id,
         display_order: index,
+        // Include required fields from the original banner
+        title: banner.title,
+        image_url: banner.image_url,
       }));
 
       const { error } = await supabase
