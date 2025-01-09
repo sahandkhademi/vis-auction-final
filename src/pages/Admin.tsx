@@ -21,6 +21,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { BannerList } from "@/components/admin/BannerList";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -104,7 +105,7 @@ const AdminDashboard = () => {
                 <AccordionItem value="artworks" className="border rounded-lg">
                   <AccordionTrigger className="px-4">
                     <div className="flex justify-between items-center w-full">
-                      <span>Artwork Management</span>
+                      <span>Artworks</span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-4 pb-4">
@@ -122,17 +123,16 @@ const AdminDashboard = () => {
                 </AccordionItem>
 
                 <AccordionItem value="artists" className="border rounded-lg">
-                  <AccordionTrigger className="px-4">Artist Management</AccordionTrigger>
+                  <AccordionTrigger className="px-4">Artists</AccordionTrigger>
                   <AccordionContent className="px-4 pb-4">
                     <ArtistList />
                   </AccordionContent>
                 </AccordionItem>
 
                 <AccordionItem value="banners" className="border rounded-lg">
-                  <AccordionTrigger className="px-4">Banner Management</AccordionTrigger>
+                  <AccordionTrigger className="px-4">Banners</AccordionTrigger>
                   <AccordionContent className="px-4 pb-4">
-                    {/* Banner management will be implemented here */}
-                    <p className="text-muted-foreground">Banner management coming soon...</p>
+                    <BannerList />
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
