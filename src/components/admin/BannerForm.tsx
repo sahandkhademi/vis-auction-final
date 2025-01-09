@@ -18,6 +18,8 @@ interface BannerFormData {
   button_link?: string;
   active: boolean;
   display_order?: number;
+  autoplay: boolean;
+  autoplay_interval?: number;
 }
 
 interface BannerFormProps {
@@ -37,6 +39,8 @@ export const BannerForm = ({ defaultValues, onSuccess }: BannerFormProps) => {
       button_link: "",
       active: true,
       display_order: 0,
+      autoplay: false,
+      autoplay_interval: 5000,
       ...defaultValues,
     },
   });
@@ -131,6 +135,25 @@ export const BannerForm = ({ defaultValues, onSuccess }: BannerFormProps) => {
             />
             <Label>Active</Label>
           </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={form.watch("autoplay")}
+              onCheckedChange={(checked) => form.setValue("autoplay", checked)}
+            />
+            <Label>Enable Autoplay</Label>
+          </div>
+
+          {form.watch("autoplay") && (
+            <div>
+              <Label>Autoplay Interval (ms)</Label>
+              <Input
+                type="number"
+                {...form.register("autoplay_interval")}
+                placeholder="Enter autoplay interval in milliseconds"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-2">

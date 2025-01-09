@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/carousel";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+import Autoplay from "embla-carousel-autoplay";
 
 export const HomeBannerSlideshow = () => {
   const { data: banners, isLoading, error } = useQuery({
@@ -48,12 +50,30 @@ export const HomeBannerSlideshow = () => {
     return null;
   }
 
+  // Find the first banner with autoplay enabled to determine autoplay settings
+  const autoplayBanner = banners.find(banner => banner.autoplay);
+  const autoplayOptions = autoplayBanner
+    ? [
+        Autoplay({
+          delay: autoplayBanner.autoplay_interval || 5000,
+          stopOnInteraction: false,
+        }),
+      ]
+    : undefined;
+
   return (
-    <Carousel className="relative h-[80vh]">
-      <CarouselContent>
+    <Carousel 
+      className="relative h-[80vh]"
+      opts={{
+        align: "start",
+        loop: true,
+      }}
+      plugins={autoplayOptions}
+    >
+      <CarouselContent className="-ml-0">
         <AnimatePresence>
           {banners.map((banner) => (
-            <CarouselItem key={banner.id}>
+            <CarouselItem key={banner.id} className="pl-0">
               <div className="relative h-[80vh] overflow-hidden">
                 <div className="absolute inset-0">
                   <img

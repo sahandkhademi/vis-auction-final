@@ -220,6 +220,8 @@ export type Database = {
       homepage_banners: {
         Row: {
           active: boolean | null
+          autoplay: boolean | null
+          autoplay_interval: number | null
           button_link: string | null
           button_text: string | null
           created_at: string
@@ -232,6 +234,8 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          autoplay?: boolean | null
+          autoplay_interval?: number | null
           button_link?: string | null
           button_text?: string | null
           created_at?: string
@@ -244,6 +248,8 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          autoplay?: boolean | null
+          autoplay_interval?: number | null
           button_link?: string | null
           button_text?: string | null
           created_at?: string
