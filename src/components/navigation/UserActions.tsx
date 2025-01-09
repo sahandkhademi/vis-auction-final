@@ -14,15 +14,20 @@ interface UserActionsProps {
 export const UserActions = ({ user, setOpen }: UserActionsProps) => {
   const navigate = useNavigate();
 
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("is_admin")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return null;
+      }
       return data;
     },
     enabled: !!user,
@@ -41,7 +46,7 @@ export const UserActions = ({ user, setOpen }: UserActionsProps) => {
       </Button>
       {user ? (
         <div className="flex items-center space-x-2">
-          {profile?.is_admin && (
+          {!isLoading && profile?.is_admin && (
             <Link to="/admin" className="hidden md:block">
               <Button 
                 variant="ghost" 
