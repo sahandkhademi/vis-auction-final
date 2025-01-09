@@ -1,5 +1,6 @@
 import { FeaturedAuction } from "@/components/FeaturedAuction";
 import { AuctionCard } from "@/components/AuctionCard";
+import { HomepageBanners } from "@/components/HomepageBanners";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -99,6 +100,7 @@ const Index = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
+          <HomepageBanners />
           <FeaturedAuction {...featuredAuction} />
         </motion.div>
       </AnimatePresence>
