@@ -14,8 +14,11 @@ import {
   CardElement,
 } from "@stripe/react-stripe-js";
 
-// Initialize Stripe with the publishable key from Supabase secrets
+// Initialize Stripe with the publishable key from environment variables
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
+
+// Log the key for debugging (will be removed in production)
+console.log('Stripe Key:', import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const PaymentMethodForm = () => {
   const stripe = useStripe();
@@ -110,6 +113,18 @@ export const PaymentMethodsManager = () => {
 
     fetchPaymentMethods();
   }, [session?.user]);
+
+  if (!stripePromise) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>
+          Stripe configuration is missing. Please check your environment variables.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <Card>
