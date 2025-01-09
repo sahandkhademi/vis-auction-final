@@ -7,7 +7,7 @@ const SubmitArt = () => {
 
   return (
     <div className="container max-w-4xl mx-auto px-4">
-      <h1 className="text-4xl mb-6">Submit Your Art</h1>
+      <h1 className="text-2xl font-extrabold mb-6">Submit Your Art</h1>
       
       <div className="bg-white rounded-lg shadow-sm border p-8 space-y-6">
         <p className="text-lg text-gray-700">
