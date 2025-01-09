@@ -7,7 +7,7 @@ const SubmitArt = () => {
 
   return (
     <div className="container max-w-4xl mx-auto px-4">
-      <h1 className="text-4xl mb-6">Submit Your Art</h1>
+      <h1 className="text-3xl font-semibold mb-6">Submit Your Art</h1>
       
       <div className="bg-white rounded-lg shadow-sm border p-8 space-y-6">
         <p className="text-lg text-gray-700">
@@ -15,7 +15,7 @@ const SubmitArt = () => {
         </p>
 
         <div className="bg-secondary/50 rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">How to Submit</h2>
+          <h2 className="text-2xl font-semibold mb-4">How to Submit</h2>
           <p className="text-gray-700 mb-4">
             Please send us an email with the following information:
           </p>
