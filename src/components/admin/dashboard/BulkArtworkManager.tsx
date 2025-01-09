@@ -1,34 +1,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { MoreHorizontal, Trash2 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { BulkActionButtons } from "./bulk-artwork/BulkActionButtons";
+import { BulkArtworkTable } from "./bulk-artwork/BulkArtworkTable";
+import { DeleteConfirmDialog } from "./bulk-artwork/DeleteConfirmDialog";
 
 export const BulkArtworkManager = () => {
   const [selectedArtworks, setSelectedArtworks] = useState<string[]>([]);
@@ -112,124 +88,27 @@ export const BulkArtworkManager = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleBulkAction("published")}
-            disabled={!selectedArtworks.length}
-          >
-            Publish Selected
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleBulkAction("draft")}
-            disabled={!selectedArtworks.length}
-          >
-            Unpublish Selected
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setShowDeleteDialog(true)}
-            disabled={!selectedArtworks.length}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete Selected
-          </Button>
-        </div>
-        <span className="text-sm text-muted-foreground">
-          {selectedArtworks.length} selected
-        </span>
-      </div>
+      <BulkActionButtons
+        selectedCount={selectedArtworks.length}
+        onPublish={() => handleBulkAction("published")}
+        onUnpublish={() => handleBulkAction("draft")}
+        onDelete={() => setShowDeleteDialog(true)}
+      />
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={
-                    artworks?.length === selectedArtworks.length &&
-                    artworks?.length > 0
-                  }
-                  onCheckedChange={(checked: boolean) => handleSelectAll(checked)}
-                />
-              </TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Artist</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {artworks?.map((artwork) => (
-              <TableRow key={artwork.id}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedArtworks.includes(artwork.id)}
-                    onCheckedChange={(checked: boolean) =>
-                      handleSelectArtwork(artwork.id, checked)
-                    }
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{artwork.title}</TableCell>
-                <TableCell>{artwork.artist}</TableCell>
-                <TableCell>{artwork.status}</TableCell>
-                <TableCell>${artwork.starting_price.toLocaleString()}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() =>
-                          handleBulkAction(
-                            artwork.status === "published" ? "draft" : "published"
-                          )
-                        }
-                      >
-                        {artwork.status === "published"
-                          ? "Unpublish"
-                          : "Publish"}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <BulkArtworkTable
+        artworks={artworks}
+        selectedArtworks={selectedArtworks}
+        onSelectAll={handleSelectAll}
+        onSelectArtwork={handleSelectArtwork}
+        onStatusChange={(id, status) => handleBulkAction(status)}
+      />
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete{" "}
-              {selectedArtworks.length} selected artwork
-              {selectedArtworks.length === 1 ? "" : "s"} and remove their data from
-              our servers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleBulkDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        selectedCount={selectedArtworks.length}
+        onConfirm={handleBulkDelete}
+      />
     </div>
   );
 };
