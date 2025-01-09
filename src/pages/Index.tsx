@@ -15,14 +15,6 @@ import { useNavigate } from "react-router-dom";
 const Index = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const featuredAuction = {
-    title: "Vase of Flowers",
-    artist: "JAN DAVIDSZ DE HEEM",
-    description: "Compared to flower still-lifes of the early seventeenth century, this painting is a real floral explosion.",
-    image: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80",
-    currentBid: 15000,
-    timeLeft: "2d 15h 30m"
-  };
 
   const { data: trendingArtworks, isLoading, error, refetch } = useQuery({
     queryKey: ["trending-artworks"],
@@ -75,12 +67,10 @@ const Index = () => {
         description: "The auction will end in 10 seconds. Place a bid to test notifications.",
       });
 
-      // Navigate to the new auction
       if (data) {
         navigate(`/auction/${data.id}`);
       }
 
-      // Refresh the trending artworks list
       refetch();
     } catch (err) {
       console.error("Error creating test auction:", err);
@@ -101,7 +91,6 @@ const Index = () => {
           transition={{ duration: 0.5 }}
         >
           <HomepageBanners />
-          <FeaturedAuction {...featuredAuction} />
         </motion.div>
       </AnimatePresence>
       
