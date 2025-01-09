@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useVirtual } from "react-virtual";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -19,6 +19,7 @@ import { toast } from "sonner";
 export const ArtworkList = () => {
   const navigate = useNavigate();
   const parentRef = useRef<HTMLDivElement>(null);
+  const tableRef = useRef<HTMLTableElement>(null);
 
   const { data: artworks, refetch } = useQuery({
     queryKey: ["admin-artworks"],
@@ -36,9 +37,17 @@ export const ArtworkList = () => {
   const rowVirtualizer = useVirtual({
     size: artworks?.length || 0,
     parentRef,
-    estimateSize: () => 60, // estimated row height
-    overscan: 5, // number of items to render outside of the visible area
+    estimateSize: () => 60,
+    overscan: 5,
   });
+
+  // Ensure table header alignment with virtualized body
+  useEffect(() => {
+    if (parentRef.current && tableRef.current) {
+      const tableWidth = tableRef.current.offsetWidth;
+      parentRef.current.style.width = `${tableWidth}px`;
+    }
+  }, [artworks]);
 
   const handleDelete = async (id: string) => {
     const confirmation = window.confirm(
@@ -74,8 +83,8 @@ export const ArtworkList = () => {
   };
 
   return (
-    <div ref={parentRef} style={{ height: "600px", overflow: "auto" }}>
-      <Table>
+    <div className="relative">
+      <Table ref={tableRef}>
         <TableHeader>
           <TableRow>
             <TableHead>Title</TableHead>
@@ -86,64 +95,79 @@ export const ArtworkList = () => {
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
-          {rowVirtualizer.virtualItems.map((virtualRow) => {
-            const artwork = artworks?.[virtualRow.index];
-            if (!artwork) return null;
-
-            return (
-              <TableRow
-                key={artwork.id}
-                style={{
-                  height: `${virtualRow.size}px`,
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-              >
-                <TableCell className="font-medium">{artwork.title}</TableCell>
-                <TableCell>{artwork.artist}</TableCell>
-                <TableCell>
-                  ${artwork.starting_price.toLocaleString()}
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    className={getStatusBadgeColor(artwork.status || "draft")}
-                  >
-                    {artwork.status || "draft"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {new Date(artwork.created_at).toLocaleDateString()}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => navigate(`/artwork/${artwork.id}`)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => navigate(`/admin/artwork/${artwork.id}`)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleDelete(artwork.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
       </Table>
+
+      <div
+        ref={parentRef}
+        className="max-h-[600px] overflow-auto"
+        style={{
+          height: "600px",
+        }}
+      >
+        <Table>
+          <TableBody>
+            {rowVirtualizer.virtualItems.map((virtualRow) => {
+              const artwork = artworks?.[virtualRow.index];
+              if (!artwork) return null;
+
+              return (
+                <TableRow
+                  key={artwork.id}
+                  style={{
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                  }}
+                >
+                  <TableCell className="font-medium">{artwork.title}</TableCell>
+                  <TableCell>{artwork.artist}</TableCell>
+                  <TableCell>
+                    ${artwork.starting_price.toLocaleString()}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      className={getStatusBadgeColor(artwork.status || "draft")}
+                    >
+                      {artwork.status || "draft"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(artwork.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => navigate(`/artwork/${artwork.id}`)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => navigate(`/admin/artwork/${artwork.id}`)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleDelete(artwork.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };
