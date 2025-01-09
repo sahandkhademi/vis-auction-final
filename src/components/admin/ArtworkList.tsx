@@ -51,7 +51,6 @@ export const ArtworkList = () => {
     };
 
     updateWidth();
-    // Add resize listener to handle window size changes
     window.addEventListener('resize', updateWidth);
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
@@ -106,9 +105,10 @@ export const ArtworkList = () => {
 
       <div
         ref={parentRef}
-        className="max-h-[600px] overflow-auto"
+        className="overflow-auto"
         style={{
-          height: "600px",
+          maxHeight: artworks && artworks.length > 0 ? "600px" : "auto",
+          minHeight: "100px"
         }}
       >
         <Table>
