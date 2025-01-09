@@ -89,7 +89,14 @@ export const ArtworkList = () => {
   };
 
   return (
-    <div className="relative">
+    <div
+      ref={parentRef}
+      className="overflow-auto"
+      style={{
+        maxHeight: artworks && artworks.length > 0 ? "600px" : "auto",
+        minHeight: "100px"
+      }}
+    >
       <Table ref={tableRef}>
         <TableHeader>
           <TableRow>
@@ -101,80 +108,68 @@ export const ArtworkList = () => {
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
-      </Table>
+        <TableBody>
+          {rowVirtualizer.virtualItems.map((virtualRow) => {
+            const artwork = artworks?.[virtualRow.index];
+            if (!artwork) return null;
 
-      <div
-        ref={parentRef}
-        className="overflow-auto"
-        style={{
-          maxHeight: artworks && artworks.length > 0 ? "600px" : "auto",
-          minHeight: "100px"
-        }}
-      >
-        <Table>
-          <TableBody>
-            {rowVirtualizer.virtualItems.map((virtualRow) => {
-              const artwork = artworks?.[virtualRow.index];
-              if (!artwork) return null;
-
-              return (
-                <TableRow
-                  key={artwork.id}
-                  style={{
-                    height: `${virtualRow.size}px`,
-                    transform: `translateY(${virtualRow.start}px)`,
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                  }}
-                >
-                  <TableCell className="font-medium">{artwork.title}</TableCell>
-                  <TableCell>{artwork.artist}</TableCell>
-                  <TableCell>
-                    ${artwork.starting_price.toLocaleString()}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      className={getStatusBadgeColor(artwork.status || "draft")}
+            return (
+              <TableRow
+                key={artwork.id}
+                style={{
+                  height: `${virtualRow.size}px`,
+                  transform: `translateY(${virtualRow.start}px)`,
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                }}
+              >
+                <TableCell className="font-medium">{artwork.title}</TableCell>
+                <TableCell>{artwork.artist}</TableCell>
+                <TableCell>
+                  ${artwork.starting_price.toLocaleString()}
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    className={getStatusBadgeColor(artwork.status || "draft")}
+                  >
+                    {artwork.status || "draft"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {new Date(artwork.created_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => navigate(`/artwork/${artwork.id}`)}
                     >
-                      {artwork.status || "draft"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(artwork.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => navigate(`/artwork/${artwork.id}`)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => navigate(`/admin/artwork/${artwork.id}`)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleDelete(artwork.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => navigate(`/admin/artwork/${artwork.id}`)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleDelete(artwork.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 };
