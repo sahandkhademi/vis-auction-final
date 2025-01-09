@@ -16,10 +16,7 @@ const ArtworkManagement = ({ navigate }: ArtworkManagementProps) => {
         </Button>
       </div>
       <ArtworkList />
-      <div className="mt-8">
-        <h3 className="text-lg font-semibold mb-4">Bulk Operations</h3>
-        <BulkArtworkManager />
-      </div>
+      <BulkArtworkManager />
     </>
   );
 };
