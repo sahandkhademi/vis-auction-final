@@ -45,7 +45,6 @@ export const PaymentMethodsManager = () => {
 
     setIsLoading(true);
     try {
-      // First check if we have a valid session
       const { data: currentSession } = await supabase.auth.getSession();
       
       if (!currentSession.session?.access_token) {
@@ -63,7 +62,7 @@ export const PaymentMethodsManager = () => {
 
       if (error) {
         console.error('Setup payment error:', error);
-        toast.error("Unable to connect to payment service. Please try again later.");
+        toast.error("Unable to setup payment method. Please try again later.");
         return;
       }
 
@@ -73,7 +72,6 @@ export const PaymentMethodsManager = () => {
         return;
       }
 
-      // Initialize Stripe
       const stripe = await stripePromise;
       if (!stripe) {
         toast.error('Payment system unavailable. Please try again later.');
@@ -96,27 +94,17 @@ export const PaymentMethodsManager = () => {
 
       if (setupError) {
         console.error('Stripe setup error:', setupError);
-        
-        if (setupError.type === 'card_error') {
-          toast.error("Your card was declined. Please try again with a different card.");
-        } else if (setupError.type === 'validation_error') {
-          toast.error("Please check your card details and try again.");
-        } else if (setupError.message?.includes('processing')) {
-          toast.error("We're having technical difficulties. Please try again in a few minutes.");
-        } else {
-          toast.error("Unable to set up payment method. Please try again later.");
-        }
+        toast.error("Unable to setup payment method. Please try again later.");
         return;
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error setting up payment method:', error);
-      toast.error("We're experiencing technical difficulties. Please try again in a few minutes.");
+      toast.error("We're experiencing technical difficulties. Please try again later.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle return from Stripe
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const setupSuccess = searchParams.get('setup_success');

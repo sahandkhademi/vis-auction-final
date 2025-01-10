@@ -13,7 +13,6 @@ serve(async (req) => {
   }
 
   try {
-    // Initialize Stripe
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
@@ -65,14 +64,14 @@ serve(async (req) => {
       console.log('Created new customer:', customer.id);
     }
 
-    // Create SetupIntent
+    // Create SetupIntent with automatic_payment_methods enabled
     const setupIntent = await stripe.setupIntents.create({
       customer: customer.id,
-      payment_method_types: ['card'],
+      automatic_payment_methods: { enabled: true },
       metadata: {
         user_id: user.id,
       },
-      usage: 'on_session', // Changed from off_session to on_session
+      usage: 'on_session',
     });
 
     console.log('SetupIntent created:', setupIntent.id);
@@ -82,7 +81,7 @@ serve(async (req) => {
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
-      },
+      }
     );
   } catch (error) {
     console.error('Error in setup-payment-method:', error);
@@ -91,7 +90,7 @@ serve(async (req) => {
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: error.message === 'Unauthorized' ? 401 : 500,
-      },
+      }
     );
   }
 });
