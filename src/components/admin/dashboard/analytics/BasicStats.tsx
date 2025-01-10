@@ -16,7 +16,7 @@ const ArrowUpIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="h-3 w-3 mr-1"
+    className="h-3 w-3 mr-1 text-green-600"
   >
     <path d="m5 12 7-7 7 7" />
   </svg>
@@ -33,7 +33,7 @@ const ArrowDownIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="h-3 w-3 mr-1"
+    className="h-3 w-3 mr-1 text-red-600"
   >
     <path d="m19 12-7 7-7-7" />
   </svg>
@@ -210,11 +210,7 @@ export const BasicStats = () => {
                           : "bg-red-100 text-red-800"
                       )}
                     >
-                      {stat.change > 0 ? (
-                        <ArrowUpIcon />
-                      ) : (
-                        <ArrowDownIcon />
-                      )}
+                      {stat.change > 0 ? <ArrowUpIcon /> : <ArrowDownIcon />}
                       <span>{Math.abs(stat.change).toFixed(1)}%</span>
                     </div>
                     <span className="text-xs text-muted-foreground">
