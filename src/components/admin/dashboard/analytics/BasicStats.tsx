@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, DollarSign, TrendingUp, Clock } from "lucide-react";
+import { Users, DollarSign, TrendingUp, Clock, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const BasicStats = () => {
@@ -175,25 +175,11 @@ export const BasicStats = () => {
                           : "bg-red-100 text-red-800"
                       )}
                     >
-                      <svg
-                        className={cn(
-                          "h-3 w-3 mr-1",
-                          stat.change > 0 ? "text-green-600" : "text-red-600"
-                        )}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d={stat.change > 0 
-                            ? "M5 15l7-7 7 7"
-                            : "M19 9l-7 7-7-7"
-                          }
-                        />
-                      </svg>
+                      {stat.change > 0 ? (
+                        <ArrowUp className="h-3 w-3 mr-1 text-green-600" />
+                      ) : (
+                        <ArrowDown className="h-3 w-3 mr-1 text-red-600" />
+                      )}
                       <span>{Math.abs(stat.change).toFixed(1)}%</span>
                     </div>
                     <span className="text-xs text-muted-foreground">
