@@ -45,9 +45,17 @@ export const PaymentMethodsManager = () => {
 
     setIsLoading(true);
     try {
+      // Make sure we have a valid access token
+      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !currentSession?.access_token) {
+        throw new Error('Unable to get valid session');
+      }
+
+      console.log('Calling setup-payment-method endpoint...');
       const { data, error } = await supabase.functions.invoke('setup-payment-method', {
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${currentSession.access_token}`,
         },
       });
 
@@ -85,6 +93,7 @@ export const PaymentMethodsManager = () => {
     }
   };
 
+  // Handle return from Stripe
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const setupSuccess = searchParams.get('setup_success');
