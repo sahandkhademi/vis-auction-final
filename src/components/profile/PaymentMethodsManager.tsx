@@ -24,28 +24,34 @@ const SetupForm = ({ clientSecret }: { clientSecret: string }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
+    if (!stripe || !elements) {
+      console.error('Stripe or Elements not initialized');
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const { error } = await stripe.confirmSetup({
+      console.log('Starting setup confirmation...');
+      const { error: setupError, setupIntent } = await stripe.confirmSetup({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/profile?setup_success=true`,
         },
       });
 
-      if (error) {
-        console.error('Stripe setup error:', error);
-        if (error.type === 'card_error') {
-          toast.error(error.message || "Card error. Please try again.");
-        } else {
-          toast.error("Unable to setup payment method. Please try again later.");
-        }
+      if (setupError) {
+        console.error('Setup error:', setupError);
+        toast.error(setupError.message || "Failed to setup payment method");
+        return;
+      }
+
+      if (setupIntent && setupIntent.status === 'succeeded') {
+        toast.success("Payment method added successfully");
+        window.location.href = `${window.location.origin}/profile?setup_success=true`;
       }
     } catch (error) {
       console.error('Error in setup form:', error);
-      toast.error("Payment setup failed. Please try again later.");
+      toast.error("Payment setup failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -190,7 +196,12 @@ export const PaymentMethodsManager = () => {
         )}
 
         {clientSecret ? (
-          <Elements stripe={stripePromise} options={{ clientSecret }}>
+          <Elements stripe={stripePromise} options={{ 
+            clientSecret,
+            appearance: {
+              theme: 'stripe'
+            }
+          }}>
             <SetupForm clientSecret={clientSecret} />
           </Elements>
         ) : (
