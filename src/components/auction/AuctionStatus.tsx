@@ -6,6 +6,7 @@ import { PaymentStatus } from "./PaymentStatus";
 import { useAuctionCompletion } from "./hooks/useAuctionCompletion";
 import { usePaymentStatus } from "./hooks/usePaymentStatus";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -25,6 +26,7 @@ export const AuctionStatus = ({
   auctionId,
 }: AuctionStatusProps) => {
   const user = useUser();
+  const queryClient = useQueryClient();
   const [localCompletionStatus, setLocalCompletionStatus] = useState(completionStatus);
   const [localWinnerId, setLocalWinnerId] = useState(winnerId);
   const [localPaymentStatus, setLocalPaymentStatus] = useState(paymentStatus);
@@ -66,6 +68,12 @@ export const AuctionStatus = ({
     enabled: isEnded && !localWinnerId
   });
 
+  const refreshAuctionData = async () => {
+    console.log('🔄 Refreshing auction data...');
+    await queryClient.invalidateQueries({ queryKey: ['artwork', auctionId] });
+    await queryClient.invalidateQueries({ queryKey: ['highestBid', auctionId] });
+  };
+
   // Subscribe to auction updates and check completion status
   useEffect(() => {
     if (!auctionId) return;
@@ -81,7 +89,7 @@ export const AuctionStatus = ({
           table: 'artworks',
           filter: `id=eq.${auctionId}`,
         },
-        (payload) => {
+        async (payload) => {
           console.log('🔄 Received auction update:', payload);
           const newData = payload.new as any;
           
@@ -90,10 +98,10 @@ export const AuctionStatus = ({
           setLocalWinnerId(newData.winner_id);
           setLocalPaymentStatus(newData.payment_status);
           
-          // If auction status changes to completed, refresh the page
+          // If auction status changes to completed, refresh the data
           if (newData.completion_status === 'completed' && localCompletionStatus !== 'completed') {
-            console.log('🔄 Auction completed, refreshing page...');
-            window.location.reload();
+            console.log('🔄 Auction completed, refreshing data...');
+            await refreshAuctionData();
           }
           
           console.log('🔄 Updated local state:', {
@@ -106,7 +114,7 @@ export const AuctionStatus = ({
       .subscribe();
 
     // Check auction status every second
-    const checkInterval = setInterval(() => {
+    const checkInterval = setInterval(async () => {
       if (endDate) {
         const now = new Date();
         const end = new Date(endDate);
@@ -116,15 +124,16 @@ export const AuctionStatus = ({
           console.log('🔄 End time reached, updating completion status');
           setLocalCompletionStatus('completed');
           
-          // Trigger completion handler and refresh page
-          supabase.functions.invoke('handle-auction-completion', {
-            body: { auctionId }
-          }).then(() => {
+          // Trigger completion handler and refresh data
+          try {
+            await supabase.functions.invoke('handle-auction-completion', {
+              body: { auctionId }
+            });
             console.log('✅ Auction completion handler triggered');
-            window.location.reload();
-          }).catch(error => {
+            await refreshAuctionData();
+          } catch (error) {
             console.error('❌ Error triggering completion handler:', error);
-          });
+          }
         }
       }
     }, 1000);
@@ -134,7 +143,7 @@ export const AuctionStatus = ({
       supabase.removeChannel(channel);
       clearInterval(checkInterval);
     };
-  }, [auctionId, endDate, localCompletionStatus]);
+  }, [auctionId, endDate, localCompletionStatus, queryClient]);
 
   // If auction has ended but winner not set, check if current user is highest bidder
   const isPotentialWinner = isEnded && !localWinnerId && highestBid?.user_id === user?.id;
