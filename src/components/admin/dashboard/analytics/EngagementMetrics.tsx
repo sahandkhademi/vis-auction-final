@@ -37,8 +37,8 @@ export const EngagementMetrics = () => {
               <XAxis dataKey="date" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="total" name="Total Visitors" fill="#C6A07C" />
-              <Bar dataKey="registered" name="Registered Users" fill="#B89068" />
+              <Bar dataKey="total" name="Total Visitors" fill="#00337F" />
+              <Bar dataKey="registered" name="Registered Users" fill="#00337F" fillOpacity={0.6} />
             </BarChart>
           </ResponsiveContainer>
         </div>

@@ -54,7 +54,6 @@ export const RevenueChart = () => {
       const startDate = getStartDate(timeWindow);
       console.log("Start date:", startDate.toISOString());
 
-      // Changed the query to look for completed sales
       const { data, error: queryError } = await supabase
         .from("artworks")
         .select("current_price, updated_at")
@@ -76,7 +75,6 @@ export const RevenueChart = () => {
       const monthlyRevenue = data.reduce((acc: any, artwork) => {
         const dateFormat = timeWindow === "1w" ? "EEE" : "MMM yyyy";
         const date = format(new Date(artwork.updated_at), dateFormat);
-        // Only include non-null current_price values
         if (artwork.current_price !== null) {
           acc[date] = (acc[date] || 0) + Number(artwork.current_price);
         }
@@ -141,7 +139,7 @@ export const RevenueChart = () => {
               <Line
                 type="monotone"
                 dataKey="amount"
-                stroke="#8884d8"
+                stroke="#00337F"
                 name="Revenue"
               />
             </LineChart>
