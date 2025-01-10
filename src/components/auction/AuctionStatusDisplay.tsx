@@ -1,4 +1,4 @@
-import { Clock, CheckCircle2, Trophy } from "lucide-react";
+import { Clock, CheckCircle2, Trophy, BadgeCheck } from "lucide-react";
 import { CountdownTimer } from "./CountdownTimer";
 
 interface AuctionStatusDisplayProps {
@@ -50,10 +50,16 @@ export const AuctionStatusDisplay = ({
         )}
 
         {(isWinner || isPotentialWinner) && (
-          <div className="flex items-center gap-2 text-emerald-600">
-            <Trophy className="w-4 h-4" />
-            <span className="text-sm font-medium">You Won!</span>
-          </div>
+          <>
+            <div className="flex items-center gap-2 text-emerald-600">
+              <Trophy className="w-4 h-4" />
+              <span className="text-sm font-medium">You Won!</span>
+            </div>
+            <div className="flex items-center gap-2 text-green-600">
+              <BadgeCheck className="w-4 h-4" />
+              <span className="text-sm font-medium">Thank you for your purchase!</span>
+            </div>
+          </>
         )}
       </div>
     </div>
