@@ -30,33 +30,73 @@ export const BasicStats = () => {
     },
   });
 
+  const { data: userCount } = useQuery({
+    queryKey: ["total-users"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("profiles")
+        .select("*", { count: 'exact', head: true })
+        .eq('is_admin', false);
+
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  const { data: totalRevenue } = useQuery({
+    queryKey: ["total-revenue"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("artworks")
+        .select("current_price")
+        .eq("payment_status", "completed");
+
+      if (error) throw error;
+      return data.reduce((sum, artwork) => sum + (artwork.current_price || 0), 0);
+    },
+  });
+
+  const { data: avgSessionTime } = useQuery({
+    queryKey: ["avg-session-time"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("website_visits")
+        .select("session_duration")
+        .not("session_duration", "is", null);
+
+      if (error) throw error;
+      const totalDuration = data.reduce((sum, visit) => sum + (visit.session_duration || 0), 0);
+      return data.length ? Math.round(totalDuration / data.length) : 0;
+    },
+  });
+
   const stats = [
     {
-      title: "Total Visitors",
-      value: retentionData?.total_visitors || 0,
+      title: "Total Users",
+      value: userCount || 0,
       icon: Users,
-      description: "Unique visitors today",
+      description: "Non-admin users",
     },
     {
-      title: "Registered Users",
-      value: retentionData?.registered_visitors || 0,
-      icon: Users,
-      description: "Active registered users",
+      title: "Total Revenue",
+      value: `€${(totalRevenue || 0).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      icon: DollarSign,
+      description: "Total completed sales",
     },
     {
       title: "Monthly Sales",
       value: commissionData?.total_sales || 0,
-      icon: DollarSign,
-      description: "Total sales this month",
+      icon: TrendingUp,
+      description: "Sales this month",
     },
     {
-      title: "Commission Earned",
-      value: `€${(commissionData?.commission_earned || 0).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
-      icon: TrendingUp,
-      description: "Commission this month",
+      title: "Avg. Session Duration",
+      value: `${Math.floor((avgSessionTime || 0) / 60)}m ${(avgSessionTime || 0) % 60}s`,
+      icon: Clock,
+      description: "Average time per visit",
     },
   ];
 

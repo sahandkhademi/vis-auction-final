@@ -4,6 +4,7 @@ import { BasicStats } from "./analytics/BasicStats";
 import { RevenueChart } from "./analytics/RevenueChart";
 import { EngagementMetrics } from "./analytics/EngagementMetrics";
 import { SystemStatus } from "./analytics/SystemStatus";
+import { PlatformUsage } from "./analytics/PlatformUsage";
 
 export const AdminAnalytics = () => {
   return (
@@ -20,6 +21,7 @@ export const AdminAnalytics = () => {
         <BasicStats />
         <RevenueChart />
         <EngagementMetrics />
+        <PlatformUsage />
         <SystemStatus />
       </motion.div>
     </div>
