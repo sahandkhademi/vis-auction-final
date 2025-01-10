@@ -7,7 +7,7 @@ import { useAuctionCompletion } from "./hooks/useAuctionCompletion";
 import { usePaymentStatus } from "./hooks/usePaymentStatus";
 import { useEffect, useState } from "react";
 
-interface AuctionStatusProps {
+interface LotStatusProps {
   currentBid: number;
   endDate: string | null;
   completionStatus: string | null;
@@ -16,7 +16,7 @@ interface AuctionStatusProps {
   auctionId: string;
 }
 
-export const AuctionStatus = ({
+export const AuctionStatus = ({ // keeping the component name for now to avoid breaking imports
   currentBid,
   endDate,
   completionStatus,

@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
 import { CountdownTimer } from "./auction/CountdownTimer";
 
-interface AuctionCardProps {
+interface LotCardProps {
   id?: string;
   title: string;
   artist: string;
@@ -17,7 +17,7 @@ interface AuctionCardProps {
   startingPrice?: number;
 }
 
-export const AuctionCard = ({ 
+export const AuctionCard = ({ // keeping the component name for now to avoid breaking imports
   id = "1", 
   title, 
   artist,
