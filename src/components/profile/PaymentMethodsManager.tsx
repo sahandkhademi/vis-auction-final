@@ -63,18 +63,24 @@ export const PaymentMethodsManager = () => {
 
       if (error) {
         console.error('Setup payment error:', error);
-        throw error;
+        toast.error(`Failed to setup payment: ${error.message}`);
+        return;
       }
 
       if (!data?.clientSecret) {
         console.error('No client secret received:', data);
-        throw new Error('No client secret received');
+        toast.error('Failed to initialize payment setup. Please try again.');
+        return;
       }
 
       // Initialize Stripe
       const stripe = await stripePromise;
-      if (!stripe) throw new Error('Stripe failed to load');
+      if (!stripe) {
+        toast.error('Payment system unavailable. Please try again later.');
+        return;
+      }
 
+      console.log('Redirecting to Stripe setup...');
       const { error: setupError } = await stripe.confirmSetup({
         clientSecret: data.clientSecret,
         elements: undefined,
@@ -85,11 +91,12 @@ export const PaymentMethodsManager = () => {
 
       if (setupError) {
         console.error('Stripe setup error:', setupError);
-        throw setupError;
+        toast.error(setupError.message || "Failed to set up payment method");
+        return;
       }
     } catch (error: any) {
       console.error('Error setting up payment method:', error);
-      toast.error(error.message || "Failed to set up payment method");
+      toast.error(error.message || "An unexpected error occurred while setting up payment");
     } finally {
       setIsLoading(false);
     }
