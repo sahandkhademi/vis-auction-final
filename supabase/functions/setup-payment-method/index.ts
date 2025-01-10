@@ -14,33 +14,46 @@ serve(async (req) => {
   }
 
   try {
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-    );
-
-    // Get the authorization header
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('No authorization header');
-    }
-
-    // Get the user from the token
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
-
-    if (userError || !user) {
-      console.error('Auth error:', userError);
-      throw new Error('Unauthorized');
-    }
-
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
 
-    console.log('Creating setup intent for user:', user.email);
+    // Get the authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('No authorization header provided');
+      throw new Error('No authorization header');
+    }
+
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    // Get the user from the token
+    const token = authHeader.replace('Bearer ', '');
+    console.log('Verifying token...');
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+
+    if (userError) {
+      console.error('Auth error:', userError);
+      throw new Error('Unauthorized');
+    }
+
+    if (!user) {
+      console.error('No user found');
+      throw new Error('User not found');
+    }
+
+    console.log('User verified:', user.email);
 
     // Get or create customer
     let customer;

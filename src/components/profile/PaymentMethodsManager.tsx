@@ -45,19 +45,25 @@ export const PaymentMethodsManager = () => {
 
     setIsLoading(true);
     try {
-      console.log('Calling setup-payment-method with token:', session.access_token);
+      // Make sure we have a valid access token
+      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
       
+      if (sessionError || !currentSession?.access_token) {
+        throw new Error('Unable to get valid session');
+      }
+
+      console.log('Calling setup-payment-method endpoint...');
       const { data, error } = await supabase.functions.invoke('setup-payment-method', {
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${currentSession.access_token}`,
         },
       });
-      
+
       if (error) {
         console.error('Setup payment error:', error);
         throw error;
       }
-      
+
       if (!data?.clientSecret) {
         console.error('No client secret received:', data);
         throw new Error('No client secret received');
@@ -82,6 +88,7 @@ export const PaymentMethodsManager = () => {
     } catch (error: any) {
       console.error('Error setting up payment method:', error);
       toast.error(error.message || "Failed to set up payment method");
+    } finally {
       setIsLoading(false);
     }
   };
