@@ -20,8 +20,13 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
     );
 
-    // Get the user from the auth header
-    const authHeader = req.headers.get('Authorization')!;
+    // Get the authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
+
+    // Get the user from the token
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
 
@@ -34,7 +39,7 @@ serve(async (req) => {
       apiVersion: '2023-10-16',
     });
 
-    console.log('Creating/retrieving customer for user:', user.email);
+    console.log('Creating setup intent for user:', user.email);
 
     // Get or create customer
     let customer;
