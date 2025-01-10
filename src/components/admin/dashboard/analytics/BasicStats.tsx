@@ -18,16 +18,16 @@ export const BasicStats = () => {
       const { count: previousCount } = await supabase
         .from("artworks")
         .select("*", { count: "exact", head: true })
-        .lte("created_at", endOfDay(previousDate).toISOString());
+        .lt("created_at", startOfDay(previousDate).toISOString());
 
-      const weeklyCount = await supabase
+      const { count: weeklyCount } = await supabase
         .from("artworks")
         .select("*", { count: "exact", head: true })
         .gte("created_at", startOfDay(previousDate).toISOString())
         .lte("created_at", endOfDay(currentDate).toISOString());
 
-      const percentageChange = previousCount 
-        ? (((weeklyCount.count || 0) / previousCount) * 100).toFixed(1)
+      const percentageChange = previousCount && previousCount > 0
+        ? (((weeklyCount || 0) / previousCount) * 100 - 100).toFixed(1)
         : "0";
 
       return {
@@ -54,9 +54,9 @@ export const BasicStats = () => {
         .select("*", { count: "exact", head: true })
         .eq("status", "published")
         .eq("completion_status", "ongoing")
-        .lte("created_at", endOfDay(previousDate).toISOString());
+        .lt("created_at", startOfDay(previousDate).toISOString());
 
-      const weeklyCount = await supabase
+      const { count: weeklyCount } = await supabase
         .from("artworks")
         .select("*", { count: "exact", head: true })
         .eq("status", "published")
@@ -64,8 +64,8 @@ export const BasicStats = () => {
         .gte("created_at", startOfDay(previousDate).toISOString())
         .lte("created_at", endOfDay(currentDate).toISOString());
 
-      const percentageChange = previousCount 
-        ? (((weeklyCount.count || 0) / previousCount) * 100).toFixed(1)
+      const percentageChange = previousCount && previousCount > 0
+        ? (((weeklyCount || 0) / previousCount) * 100 - 100).toFixed(1)
         : "0";
 
       return {
@@ -88,16 +88,16 @@ export const BasicStats = () => {
       const { count: previousCount } = await supabase
         .from("profiles")
         .select("*", { count: "exact", head: true })
-        .lte("created_at", endOfDay(previousDate).toISOString());
+        .lt("created_at", startOfDay(previousDate).toISOString());
 
-      const weeklyCount = await supabase
+      const { count: weeklyCount } = await supabase
         .from("profiles")
         .select("*", { count: "exact", head: true })
         .gte("created_at", startOfDay(previousDate).toISOString())
         .lte("created_at", endOfDay(currentDate).toISOString());
 
-      const percentageChange = previousCount 
-        ? (((weeklyCount.count || 0) / previousCount) * 100).toFixed(1)
+      const percentageChange = previousCount && previousCount > 0
+        ? (((weeklyCount || 0) / previousCount) * 100 - 100).toFixed(1)
         : "0";
 
       return {
@@ -124,7 +124,7 @@ export const BasicStats = () => {
         </div>
       );
     }
-    return <span className="text-sm text-gray-500">0%</span>;
+    return <span className="text-sm text-gray-500">No change</span>;
   };
 
   return (
@@ -134,7 +134,7 @@ export const BasicStats = () => {
           <CardTitle>Total Auctions</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold">{totalAuctions?.current}</p>
+          <p className="text-3xl font-bold">{totalAuctions?.current || 0}</p>
           <div className="mt-2">
             {renderChange(totalAuctions?.change || "0")}
             <p className="text-sm text-gray-500">vs last week</p>
@@ -147,7 +147,7 @@ export const BasicStats = () => {
           <CardTitle>Active Auctions</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold">{activeAuctions?.current}</p>
+          <p className="text-3xl font-bold">{activeAuctions?.current || 0}</p>
           <div className="mt-2">
             {renderChange(activeAuctions?.change || "0")}
             <p className="text-sm text-gray-500">vs last week</p>
@@ -160,7 +160,7 @@ export const BasicStats = () => {
           <CardTitle>Total Users</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold">{totalUsers?.current}</p>
+          <p className="text-3xl font-bold">{totalUsers?.current || 0}</p>
           <div className="mt-2">
             {renderChange(totalUsers?.change || "0")}
             <p className="text-sm text-gray-500">vs last week</p>
