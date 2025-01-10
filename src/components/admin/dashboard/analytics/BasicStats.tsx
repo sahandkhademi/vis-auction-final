@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, DollarSign, TrendingUp, Clock, ArrowUp, ArrowDown } from "lucide-react";
+import { Users, DollarSign, TrendingUp, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const BasicStats = () => {
@@ -137,7 +137,7 @@ export const BasicStats = () => {
       value: commissionData?.total_sales || 0,
       icon: TrendingUp,
       description: "Sales this month",
-      change: 0, // We'll keep this at 0 since we don't have previous month's commission data
+      change: 0,
     },
     {
       title: "Avg. Session Duration",
@@ -165,11 +165,22 @@ export const BasicStats = () => {
                   "flex items-center text-xs",
                   stat.change > 0 ? "text-green-600" : "text-red-600"
                 )}>
-                  {stat.change > 0 ? (
-                    <ArrowUp className="h-3 w-3" />
-                  ) : (
-                    <ArrowDown className="h-3 w-3" />
-                  )}
+                  <svg
+                    className="h-3 w-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d={stat.change > 0 
+                        ? "M5 15l7-7 7 7"  // Up arrow path
+                        : "M19 9l-7 7-7-7"  // Down arrow path
+                      }
+                    />
+                  </svg>
                   <span>{Math.abs(stat.change).toFixed(1)}%</span>
                 </div>
               )}
