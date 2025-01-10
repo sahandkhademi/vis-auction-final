@@ -63,13 +63,13 @@ export const PaymentMethodsManager = () => {
 
       if (error) {
         console.error('Setup payment error:', error);
-        toast.error(`Failed to setup payment: ${error.message}`);
+        toast.error("Failed to initialize payment setup. Please try again later.");
         return;
       }
 
       if (!data?.clientSecret) {
         console.error('No client secret received:', data);
-        toast.error('Failed to initialize payment setup. Please try again.');
+        toast.error("Unable to initialize payment setup. Please try again later.");
         return;
       }
 
@@ -96,25 +96,30 @@ export const PaymentMethodsManager = () => {
 
       if (setupError) {
         console.error('Stripe setup error:', setupError);
-        let errorMessage = "Failed to set up payment method";
         
-        if (setupError.type === 'card_error') {
-          errorMessage = setupError.message || "There was an issue with your card";
-        } else if (setupError.type === 'validation_error') {
-          errorMessage = "Please check your card details and try again";
-        } else if (setupError.type === 'invalid_request_error') {
-          errorMessage = "Invalid request. Please try again";
+        // Handle specific Stripe error types
+        switch (setupError.type) {
+          case 'card_error':
+            toast.error(setupError.message || "There was an issue with your card. Please try again.");
+            break;
+          case 'validation_error':
+            toast.error("Please check your payment details and try again.");
+            break;
+          case 'invalid_request_error':
+            toast.error("There was an issue with your request. Please try again in a few minutes.");
+            break;
+          default:
+            toast.error("Unable to set up payment method. Please try again later.");
         }
-        
-        toast.error(errorMessage);
         return;
       }
     } catch (error: any) {
       console.error('Error setting up payment method:', error);
-      const errorMessage = error.message === 'A processing error occurred.' 
-        ? 'Unable to process payment setup. Please try again later.'
-        : error.message || "An unexpected error occurred while setting up payment";
-      toast.error(errorMessage);
+      if (error.message?.includes('processing error')) {
+        toast.error("We're having trouble processing your request. Please try again in a few minutes.");
+      } else {
+        toast.error(error.message || "Unable to set up payment method. Please try again later.");
+      }
     } finally {
       setIsLoading(false);
     }
