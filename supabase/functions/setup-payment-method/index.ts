@@ -76,10 +76,15 @@ serve(async (req) => {
       },
     });
 
+    // Set up a webhook endpoint to handle the setupIntent.succeeded event
+    // This will be handled by the handle-setup-session edge function
     console.log('SetupIntent created:', setupIntent.id);
 
     return new Response(
-      JSON.stringify({ clientSecret: setupIntent.client_secret }),
+      JSON.stringify({ 
+        clientSecret: setupIntent.client_secret,
+        setupIntentId: setupIntent.id 
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
