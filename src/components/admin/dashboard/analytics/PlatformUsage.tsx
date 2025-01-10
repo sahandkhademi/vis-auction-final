@@ -4,53 +4,63 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 export const PlatformUsage = () => {
-  const { data: deviceData } = useQuery({
-    queryKey: ["platform-usage"],
+  const { data: deviceData, error: deviceError } = useQuery({
+    queryKey: ["platform-usage-devices"],
     queryFn: async () => {
-      // Get device types distribution
-      const { data: devices, error: deviceError } = await supabase
+      const { data, error } = await supabase
         .from("website_visits")
-        .select("device_type, count")
-        .not("device_type", "is", null)
         .select("device_type")
-        .then(({ data, error }) => {
-          if (error) throw error;
-          const counts = data.reduce((acc, { device_type }) => {
-            acc[device_type || 'unknown'] = (acc[device_type || 'unknown'] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>);
-          return Object.entries(counts).map(([name, value]) => ({ name, value }));
-        });
+        .not("device_type", "is", null);
 
-      if (deviceError) throw deviceError;
+      if (error) throw error;
 
-      // Get platform distribution
-      const { data: platforms, error: platformError } = await supabase
+      // Count occurrences of each device type
+      const counts = data.reduce((acc: Record<string, number>, { device_type }) => {
+        acc[device_type || 'unknown'] = (acc[device_type || 'unknown'] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Convert to array format for chart
+      return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    },
+  });
+
+  const { data: platformData, error: platformError } = useQuery({
+    queryKey: ["platform-usage-platforms"],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from("website_visits")
         .select("platform")
-        .not("platform", "is", null)
-        .then(({ data, error }) => {
-          if (error) throw error;
-          const counts = data.reduce((acc, { platform }) => {
-            acc[platform || 'unknown'] = (acc[platform || 'unknown'] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>);
-          return Object.entries(counts).map(([name, value]) => ({ name, value }));
-        });
+        .not("platform", "is", null);
 
-      if (platformError) throw platformError;
+      if (error) throw error;
 
-      return {
-        devices,
-        platforms,
-      };
+      // Count occurrences of each platform
+      const counts = data.reduce((acc: Record<string, number>, { platform }) => {
+        acc[platform || 'unknown'] = (acc[platform || 'unknown'] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Convert to array format for chart
+      return Object.entries(counts).map(([name, value]) => ({ name, value }));
     },
   });
 
   const COLORS = ['#C6A07C', '#B89068', '#A98054', '#9A7040', '#8B602C'];
 
+  if (deviceError || platformError) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Platform & Device Usage</CardTitle>
+          <CardDescription>Error loading usage data</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="col-span-4">
+    <Card>
       <CardHeader>
         <CardTitle>Platform & Device Usage</CardTitle>
         <CardDescription>Distribution of visits by platform and device type</CardDescription>
@@ -62,7 +72,7 @@ export const PlatformUsage = () => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={dataOrEmpty(data?.devices)}
+                  data={deviceData || []}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -71,7 +81,7 @@ export const PlatformUsage = () => {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {dataOrEmpty(data?.devices).map((entry, index) => (
+                  {(deviceData || []).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -85,7 +95,7 @@ export const PlatformUsage = () => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={dataOrEmpty(data?.platforms)}
+                  data={platformData || []}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -94,7 +104,7 @@ export const PlatformUsage = () => {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {dataOrEmpty(data?.platforms).map((entry, index) => (
+                  {(platformData || []).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -107,10 +117,6 @@ export const PlatformUsage = () => {
       </CardContent>
     </Card>
   );
-};
-
-const dataOrEmpty = (data: any[] | undefined) => {
-  return data || [];
 };
 
 const RADIAN = Math.PI / 180;
