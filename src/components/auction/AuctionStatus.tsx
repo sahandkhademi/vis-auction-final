@@ -89,6 +89,12 @@ export const AuctionStatus = ({
           setLocalCompletionStatus(newData.completion_status);
           setLocalWinnerId(newData.winner_id);
           setLocalPaymentStatus(newData.payment_status);
+          
+          console.log('🔄 Updated local state:', {
+            completionStatus: newData.completion_status,
+            winnerId: newData.winner_id,
+            paymentStatus: newData.payment_status
+          });
         }
       )
       .subscribe();
