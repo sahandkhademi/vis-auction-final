@@ -86,17 +86,35 @@ export const PaymentMethodsManager = () => {
         elements: undefined,
         confirmParams: {
           return_url: `${window.location.origin}/profile?setup_success=true`,
+          payment_method_data: {
+            billing_details: {
+              email: session.user.email,
+            },
+          },
         },
       });
 
       if (setupError) {
         console.error('Stripe setup error:', setupError);
-        toast.error(setupError.message || "Failed to set up payment method");
+        let errorMessage = "Failed to set up payment method";
+        
+        if (setupError.type === 'card_error') {
+          errorMessage = setupError.message || "There was an issue with your card";
+        } else if (setupError.type === 'validation_error') {
+          errorMessage = "Please check your card details and try again";
+        } else if (setupError.type === 'invalid_request_error') {
+          errorMessage = "Invalid request. Please try again";
+        }
+        
+        toast.error(errorMessage);
         return;
       }
     } catch (error: any) {
       console.error('Error setting up payment method:', error);
-      toast.error(error.message || "An unexpected error occurred while setting up payment");
+      const errorMessage = error.message === 'A processing error occurred.' 
+        ? 'Unable to process payment setup. Please try again later.'
+        : error.message || "An unexpected error occurred while setting up payment";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
