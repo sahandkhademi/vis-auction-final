@@ -12,7 +12,30 @@ export const EngagementMetrics = () => {
       
       console.log("Fetching views from:", thirtyDaysAgo, "to:", currentDate);
       
-      // Get unique views by combining unique viewer_ids and session_ids
+      // Get unique website visitors
+      const { data: visitsData, error: visitsError } = await supabase
+        .from("website_visits")
+        .select('visitor_id, session_id')
+        .gte("visited_at", thirtyDaysAgo.toISOString())
+        .lte("visited_at", currentDate.toISOString());
+
+      if (visitsError) {
+        console.error("Error fetching visits:", visitsError);
+      }
+
+      // Count unique visitors by combining user visits and session visits
+      const uniqueVisitors = new Set();
+      visitsData?.forEach(visit => {
+        if (visit.visitor_id) {
+          uniqueVisitors.add(`user_${visit.visitor_id}`);
+        } else if (visit.session_id) {
+          uniqueVisitors.add(`session_${visit.session_id}`);
+        }
+      });
+      
+      console.log("Unique visitors count:", uniqueVisitors.size);
+
+      // Get artwork views
       const { data: viewsData, error: viewsError } = await supabase
         .from("artwork_views")
         .select('viewer_id, session_id')
@@ -20,20 +43,18 @@ export const EngagementMetrics = () => {
         .lte("viewed_at", currentDate.toISOString());
 
       if (viewsError) {
-        console.error("Error fetching views:", viewsError);
+        console.error("Error fetching artwork views:", viewsError);
       }
 
-      // Count unique views by combining user views and session views
-      const uniqueViews = new Set();
+      // Count unique artwork views
+      const uniqueArtworkViews = new Set();
       viewsData?.forEach(view => {
         if (view.viewer_id) {
-          uniqueViews.add(`user_${view.viewer_id}`);
+          uniqueArtworkViews.add(`user_${view.viewer_id}`);
         } else if (view.session_id) {
-          uniqueViews.add(`session_${view.session_id}`);
+          uniqueArtworkViews.add(`session_${view.session_id}`);
         }
       });
-      
-      console.log("Unique views count:", uniqueViews.size);
 
       const { data: bidsData, error: bidsError } = await supabase
         .from("bids")
@@ -45,12 +66,14 @@ export const EngagementMetrics = () => {
         console.error("Error fetching bids:", bidsError);
       }
 
-      const views = uniqueViews.size;
+      const visitors = uniqueVisitors.size;
+      const artworkViews = uniqueArtworkViews.size;
       const bids = bidsData?.length || 0;
-      const conversionRate = views > 0 ? ((bids / views) * 100).toFixed(1) : "0";
+      const conversionRate = artworkViews > 0 ? ((bids / artworkViews) * 100).toFixed(1) : "0";
 
       return {
-        views,
+        visitors,
+        artworkViews,
         bids,
         conversionRate,
       };
@@ -59,14 +82,24 @@ export const EngagementMetrics = () => {
   });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Unique Views</CardTitle>
+          <CardTitle>Website Visitors</CardTitle>
           <CardDescription>Last 30 days</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold">{userEngagement?.views || 0}</p>
+          <p className="text-3xl font-bold">{userEngagement?.visitors || 0}</p>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Artwork Views</CardTitle>
+          <CardDescription>Last 30 days</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-3xl font-bold">{userEngagement?.artworkViews || 0}</p>
         </CardContent>
       </Card>
       

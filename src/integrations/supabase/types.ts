@@ -382,6 +382,30 @@ export type Database = {
         }
         Relationships: []
       }
+      website_visits: {
+        Row: {
+          id: string
+          path: string | null
+          session_id: string | null
+          visited_at: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          id?: string
+          path?: string | null
+          session_id?: string | null
+          visited_at?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          id?: string
+          path?: string | null
+          session_id?: string | null
+          visited_at?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

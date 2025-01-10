@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
@@ -19,6 +19,7 @@ import { Button } from "./ui/button";
 
 const Navigation = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [open, setOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -34,6 +35,22 @@ const Navigation = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Track page visits
+  useEffect(() => {
+    const recordVisit = async () => {
+      const sessionId = localStorage.getItem('visitorSession') || crypto.randomUUID();
+      localStorage.setItem('visitorSession', sessionId);
+
+      await supabase.from('website_visits').insert({
+        visitor_id: user?.id || null,
+        session_id: sessionId,
+        path: location.pathname
+      });
+    };
+
+    recordVisit();
+  }, [location.pathname, user?.id]);
 
   const { data: searchResults } = useQuery({
     queryKey: ["search-results"],
