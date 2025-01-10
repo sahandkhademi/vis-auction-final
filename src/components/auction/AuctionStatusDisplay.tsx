@@ -1,4 +1,4 @@
-import { Clock, CheckCircle2, Trophy } from "lucide-react";
+import { Clock, CheckCircle2, Trophy, BadgeCheck } from "lucide-react";
 import { CountdownTimer } from "./CountdownTimer";
 
 interface AuctionStatusDisplayProps {
@@ -7,6 +7,7 @@ interface AuctionStatusDisplayProps {
   isEnded: boolean;
   isWinner: boolean;
   isPotentialWinner: boolean;
+  paymentStatus?: string | null;
 }
 
 export const AuctionStatusDisplay = ({
@@ -15,6 +16,7 @@ export const AuctionStatusDisplay = ({
   isEnded,
   isWinner,
   isPotentialWinner,
+  paymentStatus,
 }: AuctionStatusDisplayProps) => {
   return (
     <div className="space-y-4">
@@ -50,9 +52,17 @@ export const AuctionStatusDisplay = ({
         )}
 
         {(isWinner || isPotentialWinner) && (
-          <div className="flex items-center gap-2 text-emerald-600">
-            <Trophy className="w-4 h-4" />
-            <span className="text-sm font-medium">You Won!</span>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-2 text-emerald-600">
+              <Trophy className="w-4 h-4" />
+              <span className="text-sm font-medium">You Won!</span>
+            </div>
+            {paymentStatus === 'completed' && (
+              <div className="flex items-center gap-2 text-emerald-600">
+                <BadgeCheck className="w-4 h-4" />
+                <span className="text-sm font-medium">Thank you for your payment</span>
+              </div>
+            )}
           </div>
         )}
       </div>
