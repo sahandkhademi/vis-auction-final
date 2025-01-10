@@ -7,6 +7,8 @@ interface AuctionStatusDisplayProps {
   isEnded: boolean;
   isWinner: boolean;
   isPotentialWinner: boolean;
+  hasCompletedPayment: boolean;
+  showWinMessage: boolean;
 }
 
 export const AuctionStatusDisplay = ({
@@ -15,6 +17,8 @@ export const AuctionStatusDisplay = ({
   isEnded,
   isWinner,
   isPotentialWinner,
+  hasCompletedPayment,
+  showWinMessage,
 }: AuctionStatusDisplayProps) => {
   return (
     <div className="space-y-4">
@@ -49,10 +53,12 @@ export const AuctionStatusDisplay = ({
           </div>
         )}
 
-        {(isWinner || isPotentialWinner) && (
+        {showWinMessage && (
           <div className="flex items-center gap-2 text-emerald-600">
             <Trophy className="w-4 h-4" />
-            <span className="text-sm font-medium">You Won!</span>
+            <span className="text-sm font-medium">
+              {hasCompletedPayment ? "You Won! Payment Completed" : "You Won!"}
+            </span>
           </div>
         )}
       </div>

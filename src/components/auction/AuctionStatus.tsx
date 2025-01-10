@@ -167,7 +167,7 @@ export const AuctionStatus = ({
   usePaymentStatus(handleRefetch);
 
   const hasCompletedPayment = (isWinner || isPotentialWinner) && localPaymentStatus === 'completed';
-  const needsPayment = (isWinner || isPotentialWinner) && localPaymentStatus === 'pending';
+  const showWinMessage = isWinner || isPotentialWinner;
 
   return (
     <div className="space-y-4">
@@ -177,12 +177,14 @@ export const AuctionStatus = ({
         isEnded={isEnded}
         isWinner={isWinner}
         isPotentialWinner={isPotentialWinner}
+        hasCompletedPayment={hasCompletedPayment}
+        showWinMessage={showWinMessage}
       />
 
-      {(hasCompletedPayment || needsPayment) && (
+      {hasCompletedPayment && (
         <PaymentStatus 
           hasCompletedPayment={hasCompletedPayment}
-          needsPayment={needsPayment}
+          needsPayment={false}
           isEnded={isEnded}
         />
       )}
