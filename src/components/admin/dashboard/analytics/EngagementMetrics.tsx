@@ -1,21 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { subMonths } from "date-fns";
+import { subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const EngagementMetrics = () => {
   const { data: userEngagement } = useQuery({
     queryKey: ["userEngagement"],
     queryFn: async () => {
+      const currentDate = new Date();
+      const previousMonth = subMonths(currentDate, 1);
+      
       const { data: viewsData } = await supabase
         .from("artwork_views")
         .select("id")
-        .gte("viewed_at", subMonths(new Date(), 1).toISOString());
+        .gte("viewed_at", startOfMonth(previousMonth).toISOString())
+        .lte("viewed_at", endOfMonth(currentDate).toISOString());
 
       const { data: bidsData } = await supabase
         .from("bids")
         .select("created_at")
-        .gte("created_at", subMonths(new Date(), 1).toISOString());
+        .gte("created_at", startOfMonth(previousMonth).toISOString())
+        .lte("created_at", endOfMonth(currentDate).toISOString());
 
       const views = viewsData?.length || 0;
       const bids = bidsData?.length || 0;
