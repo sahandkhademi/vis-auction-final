@@ -8,19 +8,32 @@ export const EngagementMetrics = () => {
     queryKey: ["userEngagement"],
     queryFn: async () => {
       const currentDate = new Date();
-      const previousMonth = subMonths(currentDate, 1);
+      const startDate = startOfMonth(subMonths(currentDate, 1));
+      const endDate = endOfMonth(currentDate);
       
-      const { data: viewsData } = await supabase
+      console.log("Fetching views from:", startDate, "to:", endDate);
+      
+      const { data: viewsData, error: viewsError } = await supabase
         .from("artwork_views")
-        .select("id")
-        .gte("viewed_at", startOfMonth(previousMonth).toISOString())
-        .lte("viewed_at", endOfMonth(currentDate).toISOString());
+        .select("*")
+        .gte("viewed_at", startDate.toISOString())
+        .lte("viewed_at", endDate.toISOString());
 
-      const { data: bidsData } = await supabase
+      if (viewsError) {
+        console.error("Error fetching views:", viewsError);
+      }
+      console.log("Views data:", viewsData);
+
+      const { data: bidsData, error: bidsError } = await supabase
         .from("bids")
-        .select("created_at")
-        .gte("created_at", startOfMonth(previousMonth).toISOString())
-        .lte("created_at", endOfMonth(currentDate).toISOString());
+        .select("*")
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString());
+
+      if (bidsError) {
+        console.error("Error fetching bids:", bidsError);
+      }
+      console.log("Bids data:", bidsData);
 
       const views = viewsData?.length || 0;
       const bids = bidsData?.length || 0;
@@ -32,6 +45,7 @@ export const EngagementMetrics = () => {
         conversionRate,
       };
     },
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   return (
@@ -39,6 +53,7 @@ export const EngagementMetrics = () => {
       <Card>
         <CardHeader>
           <CardTitle>Monthly Views</CardTitle>
+          <CardDescription>Last 30 days</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-3xl font-bold">{userEngagement?.views || 0}</p>
@@ -48,6 +63,7 @@ export const EngagementMetrics = () => {
       <Card>
         <CardHeader>
           <CardTitle>Monthly Bids</CardTitle>
+          <CardDescription>Last 30 days</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-3xl font-bold">{userEngagement?.bids || 0}</p>
