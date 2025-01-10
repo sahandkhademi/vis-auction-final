@@ -2,7 +2,6 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AuctionStatusDisplay } from "./AuctionStatusDisplay";
-import { PaymentStatus } from "./PaymentStatus";
 import { useAuctionCompletion } from "./hooks/useAuctionCompletion";
 import { usePaymentStatus } from "./hooks/usePaymentStatus";
 import { useEffect, useState } from "react";
@@ -27,7 +26,6 @@ export const AuctionStatus = ({
   const user = useUser();
   const [localCompletionStatus, setLocalCompletionStatus] = useState(completionStatus);
   const [localWinnerId, setLocalWinnerId] = useState(winnerId);
-  const [localPaymentStatus, setLocalPaymentStatus] = useState(paymentStatus);
   const isWinner = user?.id === localWinnerId;
   const isEnded = localCompletionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
 
@@ -35,7 +33,7 @@ export const AuctionStatus = ({
     currentBid,
     endDate,
     completionStatus: localCompletionStatus,
-    paymentStatus: localPaymentStatus,
+    paymentStatus,
     winnerId: localWinnerId,
     userId: user?.id,
     isWinner,
@@ -88,7 +86,6 @@ export const AuctionStatus = ({
           // Immediately update local state
           setLocalCompletionStatus(newData.completion_status);
           setLocalWinnerId(newData.winner_id);
-          setLocalPaymentStatus(newData.payment_status);
         }
       )
       .subscribe();
@@ -130,7 +127,7 @@ export const AuctionStatus = ({
   const handleRefetch = async () => {
     const { data, error } = await supabase
       .from('artworks')
-      .select('payment_status, winner_id, completion_status')
+      .select('winner_id, completion_status')
       .eq('id', auctionId)
       .single();
 
@@ -142,7 +139,6 @@ export const AuctionStatus = ({
     if (data) {
       setLocalCompletionStatus(data.completion_status);
       setLocalWinnerId(data.winner_id);
-      setLocalPaymentStatus(data.payment_status);
     }
   };
 
@@ -160,9 +156,6 @@ export const AuctionStatus = ({
 
   usePaymentStatus(handleRefetch);
 
-  const hasCompletedPayment = (isWinner || isPotentialWinner) && localPaymentStatus === 'completed';
-  const needsPayment = (isWinner || isPotentialWinner) && localPaymentStatus === 'pending';
-
   return (
     <div className="space-y-4">
       <AuctionStatusDisplay 
@@ -172,16 +165,6 @@ export const AuctionStatus = ({
         isWinner={isWinner}
         isPotentialWinner={isPotentialWinner}
       />
-
-      {(hasCompletedPayment || needsPayment) && (
-        <PaymentStatus 
-          hasCompletedPayment={hasCompletedPayment}
-          needsPayment={needsPayment}
-          isEnded={isEnded}
-          auctionId={auctionId}
-          currentBid={currentBid}
-        />
-      )}
     </div>
   );
 };
