@@ -67,7 +67,6 @@ serve(async (req) => {
     console.log('Creating SetupIntent...');
     const setupIntent = await stripe.setupIntents.create({
       customer: customer.id,
-      payment_method_types: ['card'],
       metadata: {
         user_id: user.id,
       },
