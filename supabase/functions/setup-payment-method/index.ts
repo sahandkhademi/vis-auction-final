@@ -8,7 +8,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -22,11 +21,7 @@ serve(async (req) => {
     // Get the authorization header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error('No authorization header provided');
-      return new Response(
-        JSON.stringify({ error: 'No authorization header' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
-      );
+      throw new Error('No authorization header');
     }
 
     // Initialize Supabase client
@@ -35,25 +30,20 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
         global: {
-          headers: {
-            Authorization: authHeader,
-          },
+          headers: { Authorization: authHeader },
         },
       }
     );
 
-    // Get the user from the token
+    // Get user from session
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-
+    
     if (userError || !user) {
       console.error('Auth error:', userError);
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
-      );
+      throw new Error('Unauthorized');
     }
 
-    console.log('User verified:', user.email);
+    console.log('Creating setup intent for user:', user.email);
 
     // Get or create customer
     let customer;
@@ -76,13 +66,13 @@ serve(async (req) => {
     }
 
     // Create SetupIntent
-    console.log('Creating SetupIntent for customer:', customer.id);
     const setupIntent = await stripe.setupIntents.create({
       customer: customer.id,
       payment_method_types: ['card'],
       metadata: {
         user_id: user.id,
       },
+      usage: 'on_session', // Changed from off_session to on_session
     });
 
     console.log('SetupIntent created:', setupIntent.id);
