@@ -42,7 +42,7 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    console.log('Creating setup intent for user:', user.email);
+    console.log('Setting up payment method for user:', user.email);
 
     // Get or create customer
     let customer;
@@ -64,14 +64,14 @@ serve(async (req) => {
       console.log('Created new customer:', customer.id);
     }
 
-    // Create SetupIntent with automatic_payment_methods enabled
+    console.log('Creating SetupIntent...');
     const setupIntent = await stripe.setupIntents.create({
       customer: customer.id,
       automatic_payment_methods: { enabled: true },
       metadata: {
         user_id: user.id,
       },
-      usage: 'on_session',
+      usage: 'off_session', // Changed to off_session to allow future usage
     });
 
     console.log('SetupIntent created:', setupIntent.id);

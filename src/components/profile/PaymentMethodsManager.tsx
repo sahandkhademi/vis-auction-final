@@ -45,9 +45,11 @@ export const PaymentMethodsManager = () => {
 
     setIsLoading(true);
     try {
-      const { data: currentSession } = await supabase.auth.getSession();
+      console.log('Starting payment setup process...');
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
       
-      if (!currentSession.session?.access_token) {
+      if (!currentSession?.access_token) {
+        console.error('No valid session found');
         toast.error("Please sign in again");
         await supabase.auth.signOut();
         return;
@@ -56,7 +58,7 @@ export const PaymentMethodsManager = () => {
       console.log('Calling setup-payment-method endpoint...');
       const { data, error } = await supabase.functions.invoke('setup-payment-method', {
         headers: {
-          Authorization: `Bearer ${currentSession.session.access_token}`,
+          Authorization: `Bearer ${currentSession.access_token}`,
         },
       });
 
@@ -74,6 +76,7 @@ export const PaymentMethodsManager = () => {
 
       const stripe = await stripePromise;
       if (!stripe) {
+        console.error('Stripe not initialized');
         toast.error('Payment system unavailable. Please try again later.');
         return;
       }
@@ -84,22 +87,21 @@ export const PaymentMethodsManager = () => {
         elements: undefined,
         confirmParams: {
           return_url: `${window.location.origin}/profile?setup_success=true`,
-          payment_method_data: {
-            billing_details: {
-              email: session.user.email,
-            },
-          },
         },
       });
 
       if (setupError) {
         console.error('Stripe setup error:', setupError);
-        toast.error("Unable to setup payment method. Please try again later.");
+        if (setupError.type === 'card_error') {
+          toast.error(setupError.message || "Card error. Please try again.");
+        } else {
+          toast.error("Unable to setup payment method. Please try again later.");
+        }
         return;
       }
     } catch (error) {
       console.error('Error setting up payment method:', error);
-      toast.error("We're experiencing technical difficulties. Please try again later.");
+      toast.error("Payment setup failed. Please try again later.");
     } finally {
       setIsLoading(false);
     }
