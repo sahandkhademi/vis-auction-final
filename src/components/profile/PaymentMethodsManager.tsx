@@ -45,17 +45,18 @@ export const PaymentMethodsManager = () => {
 
     setIsLoading(true);
     try {
-      // Make sure we have a valid access token
-      const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+      // Get a fresh auth session
+      const { data: authData, error: authError } = await supabase.auth.refreshSession();
       
-      if (sessionError || !currentSession?.access_token) {
-        throw new Error('Unable to get valid session');
+      if (authError || !authData.session?.access_token) {
+        console.error('Auth refresh error:', authError);
+        throw new Error('Unable to refresh authentication session');
       }
 
       console.log('Calling setup-payment-method endpoint...');
       const { data, error } = await supabase.functions.invoke('setup-payment-method', {
         headers: {
-          Authorization: `Bearer ${currentSession.access_token}`,
+          Authorization: `Bearer ${authData.session.access_token}`,
         },
       });
 
