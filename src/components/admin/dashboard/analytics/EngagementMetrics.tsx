@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { subDays, startOfDay } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const EngagementMetrics = () => {
@@ -8,36 +8,46 @@ export const EngagementMetrics = () => {
     queryKey: ["userEngagement"],
     queryFn: async () => {
       const currentDate = new Date();
-      const startDate = startOfMonth(subMonths(currentDate, 1));
-      const endDate = endOfMonth(currentDate);
+      const thirtyDaysAgo = startOfDay(subDays(currentDate, 30));
       
-      console.log("Fetching views from:", startDate, "to:", endDate);
+      console.log("Fetching views from:", thirtyDaysAgo, "to:", currentDate);
       
+      // Get unique views by combining unique viewer_ids and session_ids
       const { data: viewsData, error: viewsError } = await supabase
         .from("artwork_views")
-        .select("*")
-        .gte("viewed_at", startDate.toISOString())
-        .lte("viewed_at", endDate.toISOString());
+        .select('viewer_id, session_id')
+        .gte("viewed_at", thirtyDaysAgo.toISOString())
+        .lte("viewed_at", currentDate.toISOString());
 
       if (viewsError) {
         console.error("Error fetching views:", viewsError);
       }
-      console.log("Views data:", viewsData);
+
+      // Count unique views by combining user views and session views
+      const uniqueViews = new Set();
+      viewsData?.forEach(view => {
+        if (view.viewer_id) {
+          uniqueViews.add(`user_${view.viewer_id}`);
+        } else if (view.session_id) {
+          uniqueViews.add(`session_${view.session_id}`);
+        }
+      });
+      
+      console.log("Unique views count:", uniqueViews.size);
 
       const { data: bidsData, error: bidsError } = await supabase
         .from("bids")
         .select("*")
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
+        .gte("created_at", thirtyDaysAgo.toISOString())
+        .lte("created_at", currentDate.toISOString());
 
       if (bidsError) {
         console.error("Error fetching bids:", bidsError);
       }
-      console.log("Bids data:", bidsData);
 
-      const views = viewsData?.length || 0;
+      const views = uniqueViews.size;
       const bids = bidsData?.length || 0;
-      const conversionRate = views > 0 ? ((bids / views) * 100).toFixed(1) : 0;
+      const conversionRate = views > 0 ? ((bids / views) * 100).toFixed(1) : "0";
 
       return {
         views,
@@ -52,7 +62,7 @@ export const EngagementMetrics = () => {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Monthly Views</CardTitle>
+          <CardTitle>Unique Views</CardTitle>
           <CardDescription>Last 30 days</CardDescription>
         </CardHeader>
         <CardContent>
@@ -62,7 +72,7 @@ export const EngagementMetrics = () => {
       
       <Card>
         <CardHeader>
-          <CardTitle>Monthly Bids</CardTitle>
+          <CardTitle>Total Bids</CardTitle>
           <CardDescription>Last 30 days</CardDescription>
         </CardHeader>
         <CardContent>
@@ -76,7 +86,7 @@ export const EngagementMetrics = () => {
           <CardDescription>Views to Bids</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold">{userEngagement?.conversionRate || 0}%</p>
+          <p className="text-3xl font-bold">{userEngagement?.conversionRate}%</p>
         </CardContent>
       </Card>
     </div>
