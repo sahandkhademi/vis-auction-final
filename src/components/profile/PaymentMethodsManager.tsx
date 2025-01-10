@@ -63,13 +63,13 @@ export const PaymentMethodsManager = () => {
 
       if (error) {
         console.error('Setup payment error:', error);
-        toast.error("Failed to initialize payment setup. Please try again later.");
+        toast.error("Unable to connect to payment service. Please try again later.");
         return;
       }
 
       if (!data?.clientSecret) {
         console.error('No client secret received:', data);
-        toast.error("Unable to initialize payment setup. Please try again later.");
+        toast.error("Payment setup unavailable. Please try again later.");
         return;
       }
 
@@ -97,29 +97,20 @@ export const PaymentMethodsManager = () => {
       if (setupError) {
         console.error('Stripe setup error:', setupError);
         
-        // Handle specific Stripe error types
-        switch (setupError.type) {
-          case 'card_error':
-            toast.error(setupError.message || "There was an issue with your card. Please try again.");
-            break;
-          case 'validation_error':
-            toast.error("Please check your payment details and try again.");
-            break;
-          case 'invalid_request_error':
-            toast.error("There was an issue with your request. Please try again in a few minutes.");
-            break;
-          default:
-            toast.error("Unable to set up payment method. Please try again later.");
+        if (setupError.type === 'card_error') {
+          toast.error("Your card was declined. Please try again with a different card.");
+        } else if (setupError.type === 'validation_error') {
+          toast.error("Please check your card details and try again.");
+        } else if (setupError.message?.includes('processing')) {
+          toast.error("We're having technical difficulties. Please try again in a few minutes.");
+        } else {
+          toast.error("Unable to set up payment method. Please try again later.");
         }
         return;
       }
     } catch (error: any) {
       console.error('Error setting up payment method:', error);
-      if (error.message?.includes('processing error')) {
-        toast.error("We're having trouble processing your request. Please try again in a few minutes.");
-      } else {
-        toast.error(error.message || "Unable to set up payment method. Please try again later.");
-      }
+      toast.error("We're experiencing technical difficulties. Please try again in a few minutes.");
     } finally {
       setIsLoading(false);
     }
