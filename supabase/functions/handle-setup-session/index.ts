@@ -19,14 +19,18 @@ serve(async (req) => {
     const event = stripe.webhooks.constructEvent(
       body,
       signature!,
-      Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
+      Deno.env.get('STRIPE_SETUP_WEBHOOK_SECRET') || ''
     );
+
+    console.log('✅ Webhook event received:', event.type);
 
     if (event.type === 'setup_intent.succeeded') {
       const setupIntent = event.data.object as Stripe.SetupIntent;
       const paymentMethod = await stripe.paymentMethods.retrieve(
         setupIntent.payment_method as string
       );
+
+      console.log('✅ Payment method retrieved:', paymentMethod.id);
 
       // Save the payment method to our database
       const { error } = await supabaseClient
@@ -36,11 +40,15 @@ serve(async (req) => {
           stripe_payment_method_id: paymentMethod.id,
           last_four: paymentMethod.card?.last4,
           card_brand: paymentMethod.card?.brand,
+          is_valid: true,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error saving payment method:', error);
+        throw error;
+      }
 
-      console.log('✅ Payment method saved:', paymentMethod.id);
+      console.log('✅ Payment method saved to database');
     }
 
     return new Response(JSON.stringify({ received: true }), {
