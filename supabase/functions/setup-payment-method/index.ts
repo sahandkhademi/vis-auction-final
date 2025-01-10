@@ -23,7 +23,10 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       console.error('No authorization header provided');
-      throw new Error('No authorization header');
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
     }
 
     // Initialize Supabase client
@@ -31,26 +34,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
+        global: {
+          headers: {
+            Authorization: authHeader,
+          },
         },
       }
     );
 
     // Get the user from the token
-    const token = authHeader.replace('Bearer ', '');
-    console.log('Verifying token...');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
 
-    if (userError) {
+    if (userError || !user) {
       console.error('Auth error:', userError);
-      throw new Error('Unauthorized');
-    }
-
-    if (!user) {
-      console.error('No user found');
-      throw new Error('User not found');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
     }
 
     console.log('User verified:', user.email);
