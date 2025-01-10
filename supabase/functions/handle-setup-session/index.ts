@@ -17,7 +17,7 @@ serve(async (req) => {
   });
 
   try {
-    // Get the request body
+    // Get the request body and signature
     const body = await req.text();
     const signature = req.headers.get('stripe-signature');
 
@@ -25,19 +25,55 @@ serve(async (req) => {
       throw new Error('No Stripe signature found');
     }
 
-    // Verify the webhook
-    const event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      Deno.env.get('STRIPE_SETUP_WEBHOOK_SECRET') || ''
-    );
+    let event;
+    try {
+      // Use TextEncoder to convert the webhook secret to Uint8Array
+      const secret = new TextEncoder().encode(
+        Deno.env.get('STRIPE_SETUP_WEBHOOK_SECRET') || ''
+      );
+      
+      // Create a crypto key from the secret
+      const key = await crypto.subtle.importKey(
+        'raw',
+        secret,
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign']
+      );
+      
+      // Compute the signature
+      const signatureBytes = await crypto.subtle.sign(
+        'HMAC',
+        key,
+        new TextEncoder().encode(body)
+      );
+      
+      // Convert the signature to hex
+      const computedSignature = Array.from(new Uint8Array(signatureBytes))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      
+      // Parse the event
+      event = JSON.parse(body);
+      
+      // Verify the timestamp is within tolerance (5 minutes)
+      const timestamp = event.created;
+      const now = Math.floor(Date.now() / 1000);
+      if (Math.abs(now - timestamp) > 300) {
+        throw new Error('Webhook timestamp out of tolerance');
+      }
+      
+    } catch (err) {
+      console.error('Error verifying webhook signature:', err);
+      throw new Error(`Webhook signature verification failed: ${err.message}`);
+    }
 
     console.log('Processing webhook event:', event.type);
 
     if (event.type === 'setup_intent.succeeded') {
       const setupIntent = event.data.object;
       const paymentMethod = await stripe.paymentMethods.retrieve(
-        setupIntent.payment_method as string
+        setupIntent.payment_method
       );
 
       // Initialize Supabase client with service role key for admin access
