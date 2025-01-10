@@ -56,8 +56,7 @@ export const PaymentMethodsManager = () => {
       if (!stripe) throw new Error('Stripe failed to load');
 
       // Redirect to Stripe's hosted payment setup form
-      const { error: setupError } = await stripe.redirectToSetup({
-        clientSecret: data.clientSecret,
+      const { error: setupError } = await stripe.redirectToSetupIntent(data.clientSecret, {
         return_url: `${window.location.origin}/profile?setup_success=true`,
       });
 
