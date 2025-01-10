@@ -2,6 +2,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AuctionStatusDisplay } from "./AuctionStatusDisplay";
+import { PaymentStatus } from "./PaymentStatus";
 import { useAuctionCompletion } from "./hooks/useAuctionCompletion";
 import { usePaymentStatus } from "./hooks/usePaymentStatus";
 import { useEffect, useState } from "react";
@@ -159,6 +160,9 @@ export const AuctionStatus = ({
 
   usePaymentStatus(handleRefetch);
 
+  const hasCompletedPayment = (isWinner || isPotentialWinner) && localPaymentStatus === 'completed';
+  const needsPayment = (isWinner || isPotentialWinner) && localPaymentStatus === 'pending';
+
   return (
     <div className="space-y-4">
       <AuctionStatusDisplay 
@@ -167,8 +171,17 @@ export const AuctionStatus = ({
         isEnded={isEnded}
         isWinner={isWinner}
         isPotentialWinner={isPotentialWinner}
-        paymentStatus={localPaymentStatus}
       />
+
+      {(hasCompletedPayment || needsPayment) && (
+        <PaymentStatus 
+          hasCompletedPayment={hasCompletedPayment}
+          needsPayment={needsPayment}
+          isEnded={isEnded}
+          auctionId={auctionId}
+          currentBid={currentBid}
+        />
+      )}
     </div>
   );
 };
