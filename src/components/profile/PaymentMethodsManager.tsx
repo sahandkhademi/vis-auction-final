@@ -7,27 +7,17 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 export const PaymentMethodsManager = () => {
   const session = useSession();
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
 
-  useEffect(() => {
-    const setupSuccess = searchParams.get('setup_success');
-    const setupCancelled = searchParams.get('setup_cancelled');
-
-    if (setupSuccess) {
-      toast.success("Payment method added successfully");
-    } else if (setupCancelled) {
-      toast.error("Payment setup was cancelled");
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    const fetchPaymentMethods = async () => {
-      if (!session?.user) return;
+  const { data: paymentMethods, refetch } = useQuery({
+    queryKey: ["payment-methods", session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user) return [];
 
       try {
         const { data, error } = await supabase
@@ -37,14 +27,26 @@ export const PaymentMethodsManager = () => {
           .eq('is_valid', true);
 
         if (error) throw error;
-        setPaymentMethods(data || []);
+        return data || [];
       } catch (error) {
         console.error('Error fetching payment methods:', error);
+        return [];
       }
-    };
+    },
+    enabled: !!session?.user,
+  });
 
-    fetchPaymentMethods();
-  }, [session?.user, searchParams]); // Re-fetch when URL params change
+  useEffect(() => {
+    const setupSuccess = searchParams.get('setup_success');
+    const setupCancelled = searchParams.get('setup_cancelled');
+
+    if (setupSuccess) {
+      toast.success("Payment method added successfully");
+      refetch(); // Refetch payment methods after successful setup
+    } else if (setupCancelled) {
+      toast.error("Payment setup was cancelled");
+    }
+  }, [searchParams, refetch]);
 
   const handleSetupPayment = async () => {
     if (!session?.user) {
@@ -62,7 +64,6 @@ export const PaymentMethodsManager = () => {
         throw new Error('No setup URL received');
       }
 
-      // Redirect to Stripe's hosted setup page
       window.location.href = data.url;
     } catch (error) {
       console.error('Error setting up payment method:', error);
@@ -78,7 +79,7 @@ export const PaymentMethodsManager = () => {
         <CardTitle>Payment Methods</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {paymentMethods.length > 0 ? (
+        {paymentMethods && paymentMethods.length > 0 ? (
           <div className="space-y-4">
             {paymentMethods.map((method) => (
               <div
