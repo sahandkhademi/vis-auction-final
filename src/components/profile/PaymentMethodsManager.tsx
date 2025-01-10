@@ -46,7 +46,11 @@ export const PaymentMethodsManager = () => {
     setIsLoading(true);
     try {
       // Get the setup intent client secret
-      const { data, error } = await supabase.functions.invoke('setup-payment-method');
+      const { data, error } = await supabase.functions.invoke('setup-payment-method', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
       
       if (error) throw error;
       if (!data?.clientSecret) throw new Error('No client secret received');
@@ -55,9 +59,13 @@ export const PaymentMethodsManager = () => {
       const stripe = await stripePromise;
       if (!stripe) throw new Error('Stripe failed to load');
 
-      // Redirect to Stripe's hosted payment setup form
-      const { error: setupError } = await stripe.redirectToSetupIntent(data.clientSecret, {
-        return_url: `${window.location.origin}/profile?setup_success=true`,
+      // Use confirmSetup instead of redirectToSetupIntent
+      const { error: setupError } = await stripe.confirmSetup({
+        clientSecret: data.clientSecret,
+        elements: undefined,
+        confirmParams: {
+          return_url: `${window.location.origin}/profile?setup_success=true`,
+        },
       });
 
       if (setupError) {

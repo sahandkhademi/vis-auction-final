@@ -8,14 +8,16 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
     );
 
     // Get the user from the auth header
@@ -27,11 +29,14 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
+    // Initialize Stripe
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
 
-    // First, check if customer exists
+    console.log('Creating/retrieving customer for user:', user.email);
+
+    // Get or create customer
     let customer;
     const customers = await stripe.customers.list({
       email: user.email,
@@ -40,46 +45,44 @@ serve(async (req) => {
 
     if (customers.data.length > 0) {
       customer = customers.data[0];
+      console.log('Found existing customer:', customer.id);
     } else {
-      // Create a new customer if one doesn't exist
       customer = await stripe.customers.create({
         email: user.email,
         metadata: {
-          user_id: user.id
-        }
+          user_id: user.id,
+        },
       });
+      console.log('Created new customer:', customer.id);
     }
 
-    console.log('✅ Customer retrieved/created:', customer.id);
-
-    // Create a SetupIntent
+    // Create SetupIntent
+    console.log('Creating SetupIntent for customer:', customer.id);
     const setupIntent = await stripe.setupIntents.create({
       customer: customer.id,
       payment_method_types: ['card'],
       metadata: {
-        user_id: user.id
-      }
+        user_id: user.id,
+      },
     });
 
-    console.log('✅ Setup intent created:', setupIntent.id);
+    console.log('SetupIntent created:', setupIntent.id);
 
     return new Response(
-      JSON.stringify({ 
-        clientSecret: setupIntent.client_secret,
-      }),
+      JSON.stringify({ clientSecret: setupIntent.client_secret }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
+        status: 200,
+      },
     );
   } catch (error) {
-    console.error('❌ Error creating setup intent:', error);
+    console.error('Error in setup-payment-method:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
-      }
+        status: error.message === 'Unauthorized' ? 401 : 500,
+      },
     );
   }
 });
