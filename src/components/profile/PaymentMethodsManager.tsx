@@ -8,11 +8,67 @@ import { AlertCircle, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { loadStripe } from "@stripe/stripe-js";
+import {
+  Elements,
+  PaymentElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
+const SetupForm = ({ clientSecret }: { clientSecret: string }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+
+    setIsLoading(true);
+    try {
+      const { error } = await stripe.confirmSetup({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/profile?setup_success=true`,
+        },
+      });
+
+      if (error) {
+        console.error('Stripe setup error:', error);
+        if (error.type === 'card_error') {
+          toast.error(error.message || "Card error. Please try again.");
+        } else {
+          toast.error("Unable to setup payment method. Please try again later.");
+        }
+      }
+    } catch (error) {
+      console.error('Error in setup form:', error);
+      toast.error("Payment setup failed. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <PaymentElement />
+      <Button
+        type="submit"
+        disabled={!stripe || isLoading}
+        className="w-full"
+      >
+        <CreditCard className="mr-2 h-4 w-4" />
+        {isLoading ? "Setting up..." : "Save Payment Method"}
+      </Button>
+    </form>
+  );
+};
+
 export const PaymentMethodsManager = () => {
   const session = useSession();
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const { data: paymentMethods, refetch } = useQuery({
@@ -37,7 +93,7 @@ export const PaymentMethodsManager = () => {
     enabled: !!session?.user,
   });
 
-  const handleSetupPayment = async () => {
+  const initializeSetup = async () => {
     if (!session?.user) {
       toast.error("Please sign in to add a payment method");
       return;
@@ -74,33 +130,9 @@ export const PaymentMethodsManager = () => {
         return;
       }
 
-      const stripe = await stripePromise;
-      if (!stripe) {
-        console.error('Stripe not initialized');
-        toast.error('Payment system unavailable. Please try again later.');
-        return;
-      }
-
-      console.log('Redirecting to Stripe setup...');
-      const { error: setupError } = await stripe.confirmSetup({
-        clientSecret: data.clientSecret,
-        elements: undefined,
-        confirmParams: {
-          return_url: `${window.location.origin}/profile?setup_success=true`,
-        },
-      });
-
-      if (setupError) {
-        console.error('Stripe setup error:', setupError);
-        if (setupError.type === 'card_error') {
-          toast.error(setupError.message || "Card error. Please try again.");
-        } else {
-          toast.error("Unable to setup payment method. Please try again later.");
-        }
-        return;
-      }
+      setClientSecret(data.clientSecret);
     } catch (error) {
-      console.error('Error setting up payment method:', error);
+      console.error('Error initializing payment setup:', error);
       toast.error("Payment setup failed. Please try again later.");
     } finally {
       setIsLoading(false);
@@ -114,6 +146,7 @@ export const PaymentMethodsManager = () => {
     if (setupSuccess === 'true') {
       toast.success("Payment method added successfully");
       refetch();
+      setClientSecret(null);
       
       // Clean up URL
       const newUrl = window.location.pathname;
@@ -156,14 +189,20 @@ export const PaymentMethodsManager = () => {
           </Alert>
         )}
 
-        <Button
-          onClick={handleSetupPayment}
-          disabled={isLoading}
-          className="w-full"
-        >
-          <CreditCard className="mr-2 h-4 w-4" />
-          {isLoading ? "Setting up..." : "Add Payment Method"}
-        </Button>
+        {clientSecret ? (
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <SetupForm clientSecret={clientSecret} />
+          </Elements>
+        ) : (
+          <Button
+            onClick={initializeSetup}
+            disabled={isLoading}
+            className="w-full"
+          >
+            <CreditCard className="mr-2 h-4 w-4" />
+            {isLoading ? "Setting up..." : "Add Payment Method"}
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
