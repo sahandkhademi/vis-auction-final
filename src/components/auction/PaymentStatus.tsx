@@ -17,11 +17,16 @@ export const PaymentStatus = ({
 
   if (hasCompletedPayment) {
     return (
-      <div className="rounded-lg border p-4 bg-green-50 border-green-200">
-        <div className="flex items-center gap-3">
-          <CheckCircle2 className="w-5 h-5 text-green-500" />
-          <p className="text-sm text-green-700 font-medium">
-            Thank you for your payment!
+      <div className="rounded-lg border p-6 bg-green-50 border-green-200">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-6 h-6 text-green-500" />
+            <h3 className="text-lg font-semibold text-green-800">
+              Payment Successful!
+            </h3>
+          </div>
+          <p className="text-sm text-green-700 pl-9">
+            Thank you for your payment. We will be in touch shortly with details about your artwork delivery.
           </p>
         </div>
       </div>
