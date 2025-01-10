@@ -1,8 +1,43 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, DollarSign, TrendingUp, Clock, ArrowUp, ArrowDown } from "lucide-react";
+import { Users, DollarSign, TrendingUp, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Create arrow components to avoid import issues
+const ArrowUpIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-3 w-3 mr-1"
+  >
+    <path d="m5 12 7-7 7 7" />
+  </svg>
+);
+
+const ArrowDownIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-3 w-3 mr-1"
+  >
+    <path d="m19 12-7 7-7-7" />
+  </svg>
+);
 
 export const BasicStats = () => {
   const { data: commissionData } = useQuery({
@@ -176,9 +211,9 @@ export const BasicStats = () => {
                       )}
                     >
                       {stat.change > 0 ? (
-                        <ArrowUp className="h-3 w-3 mr-1 text-green-600" />
+                        <ArrowUpIcon />
                       ) : (
-                        <ArrowDown className="h-3 w-3 mr-1 text-red-600" />
+                        <ArrowDownIcon />
                       )}
                       <span>{Math.abs(stat.change).toFixed(1)}%</span>
                     </div>
