@@ -55,28 +55,36 @@ export const PaymentMethodsManager = () => {
       const stripe = await stripePromise;
       if (!stripe) throw new Error('Stripe failed to load');
 
-      // Confirm the setup
-      const { error: setupError } = await stripe.confirmCardSetup(data.clientSecret, {
-        payment_method: {
-          card: {
-            token: 'tok_visa', // This is for testing only
-          },
-        },
+      // Redirect to Stripe's hosted payment setup form
+      const { error: setupError } = await stripe.redirectToSetup({
+        clientSecret: data.clientSecret,
+        return_url: `${window.location.origin}/profile?setup_success=true`,
       });
 
       if (setupError) {
         throw setupError;
       }
-
-      toast.success("Payment method added successfully");
-      refetch();
     } catch (error: any) {
       console.error('Error setting up payment method:', error);
       toast.error(error.message || "Failed to set up payment method");
-    } finally {
       setIsLoading(false);
     }
   };
+
+  // Handle return from Stripe
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const setupSuccess = searchParams.get('setup_success');
+    
+    if (setupSuccess === 'true') {
+      toast.success("Payment method added successfully");
+      refetch();
+      
+      // Clean up URL
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [refetch]);
 
   return (
     <Card>
