@@ -45,21 +45,28 @@ export const PaymentMethodsManager = () => {
 
     setIsLoading(true);
     try {
-      // Get the setup intent client secret
+      console.log('Calling setup-payment-method with token:', session.access_token);
+      
       const { data, error } = await supabase.functions.invoke('setup-payment-method', {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
       });
       
-      if (error) throw error;
-      if (!data?.clientSecret) throw new Error('No client secret received');
+      if (error) {
+        console.error('Setup payment error:', error);
+        throw error;
+      }
+      
+      if (!data?.clientSecret) {
+        console.error('No client secret received:', data);
+        throw new Error('No client secret received');
+      }
 
       // Initialize Stripe
       const stripe = await stripePromise;
       if (!stripe) throw new Error('Stripe failed to load');
 
-      // Use confirmSetup instead of redirectToSetupIntent
       const { error: setupError } = await stripe.confirmSetup({
         clientSecret: data.clientSecret,
         elements: undefined,
@@ -69,6 +76,7 @@ export const PaymentMethodsManager = () => {
       });
 
       if (setupError) {
+        console.error('Stripe setup error:', setupError);
         throw setupError;
       }
     } catch (error: any) {
