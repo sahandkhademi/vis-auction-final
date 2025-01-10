@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, DollarSign, TrendingUp, Clock, ArrowUpIcon, ArrowDownIcon } from "lucide-react";
+import { Users, DollarSign, TrendingUp, Clock, ArrowUp, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const BasicStats = () => {
@@ -166,9 +166,9 @@ export const BasicStats = () => {
                   stat.change > 0 ? "text-green-600" : "text-red-600"
                 )}>
                   {stat.change > 0 ? (
-                    <ArrowUpIcon className="h-3 w-3" />
+                    <ArrowUp className="h-3 w-3" />
                   ) : (
-                    <ArrowDownIcon className="h-3 w-3" />
+                    <ArrowDown className="h-3 w-3" />
                   )}
                   <span>{Math.abs(stat.change).toFixed(1)}%</span>
                 </div>
