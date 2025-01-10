@@ -32,23 +32,21 @@ const SetupForm = ({ clientSecret }: { clientSecret: string }) => {
     setIsLoading(true);
     try {
       console.log('Starting setup confirmation...');
-      const { error: setupError, setupIntent } = await stripe.confirmSetup({
+      const result = await stripe.confirmSetup({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/profile?setup_success=true`,
         },
       });
 
-      if (setupError) {
-        console.error('Setup error:', setupError);
-        toast.error(setupError.message || "Failed to setup payment method");
+      if (result.error) {
+        console.error('Setup error:', result.error);
+        toast.error(result.error.message || "Failed to setup payment method");
         return;
       }
 
-      if (setupIntent && setupIntent.status === 'succeeded') {
-        toast.success("Payment method added successfully");
-        window.location.href = `${window.location.origin}/profile?setup_success=true`;
-      }
+      toast.success("Payment method added successfully");
+      window.location.href = `${window.location.origin}/profile?setup_success=true`;
     } catch (error) {
       console.error('Error in setup form:', error);
       toast.error("Payment setup failed. Please try again.");
