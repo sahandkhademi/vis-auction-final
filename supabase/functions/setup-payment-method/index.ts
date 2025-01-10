@@ -72,6 +72,9 @@ serve(async (req) => {
         user_id: user.id,
       },
       usage: 'off_session',
+      automatic_payment_methods: {
+        enabled: true,
+      },
     });
 
     console.log('SetupIntent created:', setupIntent.id);

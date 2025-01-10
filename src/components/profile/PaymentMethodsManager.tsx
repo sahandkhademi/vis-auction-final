@@ -45,8 +45,8 @@ const SetupForm = ({ clientSecret }: { clientSecret: string }) => {
         return;
       }
 
-      toast.success("Payment method added successfully");
-      window.location.href = `${window.location.origin}/profile?setup_success=true`;
+      // If we get here, it means the setup was successful and the user will be redirected
+      // The actual success handling happens in the useEffect that watches for URL params
     } catch (error) {
       console.error('Error in setup form:', error);
       toast.error("Payment setup failed. Please try again.");
@@ -148,10 +148,12 @@ export const PaymentMethodsManager = () => {
     const setupSuccess = searchParams.get('setup_success');
     
     if (setupSuccess === 'true') {
-      toast.success("Payment method added successfully");
+      // Refresh payment methods list
       refetch();
+      // Reset client secret to hide the form
       setClientSecret(null);
-      
+      // Show success message
+      toast.success("Payment method added successfully");
       // Clean up URL
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
