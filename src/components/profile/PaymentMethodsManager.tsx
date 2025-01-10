@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CreditCard } from "lucide-react";
+import { AlertCircle, CreditCard, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { loadStripe } from "@stripe/stripe-js";
@@ -44,9 +44,6 @@ const SetupForm = ({ clientSecret }: { clientSecret: string }) => {
         toast.error(result.error.message || "Failed to setup payment method");
         return;
       }
-
-      // If we get here, it means the setup was successful and the user will be redirected
-      // The actual success handling happens in the useEffect that watches for URL params
     } catch (error) {
       console.error('Error in setup form:', error);
       toast.error("Payment setup failed. Please try again.");
@@ -74,6 +71,7 @@ export const PaymentMethodsManager = () => {
   const session = useSession();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
 
   const { data: paymentMethods, refetch } = useQuery({
     queryKey: ["payment-methods", session?.user?.id],
@@ -96,6 +94,46 @@ export const PaymentMethodsManager = () => {
     },
     enabled: !!session?.user,
   });
+
+  const deletePaymentMethod = async (paymentMethodId: string) => {
+    if (!session?.user) {
+      toast.error("Please sign in to delete a payment method");
+      return;
+    }
+
+    setIsDeletingId(paymentMethodId);
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (!currentSession?.access_token) {
+        console.error('No valid session found');
+        toast.error("Please sign in again");
+        await supabase.auth.signOut();
+        return;
+      }
+
+      const { error } = await supabase.functions.invoke('delete-payment-method', {
+        body: { paymentMethodId },
+        headers: {
+          Authorization: `Bearer ${currentSession.access_token}`,
+        },
+      });
+
+      if (error) {
+        console.error('Delete payment error:', error);
+        toast.error("Unable to delete payment method. Please try again later.");
+        return;
+      }
+
+      toast.success("Payment method deleted successfully");
+      refetch();
+    } catch (error) {
+      console.error('Error deleting payment method:', error);
+      toast.error("Failed to delete payment method. Please try again.");
+    } finally {
+      setIsDeletingId(null);
+    }
+  };
 
   const initializeSetup = async () => {
     if (!session?.user) {
@@ -148,13 +186,9 @@ export const PaymentMethodsManager = () => {
     const setupSuccess = searchParams.get('setup_success');
     
     if (setupSuccess === 'true') {
-      // Refresh payment methods list
       refetch();
-      // Reset client secret to hide the form
       setClientSecret(null);
-      // Show success message
       toast.success("Payment method added successfully");
-      // Clean up URL
       const newUrl = window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
@@ -182,6 +216,14 @@ export const PaymentMethodsManager = () => {
                     </p>
                   </div>
                 </div>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => deletePaymentMethod(method.stripe_payment_method_id)}
+                  disabled={isDeletingId === method.stripe_payment_method_id}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
             ))}
           </div>
