@@ -121,7 +121,7 @@ const AuctionDetail = () => {
           className="mb-8 text-gray-600 hover:text-gray-900 -ml-4"
           onClick={() => navigate("/auctions")}
         >
-          ← Back to Lots
+          ← Back to Auctions
         </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">

@@ -9,14 +9,14 @@ import { ArtistInfo } from "./ArtistInfo";
 import { AuctionInfo } from "./AuctionInfo";
 import { supabase } from "@/integrations/supabase/client";
 
-interface LotDetailsProps {
+interface AuctionDetailsProps {
   artwork: ArtworkWithArtist;
   currentHighestBid: number | null;
   isLoading: boolean;
   onBidPlaced: () => void;
 }
 
-export const AuctionDetails = ({ // keeping the component name for now to avoid breaking imports
+export const AuctionDetails = ({ 
   artwork, 
   currentHighestBid, 
   isLoading,
