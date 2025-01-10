@@ -71,8 +71,10 @@ export const AuctionStatus = ({
     if (!auctionId) return;
 
     console.log('🔄 Setting up auction update subscription');
-    const channel = supabase
-      .channel('auction-updates')
+    
+    // Subscribe to artwork updates
+    const artworkChannel = supabase
+      .channel('artwork-updates')
       .on(
         'postgres_changes',
         {
@@ -122,12 +124,35 @@ export const AuctionStatus = ({
       }
     }, 1000);
 
+    // Set up real-time subscription for payment status updates
+    const paymentChannel = supabase
+      .channel('payment-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'artworks',
+          filter: `id=eq.${auctionId}`,
+        },
+        (payload) => {
+          console.log('💳 Received payment update:', payload);
+          const newData = payload.new as any;
+          if (newData.payment_status !== localPaymentStatus) {
+            console.log('💳 Updating payment status to:', newData.payment_status);
+            setLocalPaymentStatus(newData.payment_status);
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       console.log('🔄 Cleaning up auction update subscription');
-      supabase.removeChannel(channel);
+      supabase.removeChannel(artworkChannel);
+      supabase.removeChannel(paymentChannel);
       clearInterval(checkInterval);
     };
-  }, [auctionId, endDate, localCompletionStatus]);
+  }, [auctionId, endDate, localCompletionStatus, localPaymentStatus]);
 
   // If auction has ended but winner not set, check if current user is highest bidder
   const isPotentialWinner = isEnded && !localWinnerId && highestBid?.user_id === user?.id;
