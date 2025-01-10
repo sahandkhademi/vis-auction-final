@@ -4,13 +4,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CreditCard, ExternalLink } from "lucide-react";
+import { AlertCircle, CreditCard } from "lucide-react";
 import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
 
 export const PaymentMethodsManager = () => {
   const session = useSession();
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+
+  useEffect(() => {
+    const setupSuccess = searchParams.get('setup_success');
+    const setupCancelled = searchParams.get('setup_cancelled');
+
+    if (setupSuccess) {
+      toast.success("Payment method added successfully");
+    } else if (setupCancelled) {
+      toast.error("Payment setup was cancelled");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchPaymentMethods = async () => {
@@ -31,7 +44,7 @@ export const PaymentMethodsManager = () => {
     };
 
     fetchPaymentMethods();
-  }, [session?.user]);
+  }, [session?.user, searchParams]); // Re-fetch when URL params change
 
   const handleSetupPayment = async () => {
     if (!session?.user) {

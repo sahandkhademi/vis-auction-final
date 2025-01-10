@@ -38,6 +38,9 @@ serve(async (req) => {
       customer_email: user.email,
       success_url: `${req.headers.get('origin')}/profile?setup_success=true`,
       cancel_url: `${req.headers.get('origin')}/profile?setup_cancelled=true`,
+      metadata: {
+        user_id: user.id
+      }
     });
 
     console.log('✅ Setup session created:', session.id);
