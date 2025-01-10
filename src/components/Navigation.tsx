@@ -14,6 +14,8 @@ import { useQuery } from "@tanstack/react-query";
 import { DesktopNav } from "./navigation/DesktopNav";
 import { MobileNav } from "./navigation/MobileNav";
 import { UserActions } from "./navigation/UserActions";
+import { RefreshCw } from "lucide-react";
+import { Button } from "./ui/button";
 
 const Navigation = () => {
   const navigate = useNavigate();
@@ -63,6 +65,10 @@ const Navigation = () => {
     return () => document.removeEventListener("keydown", down);
   }, []);
 
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
       <div className="max-w-[1400px] mx-auto px-6">
@@ -82,6 +88,15 @@ const Navigation = () => {
           
           <DesktopNav />
           <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRefresh}
+              className="text-gray-600 hover:text-gray-900"
+              aria-label="Refresh page"
+            >
+              <RefreshCw className="h-[1.25rem] w-[1.25rem]" />
+            </Button>
             <UserActions user={user} setOpen={setOpen} />
             <MobileNav 
               mobileMenuOpen={mobileMenuOpen}
