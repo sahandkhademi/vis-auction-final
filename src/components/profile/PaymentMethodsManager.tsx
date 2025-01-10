@@ -8,6 +8,9 @@ import { AlertCircle, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { loadStripe } from "@stripe/stripe-js";
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 export const PaymentMethodsManager = () => {
   const session = useSession();
@@ -36,18 +39,6 @@ export const PaymentMethodsManager = () => {
     enabled: !!session?.user,
   });
 
-  useEffect(() => {
-    const setupSuccess = searchParams.get('setup_success');
-    const setupCancelled = searchParams.get('setup_cancelled');
-
-    if (setupSuccess) {
-      toast.success("Payment method added successfully");
-      refetch(); // Refetch payment methods after successful setup
-    } else if (setupCancelled) {
-      toast.error("Payment setup was cancelled");
-    }
-  }, [searchParams, refetch]);
-
   const handleSetupPayment = async () => {
     if (!session?.user) {
       toast.error("Please sign in to add a payment method");
@@ -56,15 +47,28 @@ export const PaymentMethodsManager = () => {
 
     setIsLoading(true);
     try {
+      const stripe = await stripePromise;
+      if (!stripe) throw new Error('Stripe failed to load');
+
       const { data, error } = await supabase.functions.invoke('setup-payment-method');
       
       if (error) throw error;
+      if (!data?.clientSecret) throw new Error('No client secret received');
 
-      if (!data?.url) {
-        throw new Error('No setup URL received');
+      const { error: stripeError } = await stripe.confirmCardSetup(data.clientSecret, {
+        payment_method: {
+          card: {
+            token: 'tok_visa', // This is for testing only
+          },
+        },
+      });
+
+      if (stripeError) {
+        throw stripeError;
       }
 
-      window.location.href = data.url;
+      toast.success("Payment method added successfully");
+      refetch();
     } catch (error) {
       console.error('Error setting up payment method:', error);
       toast.error("Failed to set up payment method");
@@ -114,7 +118,7 @@ export const PaymentMethodsManager = () => {
           className="w-full"
         >
           <CreditCard className="mr-2 h-4 w-4" />
-          Add Payment Method
+          {isLoading ? "Setting up..." : "Add Payment Method"}
         </Button>
       </CardContent>
     </Card>

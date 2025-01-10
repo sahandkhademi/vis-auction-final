@@ -31,29 +31,28 @@ serve(async (req) => {
       apiVersion: '2023-10-16',
     });
 
-    // Create a SetupIntent with the customer
-    const session = await stripe.checkout.sessions.create({
+    // Create a SetupIntent
+    const setupIntent = await stripe.setupIntents.create({
       payment_method_types: ['card'],
-      mode: 'setup',
       customer_email: user.email,
-      success_url: `${req.headers.get('origin')}/profile?setup_success=true`,
-      cancel_url: `${req.headers.get('origin')}/profile?setup_cancelled=true`,
       metadata: {
         user_id: user.id
       }
     });
 
-    console.log('✅ Setup session created:', session.id);
+    console.log('✅ Setup intent created:', setupIntent.id);
 
     return new Response(
-      JSON.stringify({ url: session.url }),
+      JSON.stringify({ 
+        clientSecret: setupIntent.client_secret,
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
       }
     );
   } catch (error) {
-    console.error('❌ Error creating setup session:', error);
+    console.error('❌ Error creating setup intent:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
