@@ -31,10 +31,31 @@ serve(async (req) => {
       apiVersion: '2023-10-16',
     });
 
+    // First, check if customer exists
+    let customer;
+    const customers = await stripe.customers.list({
+      email: user.email,
+      limit: 1,
+    });
+
+    if (customers.data.length > 0) {
+      customer = customers.data[0];
+    } else {
+      // Create a new customer if one doesn't exist
+      customer = await stripe.customers.create({
+        email: user.email,
+        metadata: {
+          user_id: user.id
+        }
+      });
+    }
+
+    console.log('✅ Customer retrieved/created:', customer.id);
+
     // Create a SetupIntent
     const setupIntent = await stripe.setupIntents.create({
+      customer: customer.id,
       payment_method_types: ['card'],
-      customer_email: user.email,
       metadata: {
         user_id: user.id
       }
