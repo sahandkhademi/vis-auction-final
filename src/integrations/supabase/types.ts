@@ -384,23 +384,35 @@ export type Database = {
       }
       website_visits: {
         Row: {
+          device_type: string | null
           id: string
           path: string | null
+          platform: string | null
+          session_duration: number | null
           session_id: string | null
+          user_agent: string | null
           visited_at: string | null
           visitor_id: string | null
         }
         Insert: {
+          device_type?: string | null
           id?: string
           path?: string | null
+          platform?: string | null
+          session_duration?: number | null
           session_id?: string | null
+          user_agent?: string | null
           visited_at?: string | null
           visitor_id?: string | null
         }
         Update: {
+          device_type?: string | null
           id?: string
           path?: string | null
+          platform?: string | null
+          session_duration?: number | null
           session_id?: string | null
+          user_agent?: string | null
           visited_at?: string | null
           visitor_id?: string | null
         }
@@ -408,7 +420,23 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      commission_earnings: {
+        Row: {
+          commission_earned: number | null
+          month: string | null
+          total_sales: number | null
+          total_volume: number | null
+        }
+        Relationships: []
+      }
+      user_retention: {
+        Row: {
+          registered_visitors: number | null
+          total_visitors: number | null
+          visit_date: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_highest_bid: {

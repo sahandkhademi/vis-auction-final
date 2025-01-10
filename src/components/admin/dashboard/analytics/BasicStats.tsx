@@ -1,172 +1,79 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUpIcon, ArrowDownIcon } from "lucide-react";
-import { subDays, startOfDay, endOfDay } from "date-fns";
+import { Users, DollarSign, TrendingUp, Clock } from "lucide-react";
 
 export const BasicStats = () => {
-  const { data: totalAuctions } = useQuery({
-    queryKey: ["totalAuctions"],
+  const { data: commissionData } = useQuery({
+    queryKey: ["commission-earnings"],
     queryFn: async () => {
-      const currentDate = new Date();
-      const previousDate = subDays(currentDate, 7);
+      const { data, error } = await supabase
+        .from("commission_earnings")
+        .select("*")
+        .limit(1);
 
-      const { count: currentCount } = await supabase
-        .from("artworks")
-        .select("*", { count: "exact", head: true });
-
-      const { count: previousCount } = await supabase
-        .from("artworks")
-        .select("*", { count: "exact", head: true })
-        .lt("created_at", startOfDay(previousDate).toISOString());
-
-      const { count: weeklyCount } = await supabase
-        .from("artworks")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", startOfDay(previousDate).toISOString())
-        .lte("created_at", endOfDay(currentDate).toISOString());
-
-      const percentageChange = previousCount && previousCount > 0
-        ? (((weeklyCount || 0) / previousCount) * 100 - 100).toFixed(1)
-        : "0";
-
-      return {
-        current: currentCount || 0,
-        change: percentageChange,
-      };
+      if (error) throw error;
+      return data[0];
     },
   });
 
-  const { data: activeAuctions } = useQuery({
-    queryKey: ["activeAuctions"],
+  const { data: retentionData } = useQuery({
+    queryKey: ["user-retention"],
     queryFn: async () => {
-      const currentDate = new Date();
-      const previousDate = subDays(currentDate, 7);
+      const { data, error } = await supabase
+        .from("user_retention")
+        .select("*")
+        .limit(1);
 
-      const { count: currentCount } = await supabase
-        .from("artworks")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "published")
-        .eq("completion_status", "ongoing");
-
-      const { count: previousCount } = await supabase
-        .from("artworks")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "published")
-        .eq("completion_status", "ongoing")
-        .lt("created_at", startOfDay(previousDate).toISOString());
-
-      const { count: weeklyCount } = await supabase
-        .from("artworks")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "published")
-        .eq("completion_status", "ongoing")
-        .gte("created_at", startOfDay(previousDate).toISOString())
-        .lte("created_at", endOfDay(currentDate).toISOString());
-
-      const percentageChange = previousCount && previousCount > 0
-        ? (((weeklyCount || 0) / previousCount) * 100 - 100).toFixed(1)
-        : "0";
-
-      return {
-        current: currentCount || 0,
-        change: percentageChange,
-      };
+      if (error) throw error;
+      return data[0];
     },
   });
 
-  const { data: totalUsers } = useQuery({
-    queryKey: ["totalUsers"],
-    queryFn: async () => {
-      const currentDate = new Date();
-      const previousDate = subDays(currentDate, 7);
-
-      const { count: currentCount } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true });
-
-      const { count: previousCount } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .lt("created_at", startOfDay(previousDate).toISOString());
-
-      const { count: weeklyCount } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", startOfDay(previousDate).toISOString())
-        .lte("created_at", endOfDay(currentDate).toISOString());
-
-      const percentageChange = previousCount && previousCount > 0
-        ? (((weeklyCount || 0) / previousCount) * 100 - 100).toFixed(1)
-        : "0";
-
-      return {
-        current: currentCount || 0,
-        change: percentageChange,
-      };
+  const stats = [
+    {
+      title: "Total Visitors",
+      value: retentionData?.total_visitors || 0,
+      icon: Users,
+      description: "Unique visitors today",
     },
-  });
-
-  const renderChange = (change: string) => {
-    const numChange = parseFloat(change);
-    if (numChange > 0) {
-      return (
-        <div className="flex items-center text-sm text-green-600">
-          <ArrowUpIcon className="w-4 h-4 mr-1" />
-          <span>+{change}%</span>
-        </div>
-      );
-    } else if (numChange < 0) {
-      return (
-        <div className="flex items-center text-sm text-red-600">
-          <ArrowDownIcon className="w-4 h-4 mr-1" />
-          <span>{change}%</span>
-        </div>
-      );
-    }
-    return <span className="text-sm text-gray-500">No change</span>;
-  };
+    {
+      title: "Registered Users",
+      value: retentionData?.registered_visitors || 0,
+      icon: Users,
+      description: "Active registered users",
+    },
+    {
+      title: "Monthly Sales",
+      value: commissionData?.total_sales || 0,
+      icon: DollarSign,
+      description: "Total sales this month",
+    },
+    {
+      title: "Commission Earned",
+      value: `€${(commissionData?.commission_earned || 0).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      icon: TrendingUp,
+      description: "Commission this month",
+    },
+  ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Total Auctions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{totalAuctions?.current || 0}</p>
-          <div className="mt-2">
-            {renderChange(totalAuctions?.change || "0")}
-            <p className="text-sm text-gray-500">vs last week</p>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Active Auctions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{activeAuctions?.current || 0}</p>
-          <div className="mt-2">
-            {renderChange(activeAuctions?.change || "0")}
-            <p className="text-sm text-gray-500">vs last week</p>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Total Users</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{totalUsers?.current || 0}</p>
-          <div className="mt-2">
-            {renderChange(totalUsers?.change || "0")}
-            <p className="text-sm text-gray-500">vs last week</p>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {stats.map((stat, index) => (
+        <Card key={index}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+            <stat.icon className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stat.value}</div>
+            <p className="text-xs text-muted-foreground">{stat.description}</p>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };
