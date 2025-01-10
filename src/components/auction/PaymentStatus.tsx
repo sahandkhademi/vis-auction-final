@@ -1,40 +1,32 @@
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { PaymentButton } from "./PaymentButton";
+import { CheckCircle2 } from "lucide-react";
 
 interface PaymentStatusProps {
   hasCompletedPayment: boolean;
   needsPayment: boolean;
   isEnded: boolean;
-  auctionId: string;
-  currentBid: number;
 }
 
 export const PaymentStatus = ({
   hasCompletedPayment,
   needsPayment,
-  isEnded,
-  auctionId,
-  currentBid,
+  isEnded
 }: PaymentStatusProps) => {
-  return (
-    <>
-      {hasCompletedPayment && (
-        <Alert className="bg-green-50 border-green-200">
-          <AlertTitle className="text-green-800">Payment Completed!</AlertTitle>
-          <AlertDescription className="text-green-700">
-            Thank you for your payment! Your purchase has been confirmed. You should have received a confirmation email with further details.
-          </AlertDescription>
-        </Alert>
-      )}
+  if (!isEnded || (!hasCompletedPayment && !needsPayment)) {
+    return null;
+  }
 
-      {needsPayment && isEnded && !hasCompletedPayment && (
-        <div className="mt-4">
-          <PaymentButton 
-            auctionId={auctionId} 
-            currentPrice={currentBid}
-          />
+  if (hasCompletedPayment) {
+    return (
+      <div className="rounded-lg border p-4 bg-green-50 border-green-200">
+        <div className="flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5 text-green-500" />
+          <p className="text-sm text-green-700 font-medium">
+            Thank you for your payment!
+          </p>
         </div>
-      )}
-    </>
-  );
+      </div>
+    );
+  }
+
+  return null;
 };
