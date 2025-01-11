@@ -11,7 +11,7 @@ const HowItWorks = () => {
         transition={{ duration: 0.5 }}
         className="space-y-8"
       >
-        <div className="text-center mb-12">
+        <div className="mb-12">
           <p className="text-gray-600">Your guide to participating in our art auctions</p>
         </div>
 
