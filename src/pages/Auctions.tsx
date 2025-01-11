@@ -28,7 +28,7 @@ const Auctions = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container max-w-4xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="space-y-4">
@@ -44,7 +44,7 @@ const Auctions = () => {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="container max-w-4xl mx-auto px-4">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
@@ -57,8 +57,8 @@ const Auctions = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl mb-8">Current Lots</h1>
+    <div className="container max-w-4xl mx-auto px-4">
+      <h1 className="text-3xl font-semibold mb-6">Current Lots</h1>
       {artworks && artworks.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {artworks.map((artwork) => (

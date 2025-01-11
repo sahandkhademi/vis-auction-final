@@ -22,8 +22,8 @@ const About = lazy(() => import("@/pages/About"));
 const Auctions = lazy(() => import("@/pages/Auctions"));
 const SubmitArt = lazy(() => import("@/pages/SubmitArt"));
 const FAQ = lazy(() => import("@/pages/FAQ"));
+const HowItWorks = lazy(() => import("@/pages/HowItWorks"));
 
-// Loading fallback component
 const PageLoader = () => (
   <div className="min-h-[70vh] flex items-center justify-center">
     <div className="space-y-4 w-full max-w-3xl px-4">
@@ -59,6 +59,7 @@ function App() {
                   <Route path="/about" element={<About />} />
                   <Route path="/submit-art" element={<SubmitArt />} />
                   <Route path="/faq" element={<FAQ />} />
+                  <Route path="/how-it-works" element={<HowItWorks />} />
                 </Routes>
               </Suspense>
             </main>

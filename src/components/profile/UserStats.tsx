@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Award, Gavel, TrendingUp } from "lucide-react";
+import { Award, Gavel, TrendingUp, Trophy, Percent, Timer, Target } from "lucide-react";
 
 interface UserStatsProps {
   userId?: string;
@@ -19,21 +19,62 @@ export const UserStats = ({ userId }: UserStatsProps) => {
     queryFn: async () => {
       if (!userId) return null;
       
-      const { data: bids, error } = await supabase
+      // Get all bids by the user
+      const { data: bids, error: bidsError } = await supabase
         .from("bids")
-        .select("amount")
+        .select(`
+          amount,
+          auction_id,
+          artworks!auction_id (
+            winner_id,
+            current_price,
+            completion_status
+          )
+        `)
         .eq("user_id", userId);
 
-      if (error) throw error;
+      if (bidsError) throw bidsError;
+
+      // Get won auctions
+      const { data: wonAuctions, error: wonError } = await supabase
+        .from("artworks")
+        .select("current_price")
+        .eq("winner_id", userId)
+        .eq("completion_status", "completed");
+
+      if (wonError) throw wonError;
 
       const totalBids = bids.length;
       const totalAmount = bids.reduce((sum, bid) => sum + Number(bid.amount), 0);
       const highestBid = bids.reduce((max, bid) => Math.max(max, Number(bid.amount)), 0);
+      
+      // Calculate unique auctions participated in
+      const uniqueAuctions = new Set(bids.map(bid => bid.auction_id)).size;
+      
+      // Calculate win rate
+      const wonAuctionsCount = wonAuctions?.length || 0;
+      const winRate = uniqueAuctions > 0 
+        ? ((wonAuctionsCount / uniqueAuctions) * 100).toFixed(1) 
+        : 0;
+
+      // Calculate total value of won auctions
+      const totalWonValue = wonAuctions?.reduce((sum, auction) => 
+        sum + Number(auction.current_price), 0) || 0;
+
+      // Calculate average bid amount
+      const averageBid = totalBids > 0 
+        ? totalAmount / totalBids 
+        : 0;
 
       return {
         totalBids,
         totalAmount,
         highestBid,
+        uniqueAuctions,
+        wonAuctionsCount,
+        winRate,
+        totalWonValue,
+        averageBid,
       };
     },
     enabled: !!userId,
@@ -48,7 +89,7 @@ export const UserStats = ({ userId }: UserStatsProps) => {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Bids</CardTitle>
@@ -57,7 +98,7 @@ export const UserStats = ({ userId }: UserStatsProps) => {
         <CardContent>
           <div className="text-2xl font-bold">{stats.totalBids}</div>
           <p className="text-xs text-muted-foreground">
-            Bids placed across all auctions
+            Across {stats.uniqueAuctions} auctions
           </p>
         </CardContent>
       </Card>
@@ -69,25 +110,36 @@ export const UserStats = ({ userId }: UserStatsProps) => {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            ${stats.totalAmount.toLocaleString()}
+            €{stats.totalAmount.toLocaleString()}
           </div>
           <p className="text-xs text-muted-foreground">
-            Total value of all bids
+            Average bid: €{Math.round(stats.averageBid).toLocaleString()}
           </p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Highest Bid</CardTitle>
-          <Award className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">Won Auctions</CardTitle>
+          <Trophy className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
-            ${stats.highestBid.toLocaleString()}
-          </div>
+          <div className="text-2xl font-bold">{stats.wonAuctionsCount}</div>
           <p className="text-xs text-muted-foreground">
-            Your highest single bid
+            Value: €{stats.totalWonValue.toLocaleString()}
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Win Rate</CardTitle>
+          <Target className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.winRate}%</div>
+          <p className="text-xs text-muted-foreground">
+            Success rate in auctions
           </p>
         </CardContent>
       </Card>
