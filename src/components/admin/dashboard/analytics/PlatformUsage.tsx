@@ -72,7 +72,10 @@ export const PlatformUsage = () => {
     retry: 2,
   });
 
-  const COLORS = ['#C6A07C', '#B89068', '#A98054', '#9A7040', '#8B602C'];
+  const COLORS = Array(5).fill('#00337F').map((color, index) => {
+    const opacity = 1 - (index * 0.15);
+    return `rgba(0, 51, 127, ${opacity})`;
+  });
 
   if (deviceError || platformError) {
     console.error("Device error:", deviceError);
@@ -101,12 +104,12 @@ export const PlatformUsage = () => {
   }
 
   return (
-    <Card>
+    <Card className="mb-8">
       <CardHeader>
         <CardTitle>Platform & Device Usage</CardTitle>
         <CardDescription>Distribution of visits by platform and device type</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="h-[300px]">
             <h3 className="text-sm font-medium mb-4">Device Types</h3>
@@ -119,7 +122,7 @@ export const PlatformUsage = () => {
                   labelLine={false}
                   label={renderCustomizedLabel}
                   outerRadius={80}
-                  fill="#8884d8"
+                  fill="#00337F"
                   dataKey="value"
                 >
                   {(deviceData || []).map((entry, index) => (
@@ -142,7 +145,7 @@ export const PlatformUsage = () => {
                   labelLine={false}
                   label={renderCustomizedLabel}
                   outerRadius={80}
-                  fill="#8884d8"
+                  fill="#00337F"
                   dataKey="value"
                 >
                   {(platformData || []).map((entry, index) => (
