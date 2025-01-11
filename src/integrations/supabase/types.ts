@@ -465,6 +465,14 @@ export type Database = {
         }
         Returns: string
       }
+      track_website_visit: {
+        Args: {
+          p_session_id: string
+          p_path: string
+          p_user_agent: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
