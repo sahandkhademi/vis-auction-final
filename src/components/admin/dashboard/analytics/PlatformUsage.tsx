@@ -12,16 +12,23 @@ export const PlatformUsage = () => {
         .select("device_type")
         .not("device_type", "is", null);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching device data:", error);
+        throw error;
+      }
 
       // Count occurrences of each device type
       const counts = data.reduce((acc: Record<string, number>, { device_type }) => {
-        acc[device_type || 'unknown'] = (acc[device_type || 'unknown'] || 0) + 1;
+        const type = device_type?.toLowerCase() || 'unknown';
+        acc[type] = (acc[type] || 0) + 1;
         return acc;
       }, {});
 
       // Convert to array format for chart
-      return Object.entries(counts).map(([name, value]) => ({ name, value }));
+      return Object.entries(counts).map(([name, value]) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        value
+      }));
     },
   });
 
@@ -33,27 +40,48 @@ export const PlatformUsage = () => {
         .select("platform")
         .not("platform", "is", null);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching platform data:", error);
+        throw error;
+      }
 
       // Count occurrences of each platform
       const counts = data.reduce((acc: Record<string, number>, { platform }) => {
-        acc[platform || 'unknown'] = (acc[platform || 'unknown'] || 0) + 1;
+        const os = platform?.toLowerCase() || 'unknown';
+        acc[os] = (acc[os] || 0) + 1;
         return acc;
       }, {});
 
       // Convert to array format for chart
-      return Object.entries(counts).map(([name, value]) => ({ name, value }));
+      return Object.entries(counts).map(([name, value]) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        value
+      }));
     },
   });
 
   const COLORS = ['#C6A07C', '#B89068', '#A98054', '#9A7040', '#8B602C'];
 
   if (deviceError || platformError) {
+    console.error("Device error:", deviceError);
+    console.error("Platform error:", platformError);
     return (
       <Card>
         <CardHeader>
           <CardTitle>Platform & Device Usage</CardTitle>
           <CardDescription>Error loading usage data</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  // Show loading state or empty state if no data
+  if (!deviceData?.length && !platformData?.length) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Platform & Device Usage</CardTitle>
+          <CardDescription>No usage data available</CardDescription>
         </CardHeader>
       </Card>
     );
