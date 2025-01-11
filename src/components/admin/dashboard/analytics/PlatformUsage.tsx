@@ -7,6 +7,7 @@ export const PlatformUsage = () => {
   const { data: deviceData, error: deviceError } = useQuery({
     queryKey: ["platform-usage-devices"],
     queryFn: async () => {
+      console.log("Fetching device data...");
       const { data, error } = await supabase
         .from("website_visits")
         .select("device_type")
@@ -17,12 +18,16 @@ export const PlatformUsage = () => {
         throw error;
       }
 
+      console.log("Raw device data:", data);
+
       // Count occurrences of each device type
       const counts = data.reduce((acc: Record<string, number>, { device_type }) => {
-        const type = device_type?.toLowerCase() || 'unknown';
+        const type = (device_type || 'unknown').toLowerCase();
         acc[type] = (acc[type] || 0) + 1;
         return acc;
       }, {});
+
+      console.log("Processed device counts:", counts);
 
       // Convert to array format for chart
       return Object.entries(counts).map(([name, value]) => ({
@@ -30,11 +35,13 @@ export const PlatformUsage = () => {
         value
       }));
     },
+    retry: 2,
   });
 
   const { data: platformData, error: platformError } = useQuery({
     queryKey: ["platform-usage-platforms"],
     queryFn: async () => {
+      console.log("Fetching platform data...");
       const { data, error } = await supabase
         .from("website_visits")
         .select("platform")
@@ -45,12 +52,16 @@ export const PlatformUsage = () => {
         throw error;
       }
 
+      console.log("Raw platform data:", data);
+
       // Count occurrences of each platform
       const counts = data.reduce((acc: Record<string, number>, { platform }) => {
-        const os = platform?.toLowerCase() || 'unknown';
+        const os = (platform || 'unknown').toLowerCase();
         acc[os] = (acc[os] || 0) + 1;
         return acc;
       }, {});
+
+      console.log("Processed platform counts:", counts);
 
       // Convert to array format for chart
       return Object.entries(counts).map(([name, value]) => ({
@@ -58,6 +69,7 @@ export const PlatformUsage = () => {
         value
       }));
     },
+    retry: 2,
   });
 
   const COLORS = ['#C6A07C', '#B89068', '#A98054', '#9A7040', '#8B602C'];
@@ -77,11 +89,12 @@ export const PlatformUsage = () => {
 
   // Show loading state or empty state if no data
   if (!deviceData?.length && !platformData?.length) {
+    console.log("No data available. Device data:", deviceData, "Platform data:", platformData);
     return (
       <Card>
         <CardHeader>
           <CardTitle>Platform & Device Usage</CardTitle>
-          <CardDescription>No usage data available</CardDescription>
+          <CardDescription>No usage data available. Please ensure website visits are being tracked.</CardDescription>
         </CardHeader>
       </Card>
     );
