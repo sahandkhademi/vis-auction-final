@@ -89,57 +89,57 @@ export const UserStats = ({ userId }: UserStatsProps) => {
   }
 
   return (
-    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Bids</CardTitle>
+    <div className="grid gap-3 grid-cols-2 md:grid-cols-4 px-1">
+      <Card className="w-full">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
+          <CardTitle className="text-xs sm:text-sm font-medium">Total Bids</CardTitle>
           <Gavel className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.totalBids}</div>
-          <p className="text-xs text-muted-foreground">
+        <CardContent className="p-4 pt-0">
+          <div className="text-xl sm:text-2xl font-bold">{stats.totalBids}</div>
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
             Across {stats.uniqueAuctions} auctions
           </p>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Amount</CardTitle>
+      <Card className="w-full">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
+          <CardTitle className="text-xs sm:text-sm font-medium">Total Amount</CardTitle>
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
+        <CardContent className="p-4 pt-0">
+          <div className="text-xl sm:text-2xl font-bold">
             €{stats.totalAmount.toLocaleString()}
           </div>
-          <p className="text-xs text-muted-foreground">
-            Average bid: €{Math.round(stats.averageBid).toLocaleString()}
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
+            Average: €{Math.round(stats.averageBid).toLocaleString()}
           </p>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Won Auctions</CardTitle>
+      <Card className="w-full">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
+          <CardTitle className="text-xs sm:text-sm font-medium">Won Auctions</CardTitle>
           <Trophy className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.wonAuctionsCount}</div>
-          <p className="text-xs text-muted-foreground">
+        <CardContent className="p-4 pt-0">
+          <div className="text-xl sm:text-2xl font-bold">{stats.wonAuctionsCount}</div>
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
             Value: €{stats.totalWonValue.toLocaleString()}
           </p>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Win Rate</CardTitle>
+      <Card className="w-full">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4">
+          <CardTitle className="text-xs sm:text-sm font-medium">Win Rate</CardTitle>
           <Target className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.winRate}%</div>
-          <p className="text-xs text-muted-foreground">
-            Success rate in auctions
+        <CardContent className="p-4 pt-0">
+          <div className="text-xl sm:text-2xl font-bold">{stats.winRate}%</div>
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
+            Success rate
           </p>
         </CardContent>
       </Card>
