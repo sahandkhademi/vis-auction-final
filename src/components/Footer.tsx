@@ -5,7 +5,7 @@ const Footer = () => {
   return (
     <footer className="bg-white border-t border-gray-100 mt-auto">
       <div className="container mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center space-x-3 mb-4">
               <img 
@@ -21,7 +21,7 @@ const Footer = () => {
           </div>
           
           <div>
-            <h4 className="text-base font-medium text-gray-900 mb-4">Auction Information</h4>
+            <h4 className="text-base font-medium text-gray-900 mb-4">Information</h4>
             <ul className="space-y-2">
               <li>
                 <Link to="/auctions" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
