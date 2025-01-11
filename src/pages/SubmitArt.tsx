@@ -14,7 +14,7 @@ const SubmitArt = () => {
           Thank you for your interest in submitting your artwork to VIS Auction. We're currently accepting submissions via email.
         </p>
 
-        <div className="bg-[#F6F6F7] rounded-lg p-6">
+        <div className="bg-secondary/50 rounded-lg p-6">
           <h2 className="text-2xl font-semibold mb-4">How to Submit</h2>
           <p className="text-gray-700 mb-4">
             Please send us an email with the following information:
