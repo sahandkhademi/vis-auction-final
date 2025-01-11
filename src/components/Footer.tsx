@@ -5,7 +5,7 @@ const Footer = () => {
   return (
     <footer className="bg-white border-t border-gray-100 mt-auto">
       <div className="container mx-auto px-6 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="space-y-8">
           <div>
             <div className="flex items-center space-x-3 mb-4">
               <img 
@@ -20,53 +20,55 @@ const Footer = () => {
             </p>
           </div>
           
-          <div>
-            <h4 className="text-base font-medium text-gray-900 mb-4">Information</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/auctions" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                  Current Lots
-                </Link>
-              </li>
-              <li>
-                <Link to="/how-it-works" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                  How It Works
-                </Link>
-              </li>
-              <li>
-                <Link to="/submit-art" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                  Submit Your Art
-                </Link>
-              </li>
-            </ul>
+          <div className="grid grid-cols-2 gap-8">
+            <div>
+              <h4 className="text-base font-medium text-gray-900 mb-4">Information</h4>
+              <ul className="space-y-2">
+                <li>
+                  <Link to="/auctions" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                    Current Lots
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/how-it-works" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                    How It Works
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/submit-art" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                    Submit Your Art
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 className="text-base font-medium text-gray-900 mb-4">Support & Help</h4>
+              <ul className="space-y-2">
+                <li>
+                  <Link to="/faq" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                    FAQ
+                  </Link>
+                </li>
+                <li>
+                  <a href="mailto:support@visauction.com" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                    Contact Support
+                  </a>
+                </li>
+                <li>
+                  <Link to="/terms" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                    Terms & Conditions
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/privacy" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                    Privacy Policy
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
-          
-          <div>
-            <h4 className="text-base font-medium text-gray-900 mb-4">Support & Help</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/faq" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <a href="mailto:support@visauction.com" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                  Contact Support
-                </a>
-              </li>
-              <li>
-                <Link to="/terms" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                  Terms & Conditions
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
-            </ul>
-          </div>
-          
+
           <div>
             <h4 className="text-base font-medium text-gray-900 mb-4">Connect With Us</h4>
             <p className="text-sm text-gray-600 mb-4">Follow us on Instagram for daily updates on new artworks and upcoming auctions.</p>
