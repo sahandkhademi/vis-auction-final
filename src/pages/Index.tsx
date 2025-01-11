@@ -1,5 +1,6 @@
 import { HomeBannerSlideshow } from "@/components/home/HomeBannerSlideshow";
 import { TrendingAuctions } from "@/components/home/TrendingAuctions";
+import { UpcomingAuctions } from "@/components/home/UpcomingAuctions";
 
 const Index = () => {
   return (
@@ -7,6 +8,7 @@ const Index = () => {
       <HomeBannerSlideshow />
       <div className="container py-8">
         <TrendingAuctions />
+        <UpcomingAuctions />
       </div>
     </div>
   );
