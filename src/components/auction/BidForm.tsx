@@ -55,7 +55,12 @@ export const BidForm = ({
           .limit(1)
           .single();
 
-        setHasValidPaymentMethod(!!data);
+        if (error) {
+          console.error('Error checking payment method:', error);
+          setHasValidPaymentMethod(false);
+        } else {
+          setHasValidPaymentMethod(!!data);
+        }
       } catch (error) {
         console.error('Error checking payment method:', error);
         setHasValidPaymentMethod(false);
