@@ -1,11 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export const UpcomingAuctions = () => {
   const { data: upcomingArtworks, isLoading, error } = useQuery({
@@ -49,7 +47,7 @@ export const UpcomingAuctions = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {isLoading ? (
           [...Array(2)].map((_, i) => (
-            <div key={i} className="relative aspect-[4/3] overflow-hidden rounded-lg">
+            <div key={i} className="relative aspect-square overflow-hidden rounded-lg">
               <Skeleton className="h-full w-full" />
             </div>
           ))
@@ -61,7 +59,7 @@ export const UpcomingAuctions = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="relative aspect-[4/3] overflow-hidden rounded-lg group"
+                className="relative aspect-square overflow-hidden rounded-lg group"
               >
                 <img
                   src={artwork.image_url || "/placeholder.svg"}
@@ -71,14 +69,7 @@ export const UpcomingAuctions = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30">
                   <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                     <h3 className="text-xl font-semibold mb-1">{artwork.title}</h3>
-                    <p className="text-sm text-gray-200 mb-4">{artwork.artist}</p>
-                    <Link to="/auctions">
-                      <Button 
-                        className="bg-white text-black hover:bg-white/90 transition-colors duration-300"
-                      >
-                        View Lots
-                      </Button>
-                    </Link>
+                    <p className="text-sm text-gray-200">{artwork.artist}</p>
                   </div>
                 </div>
               </motion.div>
