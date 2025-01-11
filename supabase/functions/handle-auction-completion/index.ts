@@ -39,7 +39,7 @@ serve(async (req: Request) => {
       }
     );
 
-    // Get auction and highest bid details
+    // Get auction details using maybeSingle() instead of single()
     const { data: auction, error: auctionError } = await supabaseClient
       .from('artworks')
       .select(`
@@ -49,7 +49,7 @@ serve(async (req: Request) => {
         )
       `)
       .eq('id', auctionId)
-      .single();
+      .maybeSingle();
 
     if (auctionError) {
       console.error('❌ Error fetching auction:', auctionError);
@@ -58,29 +58,63 @@ serve(async (req: Request) => {
 
     if (!auction) {
       console.error('❌ No auction found with ID:', auctionId);
-      throw new Error('Auction not found');
+      return new Response(
+        JSON.stringify({ error: 'Auction not found' }),
+        { 
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    // Get highest bid
+    // Get highest bid using maybeSingle()
     const { data: highestBid, error: bidError } = await supabaseClient
       .from('bids')
       .select('user_id, amount')
       .eq('auction_id', auctionId)
       .order('amount', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (bidError) {
       console.error('❌ Error fetching highest bid:', bidError);
       throw bidError;
     }
 
-    // Get winner's email
+    // If there's no highest bid, just mark the auction as completed
+    if (!highestBid) {
+      console.log('ℹ️ No bids found for auction:', auctionId);
+      const { error: updateError } = await supabaseClient
+        .from('artworks')
+        .update({
+          completion_status: 'completed',
+          current_price: auction.starting_price
+        })
+        .eq('id', auctionId);
+
+      if (updateError) {
+        console.error('❌ Error updating auction:', updateError);
+        throw updateError;
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          message: 'Auction completed with no bids',
+          finalPrice: auction.starting_price
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    }
+
+    // Get winner's email using maybeSingle()
     const { data: winner, error: winnerError } = await supabaseClient
       .from('profiles')
       .select('email')
       .eq('id', highestBid.user_id)
-      .single();
+      .maybeSingle();
 
     if (winnerError) {
       console.error('❌ Error fetching winner details:', winnerError);
@@ -111,15 +145,13 @@ serve(async (req: Request) => {
 
       if (chargeError) {
         console.error('❌ Error charging winner:', chargeError);
-        // Continue with the process even if charging fails
       }
     } catch (chargeError) {
       console.error('❌ Error invoking charge-winner function:', chargeError);
-      // Continue with the process even if charging fails
     }
 
-    // Send winner email notification
-    if (RESEND_API_KEY && winner.email) {
+    // Send winner email notification if we have both the API key and winner's email
+    if (RESEND_API_KEY && winner?.email) {
       console.log('📧 Sending winner email to:', winner.email);
       
       try {
@@ -141,10 +173,9 @@ serve(async (req: Request) => {
         if (!emailResponse.ok) {
           const errorData = await emailResponse.text();
           console.error('❌ Failed to send winner email:', errorData);
-          throw new Error(`Failed to send winner email: ${errorData}`);
+        } else {
+          console.log('✅ Winner email sent successfully');
         }
-
-        console.log('✅ Winner email sent successfully');
       } catch (emailError) {
         console.error('❌ Error sending winner email:', emailError);
       }
