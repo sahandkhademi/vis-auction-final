@@ -77,7 +77,7 @@ export const UpcomingAuctions = () => {
           </AnimatePresence>
         ) : (
           <div className="col-span-2 text-center py-12">
-            <p className="text-gray-500 text-lg">No active auctions available at the moment.</p>
+            <p className="text-gray-500 text-lg">No upcoming auctions for now! Sign up as a user to be notified about upcoming auction.</p>
           </div>
         )}
       </div>
