@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, DollarSign, TrendingUp, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Create arrow components to avoid import issues
 const ArrowUpIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -95,12 +94,18 @@ export const BasicStats = () => {
   const { data: avgSessionTime } = useQuery({
     queryKey: ["avg-session-time"],
     queryFn: async () => {
+      console.log("Fetching average session time...");
       const { data, error } = await supabase
         .from("website_visits")
         .select("session_duration")
         .not("session_duration", "is", null);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching session duration:", error);
+        throw error;
+      }
+
+      console.log("Session duration data:", data);
       const totalDuration = data.reduce((sum, visit) => sum + (visit.session_duration || 0), 0);
       return data.length ? Math.round(totalDuration / data.length) : 0;
     },
@@ -149,6 +154,12 @@ export const BasicStats = () => {
     return ((current - previous) / previous) * 100;
   };
 
+  const formatSessionDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`;
+  };
+
   const stats = [
     {
       title: "Total Users",
@@ -179,7 +190,7 @@ export const BasicStats = () => {
     },
     {
       title: "Avg. Session Duration",
-      value: `${Math.floor((avgSessionTime || 0) / 60)}m ${(avgSessionTime || 0) % 60}s`,
+      value: formatSessionDuration(avgSessionTime || 0),
       icon: Clock,
       description: "Average time per visit",
       change: calculateChange(avgSessionTime || 0, previousPeriodData?.avgSessionTime || 0),
