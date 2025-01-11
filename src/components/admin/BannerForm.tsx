@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Upload } from "lucide-react";
+import { convertToWebP } from "@/utils/imageUtils";
 
 interface BannerFormData {
   id?: string;
@@ -55,14 +56,17 @@ export const BannerForm = ({ defaultValues, onSuccess }: BannerFormProps) => {
       setIsLoading(true);
       setUploadProgress(0);
 
+      // Convert to WebP
+      const webpFile = await convertToWebP(file);
+
       // Generate a unique filename
-      const fileExt = file.name.split('.').pop();
+      const fileExt = webpFile.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
 
       // Upload the file to Supabase storage
       const { data, error } = await supabase.storage
         .from('banner-images')
-        .upload(fileName, file, {
+        .upload(fileName, webpFile, {
           cacheControl: '3600',
           upsert: false
         });

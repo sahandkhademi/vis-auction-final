@@ -32,3 +32,13 @@ export const convertToWebP = async (file: File): Promise<File> => {
     img.src = URL.createObjectURL(file);
   });
 };
+
+export const generateWebPUrl = (url: string): string => {
+  if (!url) return '';
+  return url.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+};
+
+export const generateSrcSet = (url: string): string => {
+  const webpUrl = generateWebPUrl(url);
+  return `${webpUrl} 1x, ${webpUrl.replace(/\.(webp)$/i, '@2x.$1')} 2x, ${webpUrl.replace(/\.(webp)$/i, '@3x.$1')} 3x`;
+};
