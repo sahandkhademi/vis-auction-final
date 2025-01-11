@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const UpcomingAuctions = () => {
   const { data: upcomingArtworks, isLoading, error } = useQuery({
@@ -67,15 +68,16 @@ export const UpcomingAuctions = () => {
                   alt={artwork.title}
                   className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30">
                   <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                     <h3 className="text-xl font-semibold mb-1">{artwork.title}</h3>
                     <p className="text-sm text-gray-200 mb-4">{artwork.artist}</p>
-                    <Link
-                      to="/auctions"
-                      className="inline-block bg-white text-black px-6 py-2 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors"
-                    >
-                      View Lots
+                    <Link to="/auctions">
+                      <Button 
+                        className="bg-white text-black hover:bg-white/90 transition-colors duration-300"
+                      >
+                        View Lots
+                      </Button>
                     </Link>
                   </div>
                 </div>
