@@ -52,7 +52,7 @@ export const AuctionParticipation = ({ userId }: { userId: string }) => {
     return (
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
-          You haven't participated in any auctions yet.
+          You haven't participated in any lots yet.
         </CardContent>
       </Card>
     );

@@ -111,7 +111,7 @@ export const WonAuctions = ({ userId }: { userId: string }) => {
     return (
       <Card>
         <CardContent className="py-8 text-center text-muted-foreground">
-          You haven't won any auctions yet. Keep bidding!
+          You haven't won any lots yet. Keep bidding!
         </CardContent>
       </Card>
     );

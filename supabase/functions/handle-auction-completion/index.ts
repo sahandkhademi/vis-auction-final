@@ -102,6 +102,22 @@ serve(async (req: Request) => {
       throw updateError;
     }
 
+    // Attempt to charge the winner
+    try {
+      console.log('💳 Attempting to charge winner...');
+      const { error: chargeError } = await supabaseClient.functions.invoke('charge-winner', {
+        body: { auctionId }
+      });
+
+      if (chargeError) {
+        console.error('❌ Error charging winner:', chargeError);
+        // Continue with the process even if charging fails
+      }
+    } catch (chargeError) {
+      console.error('❌ Error invoking charge-winner function:', chargeError);
+      // Continue with the process even if charging fails
+    }
+
     // Send winner email notification
     if (RESEND_API_KEY && winner.email) {
       console.log('📧 Sending winner email to:', winner.email);

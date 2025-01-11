@@ -83,14 +83,14 @@ export const TrendingAuctions = () => {
   return (
     <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-medium text-gray-900">Trending Auctions</h2>
+        <h2 className="text-2xl font-medium text-gray-900">Trending Lots</h2>
         <div className="flex items-center gap-4">
           <Button
             onClick={createTestAuction}
             variant="secondary"
             className="text-sm"
           >
-            Create Test Auction
+            Create Test Lot
           </Button>
           <Link 
             to="/auctions" 
@@ -164,7 +164,7 @@ export const TrendingAuctions = () => {
               to="/auctions" 
               className="text-primary hover:text-primary/80 transition-colors mt-2 inline-block"
             >
-              Browse all auctions
+              Browse all lots
             </Link>
           </motion.div>
         )}

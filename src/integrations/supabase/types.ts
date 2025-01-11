@@ -84,6 +84,7 @@ export type Database = {
           format: string | null
           id: string
           image_url: string | null
+          payment_intent_id: string | null
           payment_status: string | null
           starting_price: number
           status: string | null
@@ -106,6 +107,7 @@ export type Database = {
           format?: string | null
           id?: string
           image_url?: string | null
+          payment_intent_id?: string | null
           payment_status?: string | null
           starting_price: number
           status?: string | null
@@ -128,6 +130,7 @@ export type Database = {
           format?: string | null
           id?: string
           image_url?: string | null
+          payment_intent_id?: string | null
           payment_status?: string | null
           starting_price?: number
           status?: string | null
@@ -346,9 +349,94 @@ export type Database = {
         }
         Relationships: []
       }
+      user_payment_methods: {
+        Row: {
+          card_brand: string
+          created_at: string
+          id: string
+          is_valid: boolean | null
+          last_four: string
+          stripe_payment_method_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_brand: string
+          created_at?: string
+          id?: string
+          is_valid?: boolean | null
+          last_four: string
+          stripe_payment_method_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_brand?: string
+          created_at?: string
+          id?: string
+          is_valid?: boolean | null
+          last_four?: string
+          stripe_payment_method_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      website_visits: {
+        Row: {
+          device_type: string | null
+          id: string
+          path: string | null
+          platform: string | null
+          session_duration: number | null
+          session_id: string | null
+          user_agent: string | null
+          visited_at: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          device_type?: string | null
+          id?: string
+          path?: string | null
+          platform?: string | null
+          session_duration?: number | null
+          session_id?: string | null
+          user_agent?: string | null
+          visited_at?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          device_type?: string | null
+          id?: string
+          path?: string | null
+          platform?: string | null
+          session_duration?: number | null
+          session_id?: string | null
+          user_agent?: string | null
+          visited_at?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      commission_earnings: {
+        Row: {
+          commission_earned: number | null
+          month: string | null
+          total_sales: number | null
+          total_volume: number | null
+        }
+        Relationships: []
+      }
+      user_retention: {
+        Row: {
+          registered_visitors: number | null
+          total_visitors: number | null
+          visit_date: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_highest_bid: {

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Upload } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { convertToWebP } from "@/utils/imageUtils";
 
 interface ArtistFormData {
   name: string;
@@ -38,18 +39,21 @@ export const ArtistForm = ({ defaultValues, artistId, onSuccess }: ArtistFormPro
 
     try {
       setIsLoading(true);
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${artistId || crypto.randomUUID()}.${fileExt}`;
+      
+      // Convert to WebP
+      const webpFile = await convertToWebP(file);
+      
+      const fileName = `${artistId || crypto.randomUUID()}.webp`;
 
       const { error: uploadError } = await supabase.storage
         .from('artist-avatars')
-        .upload(filePath, file, { upsert: true });
+        .upload(fileName, webpFile, { upsert: true });
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
         .from('artist-avatars')
-        .getPublicUrl(filePath);
+        .getPublicUrl(fileName);
 
       setImageUrl(publicUrl);
       toast.success("Image uploaded successfully");

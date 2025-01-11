@@ -1,172 +1,228 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUpIcon, ArrowDownIcon } from "lucide-react";
-import { subDays, startOfDay, endOfDay } from "date-fns";
+import { Users, DollarSign, TrendingUp, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// Create arrow components to avoid import issues
+const ArrowUpIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-3 w-3 mr-1 text-green-600"
+  >
+    <path d="m5 12 7-7 7 7" />
+  </svg>
+);
+
+const ArrowDownIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-3 w-3 mr-1 text-red-600"
+  >
+    <path d="m19 12-7 7-7-7" />
+  </svg>
+);
 
 export const BasicStats = () => {
-  const { data: totalAuctions } = useQuery({
-    queryKey: ["totalAuctions"],
+  const { data: commissionData } = useQuery({
+    queryKey: ["commission-earnings"],
     queryFn: async () => {
-      const currentDate = new Date();
-      const previousDate = subDays(currentDate, 7);
+      const { data, error } = await supabase
+        .from("commission_earnings")
+        .select("*")
+        .limit(1);
 
-      const { count: currentCount } = await supabase
+      if (error) throw error;
+      return data[0];
+    },
+  });
+
+  const { data: retentionData } = useQuery({
+    queryKey: ["user-retention"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_retention")
+        .select("*")
+        .limit(1);
+
+      if (error) throw error;
+      return data[0];
+    },
+  });
+
+  const { data: userCount } = useQuery({
+    queryKey: ["total-users"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("profiles")
+        .select("*", { count: 'exact', head: true })
+        .eq('is_admin', false);
+
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  const { data: totalRevenue } = useQuery({
+    queryKey: ["total-revenue"],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from("artworks")
-        .select("*", { count: "exact", head: true });
+        .select("current_price")
+        .eq("payment_status", "completed");
 
-      const { count: previousCount } = await supabase
+      if (error) throw error;
+      return data.reduce((sum, artwork) => sum + (artwork.current_price || 0), 0);
+    },
+  });
+
+  const { data: avgSessionTime } = useQuery({
+    queryKey: ["avg-session-time"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("website_visits")
+        .select("session_duration")
+        .not("session_duration", "is", null);
+
+      if (error) throw error;
+      const totalDuration = data.reduce((sum, visit) => sum + (visit.session_duration || 0), 0);
+      return data.length ? Math.round(totalDuration / data.length) : 0;
+    },
+  });
+
+  const { data: previousPeriodData } = useQuery({
+    queryKey: ["previous-period-stats"],
+    queryFn: async () => {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const sixtyDaysAgo = new Date();
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+      const { data: users } = await supabase
+        .from("profiles")
+        .select("created_at")
+        .eq('is_admin', false)
+        .gte('created_at', sixtyDaysAgo.toISOString())
+        .lte('created_at', thirtyDaysAgo.toISOString());
+
+      const { data: revenue } = await supabase
         .from("artworks")
-        .select("*", { count: "exact", head: true })
-        .lte("created_at", endOfDay(previousDate).toISOString());
+        .select("current_price, updated_at")
+        .eq("payment_status", "completed")
+        .gte('updated_at', sixtyDaysAgo.toISOString())
+        .lte('updated_at', thirtyDaysAgo.toISOString());
 
-      const weeklyCount = await supabase
-        .from("artworks")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", startOfDay(previousDate).toISOString())
-        .lte("created_at", endOfDay(currentDate).toISOString());
-
-      const percentageChange = previousCount 
-        ? (((weeklyCount.count || 0) / previousCount) * 100).toFixed(1)
-        : "0";
+      const { data: visits } = await supabase
+        .from("website_visits")
+        .select("session_duration")
+        .gte('visited_at', sixtyDaysAgo.toISOString())
+        .lte('visited_at', thirtyDaysAgo.toISOString());
 
       return {
-        current: currentCount || 0,
-        change: percentageChange,
+        userCount: users?.length || 0,
+        revenue: revenue?.reduce((sum, artwork) => sum + (artwork.current_price || 0), 0) || 0,
+        avgSessionTime: visits?.length ? 
+          Math.round(visits.reduce((sum, visit) => sum + (visit.session_duration || 0), 0) / visits.length) : 
+          0
       };
     },
   });
 
-  const { data: activeAuctions } = useQuery({
-    queryKey: ["activeAuctions"],
-    queryFn: async () => {
-      const currentDate = new Date();
-      const previousDate = subDays(currentDate, 7);
-
-      const { count: currentCount } = await supabase
-        .from("artworks")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "published")
-        .eq("completion_status", "ongoing");
-
-      const { count: previousCount } = await supabase
-        .from("artworks")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "published")
-        .eq("completion_status", "ongoing")
-        .lte("created_at", endOfDay(previousDate).toISOString());
-
-      const weeklyCount = await supabase
-        .from("artworks")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "published")
-        .eq("completion_status", "ongoing")
-        .gte("created_at", startOfDay(previousDate).toISOString())
-        .lte("created_at", endOfDay(currentDate).toISOString());
-
-      const percentageChange = previousCount 
-        ? (((weeklyCount.count || 0) / previousCount) * 100).toFixed(1)
-        : "0";
-
-      return {
-        current: currentCount || 0,
-        change: percentageChange,
-      };
-    },
-  });
-
-  const { data: totalUsers } = useQuery({
-    queryKey: ["totalUsers"],
-    queryFn: async () => {
-      const currentDate = new Date();
-      const previousDate = subDays(currentDate, 7);
-
-      const { count: currentCount } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true });
-
-      const { count: previousCount } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .lte("created_at", endOfDay(previousDate).toISOString());
-
-      const weeklyCount = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", startOfDay(previousDate).toISOString())
-        .lte("created_at", endOfDay(currentDate).toISOString());
-
-      const percentageChange = previousCount 
-        ? (((weeklyCount.count || 0) / previousCount) * 100).toFixed(1)
-        : "0";
-
-      return {
-        current: currentCount || 0,
-        change: percentageChange,
-      };
-    },
-  });
-
-  const renderChange = (change: string) => {
-    const numChange = parseFloat(change);
-    if (numChange > 0) {
-      return (
-        <div className="flex items-center text-sm text-green-600">
-          <ArrowUpIcon className="w-4 h-4 mr-1" />
-          <span>+{change}%</span>
-        </div>
-      );
-    } else if (numChange < 0) {
-      return (
-        <div className="flex items-center text-sm text-red-600">
-          <ArrowDownIcon className="w-4 h-4 mr-1" />
-          <span>{change}%</span>
-        </div>
-      );
-    }
-    return <span className="text-sm text-gray-500">0%</span>;
+  const calculateChange = (current: number, previous: number) => {
+    if (!previous) return 0;
+    return ((current - previous) / previous) * 100;
   };
 
+  const stats = [
+    {
+      title: "Total Users",
+      value: userCount || 0,
+      icon: Users,
+      description: "Non-admin users",
+      change: calculateChange(userCount || 0, previousPeriodData?.userCount || 0),
+      trend: "vs last 30 days",
+    },
+    {
+      title: "Total Revenue",
+      value: `€${(totalRevenue || 0).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
+      icon: DollarSign,
+      description: "Total completed sales",
+      change: calculateChange(totalRevenue || 0, previousPeriodData?.revenue || 0),
+      trend: "vs last 30 days",
+    },
+    {
+      title: "Monthly Sales",
+      value: commissionData?.total_sales || 0,
+      icon: TrendingUp,
+      description: "Sales this month",
+      change: 0,
+      trend: "vs last month",
+    },
+    {
+      title: "Avg. Session Duration",
+      value: `${Math.floor((avgSessionTime || 0) / 60)}m ${(avgSessionTime || 0) % 60}s`,
+      icon: Clock,
+      description: "Average time per visit",
+      change: calculateChange(avgSessionTime || 0, previousPeriodData?.avgSessionTime || 0),
+      trend: "vs last 30 days",
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Total Auctions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{totalAuctions?.current}</p>
-          <div className="mt-2">
-            {renderChange(totalAuctions?.change || "0")}
-            <p className="text-sm text-gray-500">vs last week</p>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Active Auctions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{activeAuctions?.current}</p>
-          <div className="mt-2">
-            {renderChange(activeAuctions?.change || "0")}
-            <p className="text-sm text-gray-500">vs last week</p>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Total Users</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{totalUsers?.current}</p>
-          <div className="mt-2">
-            {renderChange(totalUsers?.change || "0")}
-            <p className="text-sm text-gray-500">vs last week</p>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {stats.map((stat, index) => (
+        <Card key={index} className="relative overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+            <stat.icon className="h-4 w-4 text-[#00337F]" />
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col space-y-2">
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <div className="flex flex-col space-y-1">
+                <p className="text-xs text-muted-foreground">{stat.description}</p>
+                {stat.change !== 0 && (
+                  <div className="flex items-center space-x-1">
+                    <div
+                      className={cn(
+                        "flex items-center rounded px-1.5 py-0.5 text-xs font-medium",
+                        stat.change > 0 
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      )}
+                    >
+                      {stat.change > 0 ? <ArrowUpIcon /> : <ArrowDownIcon />}
+                      <span>{Math.abs(stat.change).toFixed(1)}%</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {stat.trend}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };

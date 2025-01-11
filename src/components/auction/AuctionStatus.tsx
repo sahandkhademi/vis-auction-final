@@ -89,6 +89,18 @@ export const AuctionStatus = ({
           setLocalCompletionStatus(newData.completion_status);
           setLocalWinnerId(newData.winner_id);
           setLocalPaymentStatus(newData.payment_status);
+          
+          // If auction status changes to completed, refresh the page
+          if (newData.completion_status === 'completed' && localCompletionStatus !== 'completed') {
+            console.log('🔄 Auction completed, refreshing page...');
+            window.location.reload();
+          }
+          
+          console.log('🔄 Updated local state:', {
+            completionStatus: newData.completion_status,
+            winnerId: newData.winner_id,
+            paymentStatus: newData.payment_status
+          });
         }
       )
       .subscribe();
@@ -104,11 +116,12 @@ export const AuctionStatus = ({
           console.log('🔄 End time reached, updating completion status');
           setLocalCompletionStatus('completed');
           
-          // Trigger completion handler
+          // Trigger completion handler and refresh page
           supabase.functions.invoke('handle-auction-completion', {
             body: { auctionId }
           }).then(() => {
             console.log('✅ Auction completion handler triggered');
+            window.location.reload();
           }).catch(error => {
             console.error('❌ Error triggering completion handler:', error);
           });
@@ -161,7 +174,7 @@ export const AuctionStatus = ({
   usePaymentStatus(handleRefetch);
 
   const hasCompletedPayment = (isWinner || isPotentialWinner) && localPaymentStatus === 'completed';
-  const needsPayment = (isWinner || isPotentialWinner) && localPaymentStatus === 'pending';
+  const showWinMessage = isWinner || isPotentialWinner;
 
   return (
     <div className="space-y-4">
@@ -171,15 +184,15 @@ export const AuctionStatus = ({
         isEnded={isEnded}
         isWinner={isWinner}
         isPotentialWinner={isPotentialWinner}
+        hasCompletedPayment={hasCompletedPayment}
+        showWinMessage={showWinMessage}
       />
 
-      {(hasCompletedPayment || needsPayment) && (
+      {hasCompletedPayment && (
         <PaymentStatus 
           hasCompletedPayment={hasCompletedPayment}
-          needsPayment={needsPayment}
+          needsPayment={false}
           isEnded={isEnded}
-          auctionId={auctionId}
-          currentBid={currentBid}
         />
       )}
     </div>

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, RefreshCw } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,6 +75,38 @@ export const WinnersManagement = () => {
     refetch();
   };
 
+  const handleRetryCharge = async (artworkId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('charge-winner', {
+        body: { artworkId }
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success("Payment processed successfully");
+      } else {
+        toast.error(data?.message || "Failed to process payment");
+      }
+
+      refetch();
+    } catch (error) {
+      console.error('Error retrying charge:', error);
+      toast.error("Failed to process payment");
+    }
+  };
+
+  const getPaymentStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <Badge className="bg-green-500">Paid</Badge>;
+      case 'failed':
+        return <Badge variant="destructive">Failed</Badge>;
+      default:
+        return <Badge variant="secondary">Pending</Badge>;
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -106,11 +138,19 @@ export const WinnersManagement = () => {
                 </TableCell>
                 <TableCell>€{winner.current_price?.toLocaleString()}</TableCell>
                 <TableCell>
-                  <Badge
-                    variant={winner.payment_status === 'completed' ? 'default' : 'secondary'}
-                  >
-                    {winner.payment_status === 'completed' ? 'Paid' : 'Pending'}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    {getPaymentStatusBadge(winner.payment_status)}
+                    {winner.payment_status !== 'completed' && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRetryCharge(winner.id)}
+                        title="Retry charge"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <Badge

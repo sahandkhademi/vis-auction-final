@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
+import { convertToWebP } from "@/utils/imageUtils";
 
 interface ImageUploadProps {
   form: UseFormReturn<ArtworkFormData>;
@@ -29,13 +30,15 @@ export const ImageUpload = ({ form }: ImageUploadProps) => {
     try {
       setIsUploading(true);
 
+      // Convert to WebP
+      const webpFile = await convertToWebP(file);
+      
       // Upload file to Supabase storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+      const fileName = `${crypto.randomUUID()}.webp`;
       
       const { data, error: uploadError } = await supabase.storage
         .from('artwork-images')
-        .upload(fileName, file);
+        .upload(fileName, webpFile);
 
       if (uploadError) throw uploadError;
 

@@ -3,8 +3,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useSession } from "@supabase/auth-helpers-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface BidFormProps {
   auctionId: string;
@@ -26,7 +28,8 @@ export const BidForm = ({
   const [bidAmount, setBidAmount] = useState<number>(currentBid + 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAuctionEnded, setIsAuctionEnded] = useState(false);
-  const { toast } = useToast();
+  const [hasValidPaymentMethod, setHasValidPaymentMethod] = useState(false);
+  const [isCheckingPayment, setIsCheckingPayment] = useState(true);
   const session = useSession();
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,6 +37,35 @@ export const BidForm = ({
   useEffect(() => {
     setBidAmount(currentBid + 1);
   }, [currentBid]);
+
+  useEffect(() => {
+    const checkPaymentMethod = async () => {
+      if (!session?.user) {
+        setHasValidPaymentMethod(false);
+        setIsCheckingPayment(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('user_payment_methods')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .eq('is_valid', true)
+          .limit(1)
+          .single();
+
+        setHasValidPaymentMethod(!!data);
+      } catch (error) {
+        console.error('Error checking payment method:', error);
+        setHasValidPaymentMethod(false);
+      } finally {
+        setIsCheckingPayment(false);
+      }
+    };
+
+    checkPaymentMethod();
+  }, [session?.user]);
 
   // Check if auction has ended
   useEffect(() => {
@@ -43,12 +75,8 @@ export const BidForm = ({
       setIsAuctionEnded(isCompleted || isPastEndDate);
     };
 
-    // Check immediately
     checkAuctionStatus();
-
-    // Set up interval to check every second
     const interval = setInterval(checkAuctionStatus, 1000);
-
     return () => clearInterval(interval);
   }, [completionStatus, endDate]);
 
@@ -132,11 +160,7 @@ export const BidForm = ({
     e.preventDefault();
 
     if (isAuctionEnded) {
-      toast({
-        title: "Auction has ended",
-        description: "This auction is no longer accepting bids",
-        variant: "destructive",
-      });
+      toast.error("This auction has ended");
       return;
     }
 
@@ -146,12 +170,14 @@ export const BidForm = ({
       return;
     }
 
+    if (!hasValidPaymentMethod) {
+      toast.error("Please add a valid payment method before bidding");
+      navigate("/profile");
+      return;
+    }
+
     if (bidAmount <= currentBid) {
-      toast({
-        title: "Invalid bid amount",
-        description: "Your bid must be higher than the current bid",
-        variant: "destructive",
-      });
+      toast.error("Your bid must be higher than the current bid");
       return;
     }
 
@@ -180,10 +206,8 @@ export const BidForm = ({
 
       if (bidError) {
         console.error("Bid insertion error:", bidError);
-        toast({
-          title: "Failed to place bid",
-          description: bidError.message || "Please try again",
-          variant: "destructive",
+        toast.error("Failed to place bid", {
+          description: bidError.message || "Please try again"
         });
         return;
       }
@@ -196,10 +220,8 @@ export const BidForm = ({
 
       if (updateError) {
         console.error("Artwork update error:", updateError);
-        toast({
-          title: "Bid placed but price not updated",
-          description: "Please refresh the page",
-          variant: "destructive",
+        toast.error("Bid placed but price not updated", {
+          description: "Please refresh the page"
         });
         return;
       }
@@ -209,19 +231,16 @@ export const BidForm = ({
         await notifyPreviousBidder(previousBid.user_id);
       }
 
-      toast({
-        title: "Bid placed successfully!",
-        description: `Your bid of €${bidAmount.toLocaleString()} has been placed`,
+      toast.success("Bid placed successfully!", {
+        description: `Your bid of €${bidAmount.toLocaleString()} has been placed`
       });
 
       onBidPlaced();
       setBidAmount(bidAmount + 1);
     } catch (error: any) {
       console.error("Error placing bid:", error);
-      toast({
-        title: "Failed to place bid",
-        description: error.message || "Please try again",
-        variant: "destructive",
+      toast.error("Failed to place bid", {
+        description: error.message
       });
     } finally {
       setIsSubmitting(false);
@@ -232,25 +251,41 @@ export const BidForm = ({
     return null;
   }
 
+  if (isCheckingPayment) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex space-x-2">
-        <Input
-          type="number"
-          min={currentBid + 1}
-          value={bidAmount}
-          onChange={(e) => setBidAmount(Number(e.target.value))}
-          placeholder="Enter bid amount"
-          className="flex-1"
-          disabled={isSubmitting || isLoading || isAuctionEnded}
-        />
-        <Button 
-          type="submit" 
-          disabled={isSubmitting || isLoading || !session?.user || isAuctionEnded}
-        >
-          {isSubmitting ? "Placing bid..." : "Place Bid"}
-        </Button>
-      </div>
-    </form>
+    <div className="space-y-4">
+      {!hasValidPaymentMethod && session?.user && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Payment Method Required</AlertTitle>
+          <AlertDescription>
+            Please add a valid payment method in your profile before placing a bid.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex space-x-2">
+          <Input
+            type="number"
+            min={currentBid + 1}
+            value={bidAmount}
+            onChange={(e) => setBidAmount(Number(e.target.value))}
+            placeholder="Enter bid amount"
+            className="flex-1"
+            disabled={isSubmitting || isLoading || isAuctionEnded || !hasValidPaymentMethod}
+          />
+          <Button 
+            type="submit" 
+            disabled={isSubmitting || isLoading || !session?.user || isAuctionEnded || !hasValidPaymentMethod}
+          >
+            {isSubmitting ? "Placing bid..." : "Place Bid"}
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 };

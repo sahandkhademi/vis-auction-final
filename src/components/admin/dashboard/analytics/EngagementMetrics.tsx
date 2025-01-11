@@ -1,63 +1,48 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { subMonths } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export const EngagementMetrics = () => {
-  const { data: userEngagement } = useQuery({
-    queryKey: ["userEngagement"],
+  const { data: retentionData } = useQuery({
+    queryKey: ["user-retention-trend"],
     queryFn: async () => {
-      const { data: viewsData } = await supabase
-        .from("artwork_views")
-        .select("id")
-        .gte("viewed_at", subMonths(new Date(), 1).toISOString());
+      const { data, error } = await supabase
+        .from("user_retention")
+        .select("*")
+        .order('visit_date', { ascending: true })
+        .limit(7);
 
-      const { data: bidsData } = await supabase
-        .from("bids")
-        .select("created_at")
-        .gte("created_at", subMonths(new Date(), 1).toISOString());
-
-      const views = viewsData?.length || 0;
-      const bids = bidsData?.length || 0;
-      const conversionRate = views > 0 ? ((bids / views) * 100).toFixed(1) : 0;
-
-      return {
-        views,
-        bids,
-        conversionRate,
-      };
+      if (error) throw error;
+      
+      return data.map(day => ({
+        date: new Date(day.visit_date).toLocaleDateString('en-US', { weekday: 'short' }),
+        total: day.total_visitors,
+        registered: day.registered_visitors
+      }));
     },
   });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Views</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{userEngagement?.views || 0}</p>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Bids</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{userEngagement?.bids || 0}</p>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Conversion Rate</CardTitle>
-          <CardDescription>Views to Bids</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold">{userEngagement?.conversionRate || 0}%</p>
-        </CardContent>
-      </Card>
-    </div>
+    <Card className="col-span-4">
+      <CardHeader>
+        <CardTitle>User Engagement</CardTitle>
+        <CardDescription>Daily visitor breakdown over the last 7 days</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={retentionData || []}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="total" name="Total Visitors" fill="#00337F" />
+              <Bar dataKey="registered" name="Registered Users" fill="#00337F" fillOpacity={0.6} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
