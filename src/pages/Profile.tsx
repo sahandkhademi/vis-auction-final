@@ -10,15 +10,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { UserRound } from "lucide-react";
 import { ProfileTabs } from "@/components/profile/ProfileTabs";
-
-interface Profile {
-  username: string | null;
-  avatar_url: string | null;
-}
+import { UserStats } from "@/components/profile/UserStats";
 
 const Profile = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<{ username: string | null; avatar_url: string | null; } | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [username, setUsername] = useState("");
@@ -64,7 +60,6 @@ const Profile = () => {
       return;
     }
 
-    // Send profile update email using edge function
     try {
       const { error: emailError } = await supabase.functions.invoke('send-profile-update', {
         body: {
@@ -141,6 +136,8 @@ const Profile = () => {
             </div>
           </CardContent>
         </Card>
+
+        {user && <UserStats userId={user.id} />}
 
         <ProfileTabs user={user} />
       </div>
