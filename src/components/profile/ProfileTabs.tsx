@@ -8,12 +8,12 @@ import { PaymentMethodsManager } from "./PaymentMethodsManager";
 export const ProfileTabs = ({ user }: { user: any }) => {
   return (
     <Tabs defaultValue="account" className="space-y-4 w-full">
-      <TabsList className="w-full flex flex-wrap justify-start gap-1 bg-muted p-1">
-        <TabsTrigger value="account" className="flex-grow basis-[calc(50%-0.25rem)] sm:basis-auto">Account</TabsTrigger>
-        <TabsTrigger value="notifications" className="flex-grow basis-[calc(50%-0.25rem)] sm:basis-auto">Notifications</TabsTrigger>
-        <TabsTrigger value="payments" className="flex-grow basis-[calc(50%-0.25rem)] sm:basis-auto">Payments</TabsTrigger>
-        <TabsTrigger value="auctions" className="flex-grow basis-[calc(50%-0.25rem)] sm:basis-auto">My Auctions</TabsTrigger>
-        <TabsTrigger value="won" className="flex-grow basis-[calc(50%-0.25rem)] sm:basis-auto">Won Auctions</TabsTrigger>
+      <TabsList className="w-full grid grid-cols-2 sm:flex sm:flex-row gap-1 bg-muted p-1">
+        <TabsTrigger value="account" className="flex-grow">Account</TabsTrigger>
+        <TabsTrigger value="notifications" className="flex-grow">Notifications</TabsTrigger>
+        <TabsTrigger value="payments" className="flex-grow">Payments</TabsTrigger>
+        <TabsTrigger value="auctions" className="flex-grow">My Auctions</TabsTrigger>
+        <TabsTrigger value="won" className="flex-grow">Won Auctions</TabsTrigger>
       </TabsList>
 
       <TabsContent value="account">
