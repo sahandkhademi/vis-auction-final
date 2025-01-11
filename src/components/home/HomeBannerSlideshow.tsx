@@ -37,19 +37,6 @@ export const HomeBannerSlideshow = () => {
     }));
   };
 
-  // Function to generate srcset for responsive images
-  const generateSrcSet = (imageUrl: string) => {
-    // Extract base URL and extension
-    const [baseUrl, extension] = imageUrl.split(/\.(?=[^.]+$)/);
-    
-    // Define widths for different screen sizes
-    const widths = [640, 960, 1280, 1600, 1920];
-    
-    return widths
-      .map(width => `${baseUrl}-${width}.${extension} ${width}w`)
-      .join(', ');
-  };
-
   if (error) {
     return (
       <Alert variant="destructive" className="mb-6">
@@ -105,21 +92,16 @@ export const HomeBannerSlideshow = () => {
                       }}
                     />
                     
-                    {/* Main image with responsive sizes */}
+                    {/* Main image */}
                     <img
                       src={banner.image_url}
-                      srcSet={generateSrcSet(banner.image_url)}
-                      sizes="(max-width: 640px) 100vw,
-                             (max-width: 960px) 960px,
-                             (max-width: 1280px) 1280px,
-                             (max-width: 1600px) 1600px,
-                             1920px"
                       alt={banner.title}
                       className={`w-full h-full object-cover transition-opacity duration-500 ${
                         loadedImages[banner.id] ? 'opacity-100' : 'opacity-0'
                       }`}
                       onLoad={() => handleImageLoad(banner.id)}
                       loading="eager"
+                      sizes="100vw"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30" />
                   </div>
