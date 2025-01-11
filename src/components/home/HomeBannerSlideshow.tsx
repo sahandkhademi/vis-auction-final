@@ -44,8 +44,9 @@ export const HomeBannerSlideshow = () => {
     }));
   };
 
-  const handleSelect = (index: number) => {
-    setCurrentIndex(index);
+  const handleSelect = (api: any) => {
+    const selectedIndex = api.selectedScrollSnap();
+    setCurrentIndex(selectedIndex);
   };
 
   if (error) {
