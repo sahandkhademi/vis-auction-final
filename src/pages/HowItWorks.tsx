@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 const HowItWorks = () => {
   return (
     <div className="container max-w-4xl mx-auto px-4">
+      <h1 className="text-3xl font-semibold mb-6">How Does VIS Auction Work?</h1>
+      
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -10,7 +12,6 @@ const HowItWorks = () => {
         className="space-y-8"
       >
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-medium mb-4">How Does VIS Auction Work?</h1>
           <p className="text-gray-600">Your guide to participating in our art auctions</p>
         </div>
 
