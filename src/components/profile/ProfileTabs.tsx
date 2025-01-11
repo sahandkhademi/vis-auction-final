@@ -8,7 +8,7 @@ import { PaymentMethodsManager } from "./PaymentMethodsManager";
 export const ProfileTabs = ({ user }: { user: any }) => {
   return (
     <Tabs defaultValue="account" className="space-y-4 w-full">
-      <TabsList className="w-full grid grid-cols-2 sm:flex sm:flex-row gap-1 bg-muted p-1">
+      <TabsList className="w-full grid grid-cols-2 sm:flex sm:flex-row gap-1 bg-muted p-1 h-auto">
         <TabsTrigger value="account" className="flex-grow">Account</TabsTrigger>
         <TabsTrigger value="notifications" className="flex-grow">Notifications</TabsTrigger>
         <TabsTrigger value="payments" className="flex-grow">Payments</TabsTrigger>
