@@ -64,10 +64,7 @@ export const BannerForm = ({ defaultValues, onSuccess }: BannerFormProps) => {
         .from('banner-images')
         .upload(fileName, file, {
           cacheControl: '3600',
-          upsert: false,
-          onUploadProgress: (progress) => {
-            setUploadProgress((progress.loaded / progress.total) * 100);
-          },
+          upsert: false
         });
 
       if (error) throw error;
@@ -79,12 +76,13 @@ export const BannerForm = ({ defaultValues, onSuccess }: BannerFormProps) => {
 
       form.setValue('image_url', publicUrl);
       toast.success('Image uploaded successfully');
+      setUploadProgress(100);
     } catch (error) {
       console.error('Error uploading image:', error);
       toast.error('Failed to upload image');
     } finally {
       setIsLoading(false);
-      setUploadProgress(0);
+      setTimeout(() => setUploadProgress(0), 1000); // Reset progress after a delay
     }
   };
 
