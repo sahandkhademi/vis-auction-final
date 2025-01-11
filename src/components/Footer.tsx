@@ -20,7 +20,7 @@ const Footer = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <h4 className="text-base font-medium text-gray-900 mb-4">Information</h4>
               <ul className="space-y-2">
@@ -67,16 +67,16 @@ const Footer = () => {
                 </li>
               </ul>
             </div>
-          </div>
 
-          <div>
-            <h4 className="text-base font-medium text-gray-900 mb-4">Connect With Us</h4>
-            <p className="text-sm text-gray-600 mb-4">Follow us on Instagram for daily updates on new artworks and upcoming auctions.</p>
-            <div className="flex space-x-4">
-              <a href="https://instagram.com/visauction" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">
-                <span className="sr-only">Instagram</span>
-                <Instagram className="h-6 w-6" />
-              </a>
+            <div>
+              <h4 className="text-base font-medium text-gray-900 mb-4">Connect With Us</h4>
+              <p className="text-sm text-gray-600 mb-4">Follow us on Instagram for daily updates on new artworks and upcoming auctions.</p>
+              <div className="flex space-x-4">
+                <a href="https://instagram.com/visauction" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900">
+                  <span className="sr-only">Instagram</span>
+                  <Instagram className="h-6 w-6" />
+                </a>
+              </div>
             </div>
           </div>
         </div>
