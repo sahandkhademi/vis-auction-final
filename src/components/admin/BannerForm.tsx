@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
+import { Upload } from "lucide-react";
 
 interface BannerFormData {
   id?: string;
@@ -29,6 +30,7 @@ interface BannerFormProps {
 
 export const BannerForm = ({ defaultValues, onSuccess }: BannerFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   const form = useForm<BannerFormData>({
     defaultValues: {
@@ -44,6 +46,47 @@ export const BannerForm = ({ defaultValues, onSuccess }: BannerFormProps) => {
       ...defaultValues,
     },
   });
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsLoading(true);
+      setUploadProgress(0);
+
+      // Generate a unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${fileExt}`;
+
+      // Upload the file to Supabase storage
+      const { data, error } = await supabase.storage
+        .from('banner-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+          onUploadProgress: (progress) => {
+            setUploadProgress((progress.loaded / progress.total) * 100);
+          },
+        });
+
+      if (error) throw error;
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('banner-images')
+        .getPublicUrl(fileName);
+
+      form.setValue('image_url', publicUrl);
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setIsLoading(false);
+      setUploadProgress(0);
+    }
+  };
 
   const onSubmit = async (data: BannerFormData) => {
     try {
@@ -96,11 +139,40 @@ export const BannerForm = ({ defaultValues, onSuccess }: BannerFormProps) => {
           </div>
 
           <div>
-            <Label>Image URL</Label>
-            <Input
-              {...form.register("image_url")}
-              placeholder="Enter image URL"
-            />
+            <Label>Banner Image</Label>
+            <div className="mt-2 space-y-4">
+              <div className="flex items-center gap-4">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={isLoading}
+                  className="cursor-pointer"
+                />
+                {uploadProgress > 0 && uploadProgress < 100 && (
+                  <div className="text-sm text-muted-foreground">
+                    {Math.round(uploadProgress)}%
+                  </div>
+                )}
+              </div>
+              
+              {form.watch('image_url') && (
+                <div className="relative rounded-lg overflow-hidden border">
+                  <img
+                    src={form.watch('image_url')}
+                    alt="Banner preview"
+                    className="w-full h-48 object-cover"
+                  />
+                </div>
+              )}
+              
+              <Input
+                type="text"
+                {...form.register("image_url")}
+                placeholder="Image URL will appear here"
+                className="mt-2"
+              />
+            </div>
           </div>
 
           <div>
