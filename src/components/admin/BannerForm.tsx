@@ -226,7 +226,7 @@ export const BannerForm = ({ defaultValues, onSuccess }: BannerFormProps) => {
           )}
         </div>
 
-        <div className="flex justify-end gap-2 sticky bottom-0 bg-background py-4 border-t">
+        <div className="flex justify-end gap-2">
           <Button
             type="submit"
             disabled={isLoading}
