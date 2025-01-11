@@ -37,14 +37,6 @@ export const HomeBannerSlideshow = () => {
     }));
   };
 
-  // Generate WebP URL from original image
-  const getWebpUrl = (url: string) => url.replace(/\.(jpg|jpeg|png)$/i, '.webp');
-
-  // Generate different sizes for srcset
-  const generateSrcSet = (url: string) => {
-    return `${url} 1x, ${url.replace(/\.(webp|jpg|jpeg|png)$/i, '@2x.$1')} 2x, ${url.replace(/\.(webp|jpg|jpeg|png)$/i, '@3x.$1')} 3x`;
-  };
-
   if (error) {
     return (
       <Alert variant="destructive" className="mb-6">
@@ -100,24 +92,16 @@ export const HomeBannerSlideshow = () => {
                       }}
                     />
                     
-                    {/* Main image with srcset and WebP support */}
-                    <picture>
-                      <source
-                        type="image/webp"
-                        srcSet={generateSrcSet(getWebpUrl(banner.image_url))}
-                        sizes="100vw"
-                      />
-                      <img
-                        src={banner.image_url}
-                        srcSet={generateSrcSet(banner.image_url)}
-                        sizes="100vw"
-                        alt={banner.title}
-                        className={`w-full h-full object-cover transition-opacity duration-500 ${
-                          loadedImages[banner.id] ? 'opacity-100' : 'opacity-0'
-                        }`}
-                        onLoad={() => handleImageLoad(banner.id)}
-                      />
-                    </picture>
+                    {/* Main image with responsive sizes */}
+                    <img
+                      src={banner.image_url}
+                      alt={banner.title}
+                      className={`w-full h-full object-cover transition-opacity duration-500 ${
+                        loadedImages[banner.id] ? 'opacity-100' : 'opacity-0'
+                      }`}
+                      onLoad={() => handleImageLoad(banner.id)}
+                      sizes="100vw"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30" />
                   </div>
                   
