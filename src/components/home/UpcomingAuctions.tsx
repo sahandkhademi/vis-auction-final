@@ -52,9 +52,9 @@ export const UpcomingAuctions = () => {
               <Skeleton className="h-full w-full" />
             </div>
           ))
-        ) : (
+        ) : upcomingArtworks && upcomingArtworks.length > 0 ? (
           <AnimatePresence>
-            {upcomingArtworks?.map((artwork, index) => (
+            {upcomingArtworks.map((artwork, index) => (
               <motion.div
                 key={artwork.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -82,6 +82,10 @@ export const UpcomingAuctions = () => {
               </motion.div>
             ))}
           </AnimatePresence>
+        ) : (
+          <div className="col-span-2 text-center py-12">
+            <p className="text-gray-500 text-lg">No active auctions available at the moment.</p>
+          </div>
         )}
       </div>
     </div>
