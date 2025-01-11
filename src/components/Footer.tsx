@@ -20,8 +20,8 @@ const Footer = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="col-span-1">
               <h4 className="text-base font-medium text-gray-900 mb-4">Information</h4>
               <ul className="space-y-2">
                 <li>
@@ -42,7 +42,7 @@ const Footer = () => {
               </ul>
             </div>
             
-            <div>
+            <div className="col-span-1">
               <h4 className="text-base font-medium text-gray-900 mb-4">Support & Help</h4>
               <ul className="space-y-2">
                 <li>
@@ -68,7 +68,7 @@ const Footer = () => {
               </ul>
             </div>
 
-            <div>
+            <div className="col-span-2 md:col-span-1">
               <h4 className="text-base font-medium text-gray-900 mb-4">Connect With Us</h4>
               <p className="text-sm text-gray-600 mb-4">Follow us on Instagram for daily updates on new artworks and upcoming auctions.</p>
               <div className="flex space-x-4">
@@ -77,6 +77,24 @@ const Footer = () => {
                   <Instagram className="h-6 w-6" />
                 </a>
               </div>
+            </div>
+
+            <div className="col-span-2 md:col-span-1">
+              <h4 className="text-base font-medium text-gray-900 mb-4">Newsletter</h4>
+              <p className="text-sm text-gray-600 mb-4">Subscribe to our newsletter to receive updates about new auctions and featured artists.</p>
+              <form className="space-y-2">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-400"
+                />
+                <button
+                  type="submit"
+                  className="w-full px-4 py-2 text-sm text-white bg-gray-900 rounded hover:bg-gray-800 transition-colors"
+                >
+                  Subscribe
+                </button>
+              </form>
             </div>
           </div>
         </div>
