@@ -14,8 +14,6 @@ import { useQuery } from "@tanstack/react-query";
 import { DesktopNav } from "./navigation/DesktopNav";
 import { MobileNav } from "./navigation/MobileNav";
 import { UserActions } from "./navigation/UserActions";
-import { RefreshCw } from "lucide-react";
-import { Button } from "./ui/button";
 
 const Navigation = () => {
   const navigate = useNavigate();
@@ -39,18 +37,28 @@ const Navigation = () => {
   // Track page visits
   useEffect(() => {
     const recordVisit = async () => {
-      const sessionId = localStorage.getItem('visitorSession') || crypto.randomUUID();
-      localStorage.setItem('visitorSession', sessionId);
+      try {
+        const sessionId = localStorage.getItem('visitorSession') || crypto.randomUUID();
+        localStorage.setItem('visitorSession', sessionId);
 
-      await supabase.from('website_visits').insert({
-        visitor_id: user?.id || null,
-        session_id: sessionId,
-        path: location.pathname
-      });
+        const { data, error } = await supabase.rpc('track_website_visit', {
+          p_session_id: sessionId,
+          p_path: location.pathname,
+          p_user_agent: navigator.userAgent
+        });
+
+        if (error) {
+          console.error('Error recording visit:', error);
+        } else {
+          console.log('Visit recorded successfully:', data);
+        }
+      } catch (err) {
+        console.error('Failed to record visit:', err);
+      }
     };
 
     recordVisit();
-  }, [location.pathname, user?.id]);
+  }, [location.pathname]);
 
   const { data: searchResults } = useQuery({
     queryKey: ["search-results"],

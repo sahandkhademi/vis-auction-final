@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { generateWebPUrl, generateSrcSet } from "@/utils/imageUtils";
+import { useState } from "react";
 
 interface FeaturedAuctionProps {
   title: string;
@@ -16,14 +18,36 @@ export const FeaturedAuction = ({
   description,
   image,
 }: FeaturedAuctionProps) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   return (
     <div className="relative h-[80vh] overflow-hidden">
       <div className="absolute inset-0">
-        <img
-          src={image}
-          alt={title}
-          className="w-full h-full object-cover"
+        <div 
+          className={`absolute inset-0 bg-gray-100 transition-opacity duration-300 ${
+            imageLoaded ? 'opacity-0' : 'opacity-100'
+          }`} 
+          style={{ 
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)'
+          }}
         />
+        
+        <picture>
+          <source
+            type="image/webp"
+            srcSet={generateSrcSet(generateWebPUrl(image))}
+            sizes="100vw"
+          />
+          <img
+            src={image}
+            alt={title}
+            className={`w-full h-full object-cover transition-opacity duration-300 ${
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+            onLoad={() => setImageLoaded(true)}
+          />
+        </picture>
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30" />
       </div>
       

@@ -13,11 +13,14 @@ export const EngagementMetrics = () => {
         .order('visit_date', { ascending: true })
         .limit(7);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching retention data:", error);
+        throw error;
+      }
       
       return data.map(day => ({
         date: new Date(day.visit_date).toLocaleDateString('en-US', { weekday: 'short' }),
-        total: day.total_visitors,
+        unique: day.total_visitors,
         registered: day.registered_visitors
       }));
     },
@@ -27,7 +30,7 @@ export const EngagementMetrics = () => {
     <Card className="col-span-4">
       <CardHeader>
         <CardTitle>User Engagement</CardTitle>
-        <CardDescription>Daily visitor breakdown over the last 7 days</CardDescription>
+        <CardDescription>Daily unique visitor breakdown over the last 7 days</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
@@ -37,7 +40,7 @@ export const EngagementMetrics = () => {
               <XAxis dataKey="date" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="total" name="Total Visitors" fill="#00337F" />
+              <Bar dataKey="unique" name="Unique Visitors" fill="#00337F" />
               <Bar dataKey="registered" name="Registered Users" fill="#00337F" fillOpacity={0.6} />
             </BarChart>
           </ResponsiveContainer>
