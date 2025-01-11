@@ -6,21 +6,21 @@ const Footer = () => {
     <footer className="bg-gray-50 border-t border-gray-100 mt-auto">
       <div className="container mx-auto px-6 py-12">
         <div className="space-y-8">
-          <div>
-            <div className="flex items-center space-x-3 mb-4">
-              <img 
-                src="/lovable-uploads/48e1bd0c-6d7a-461c-a150-3037fa8f5f59.png" 
-                alt="VIS Auction Logo" 
-                className="h-8 w-8"
-              />
-              <h3 className="text-xl font-serif text-gray-900">VIS Auction</h3>
-            </div>
-            <p className="text-sm text-gray-600">
-              Connecting young artists with patrons
-            </p>
-          </div>
-          
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="col-span-2 md:col-span-1">
+              <div className="flex items-center space-x-3 mb-4">
+                <img 
+                  src="/lovable-uploads/48e1bd0c-6d7a-461c-a150-3037fa8f5f59.png" 
+                  alt="VIS Auction Logo" 
+                  className="h-8 w-8"
+                />
+                <h3 className="text-xl font-serif text-gray-900">VIS Auction</h3>
+              </div>
+              <p className="text-sm text-gray-600">
+                Connecting young artists with patrons
+              </p>
+            </div>
+            
             <div className="col-span-1">
               <h4 className="text-base font-medium text-gray-900 mb-4">Information</h4>
               <ul className="space-y-2">
@@ -77,24 +77,6 @@ const Footer = () => {
                   <Instagram className="h-6 w-6" />
                 </a>
               </div>
-            </div>
-
-            <div className="col-span-2 md:col-span-1">
-              <h4 className="text-base font-medium text-gray-900 mb-4">Newsletter</h4>
-              <p className="text-sm text-gray-600 mb-4">Subscribe to our newsletter to receive updates about new auctions and featured artists.</p>
-              <form className="space-y-2">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-400"
-                />
-                <button
-                  type="submit"
-                  className="w-full px-4 py-2 text-sm text-white bg-gray-900 rounded hover:bg-gray-800 transition-colors"
-                >
-                  Subscribe
-                </button>
-              </form>
             </div>
           </div>
         </div>
