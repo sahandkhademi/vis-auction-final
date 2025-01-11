@@ -10,13 +10,13 @@ const HowItWorks = () => {
         className="space-y-8"
       >
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-serif mb-4">How Does VIS Auction Work?</h1>
+          <h1 className="text-4xl font-medium mb-4">How Does VIS Auction Work?</h1>
           <p className="text-gray-600">Your guide to participating in our art auctions</p>
         </div>
 
         <div className="grid gap-8">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h2 className="text-2xl font-serif mb-4 text-[#00337F]">1. Browse Auctions</h2>
+            <h2 className="text-2xl font-medium mb-4 text-[#00337F]">1. Browse Auctions</h2>
             <p className="text-gray-600">
               Explore our curated collection of artworks. Each piece comes with detailed information about the artist, 
               artwork specifications, and current bidding status.
@@ -24,7 +24,7 @@ const HowItWorks = () => {
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h2 className="text-2xl font-serif mb-4 text-[#00337F]">2. Register an Account</h2>
+            <h2 className="text-2xl font-medium mb-4 text-[#00337F]">2. Register an Account</h2>
             <p className="text-gray-600">
               Create your account to participate in auctions. This allows you to place bids, track your favorite artworks, 
               and receive notifications about auction updates.
@@ -32,7 +32,7 @@ const HowItWorks = () => {
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h2 className="text-2xl font-serif mb-4 text-[#00337F]">3. Place Your Bids</h2>
+            <h2 className="text-2xl font-medium mb-4 text-[#00337F]">3. Place Your Bids</h2>
             <p className="text-gray-600">
               Once registered, you can place bids on any active auction. You'll receive notifications if you're outbid, 
               allowing you to stay competitive in the bidding process.
@@ -40,7 +40,7 @@ const HowItWorks = () => {
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h2 className="text-2xl font-serif mb-4 text-[#00337F]">4. Win & Payment</h2>
+            <h2 className="text-2xl font-medium mb-4 text-[#00337F]">4. Win & Payment</h2>
             <p className="text-gray-600">
               If you win an auction, you'll be notified immediately. Follow the provided instructions to complete your 
               payment and arrange for artwork delivery or pickup.
