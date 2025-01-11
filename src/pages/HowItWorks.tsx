@@ -16,7 +16,7 @@ const HowItWorks = () => {
         </div>
 
         <div className="grid gap-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+          <div className="bg-[#F6F6F7] p-6 rounded-lg">
             <h2 className="text-2xl font-medium mb-4 text-[#00337F]">1. Browse Auctions</h2>
             <p className="text-gray-600">
               Explore our curated collection of artworks. Each piece comes with detailed information about the artist, 
@@ -24,7 +24,7 @@ const HowItWorks = () => {
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+          <div className="bg-[#F6F6F7] p-6 rounded-lg">
             <h2 className="text-2xl font-medium mb-4 text-[#00337F]">2. Register an Account</h2>
             <p className="text-gray-600">
               Create your account to participate in auctions. This allows you to place bids, track your favorite artworks, 
@@ -32,7 +32,7 @@ const HowItWorks = () => {
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+          <div className="bg-[#F6F6F7] p-6 rounded-lg">
             <h2 className="text-2xl font-medium mb-4 text-[#00337F]">3. Place Your Bids</h2>
             <p className="text-gray-600">
               Once registered, you can place bids on any active auction. You'll receive notifications if you're outbid, 
@@ -40,7 +40,7 @@ const HowItWorks = () => {
             </p>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+          <div className="bg-[#F6F6F7] p-6 rounded-lg">
             <h2 className="text-2xl font-medium mb-4 text-[#00337F]">4. Win & Payment</h2>
             <p className="text-gray-600">
               If you win an auction, you'll be notified immediately. Follow the provided instructions to complete your 
