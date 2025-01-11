@@ -11,8 +11,11 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Autoplay from "embla-carousel-autoplay";
+import { useState } from "react";
 
 export const HomeBannerSlideshow = () => {
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
+
   const { data: banners, isLoading, error } = useQuery({
     queryKey: ["homepage-banners"],
     queryFn: async () => {
@@ -26,6 +29,21 @@ export const HomeBannerSlideshow = () => {
       return data || [];
     },
   });
+
+  const handleImageLoad = (bannerId: string) => {
+    setLoadedImages(prev => ({
+      ...prev,
+      [bannerId]: true
+    }));
+  };
+
+  // Generate WebP URL from original image
+  const getWebpUrl = (url: string) => url.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+
+  // Generate different sizes for srcset
+  const generateSrcSet = (url: string) => {
+    return `${url} 1x, ${url.replace(/\.(webp|jpg|jpeg|png)$/i, '@2x.$1')} 2x, ${url.replace(/\.(webp|jpg|jpeg|png)$/i, '@3x.$1')} 3x`;
+  };
 
   if (error) {
     return (
@@ -47,7 +65,6 @@ export const HomeBannerSlideshow = () => {
     return null;
   }
 
-  // Find the first banner with autoplay enabled to determine autoplay settings
   const autoplayBanner = banners.find(banner => banner.autoplay);
   const autoplayOptions = [
     Autoplay({
@@ -72,11 +89,35 @@ export const HomeBannerSlideshow = () => {
               <CarouselItem key={banner.id} className="pl-0">
                 <div className="relative h-[80vh] overflow-hidden">
                   <div className="absolute inset-0">
-                    <img
-                      src={banner.image_url}
-                      alt={banner.title}
-                      className="w-full h-full object-cover"
+                    {/* Blur placeholder */}
+                    <div 
+                      className={`absolute inset-0 bg-gray-100 transition-opacity duration-500 ${
+                        loadedImages[banner.id] ? 'opacity-0' : 'opacity-100'
+                      }`}
+                      style={{ 
+                        backdropFilter: 'blur(10px)',
+                        WebkitBackdropFilter: 'blur(10px)'
+                      }}
                     />
+                    
+                    {/* Main image with srcset and WebP support */}
+                    <picture>
+                      <source
+                        type="image/webp"
+                        srcSet={generateSrcSet(getWebpUrl(banner.image_url))}
+                        sizes="100vw"
+                      />
+                      <img
+                        src={banner.image_url}
+                        srcSet={generateSrcSet(banner.image_url)}
+                        sizes="100vw"
+                        alt={banner.title}
+                        className={`w-full h-full object-cover transition-opacity duration-500 ${
+                          loadedImages[banner.id] ? 'opacity-100' : 'opacity-0'
+                        }`}
+                        onLoad={() => handleImageLoad(banner.id)}
+                      />
+                    </picture>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30" />
                   </div>
                   
