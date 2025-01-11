@@ -21,6 +21,7 @@ const CarouselLoader = () => (
 
 export const HomeBannerSlideshow = () => {
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const { data: banners, isLoading, error } = useQuery({
     queryKey: ["homepage-banners"],
@@ -72,21 +73,32 @@ export const HomeBannerSlideshow = () => {
   ];
 
   return (
-    <div className="relative">
+    <div className="relative h-[80vh] overflow-hidden">
       <Suspense fallback={<CarouselLoader />}>
         <Carousel 
-          className="h-[80vh]"
+          className="h-full"
           opts={{
             align: "start",
             loop: true,
           }}
           plugins={autoplayOptions}
+          onSelect={setCurrentIndex}
         >
           <CarouselContent className="-ml-0">
-            <AnimatePresence>
-              {banners.map((banner) => (
+            <AnimatePresence mode="wait">
+              {banners.map((banner, index) => (
                 <CarouselItem key={banner.id} className="pl-0">
-                  <div className="relative h-[80vh] overflow-hidden">
+                  <motion.div 
+                    className="absolute inset-0 h-[80vh] overflow-hidden"
+                    initial={{ x: "100%" }}
+                    animate={{ x: index === currentIndex ? "0%" : "100%" }}
+                    exit={{ x: "-100%" }}
+                    transition={{ 
+                      type: "tween",
+                      duration: 0.8,
+                      ease: [0.4, 0, 0.2, 1]
+                    }}
+                  >
                     <div className="absolute inset-0">
                       <div 
                         className={`absolute inset-0 bg-gray-100 transition-opacity duration-500 ${
@@ -136,7 +148,7 @@ export const HomeBannerSlideshow = () => {
                         </div>
                       </div>
                     </motion.div>
-                  </div>
+                  </motion.div>
                 </CarouselItem>
               ))}
             </AnimatePresence>
