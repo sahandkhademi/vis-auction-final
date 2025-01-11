@@ -39,15 +39,7 @@ export const AuctionCard = ({
     }
   };
 
-  // Generate WebP URL from original image
-  const webpUrl = image.replace(/\.(jpg|jpeg|png)$/i, '.webp');
-  
-  // Generate different sizes for srcset
-  const generateSrcSet = (url: string) => {
-    return `${url} 1x, ${url.replace(/\.(webp|jpg|jpeg|png)$/i, '@2x.$1')} 2x, ${url.replace(/\.(webp|jpg|jpeg|png)$/i, '@3x.$1')} 3x`;
-  };
-
-  // Determine the price to display
+  // Determine the price to display - use currentBid if it exists and is greater than 0
   const displayPrice = currentBid > 0 ? currentBid : startingPrice;
 
   return (
@@ -60,36 +52,15 @@ export const AuctionCard = ({
       >
         <Card className="overflow-hidden bg-white border-0 shadow-none">
           <div className="relative aspect-square overflow-hidden">
-            {/* Blur placeholder */}
-            <div 
-              className={`absolute inset-0 bg-gray-100 transition-opacity duration-300 ${
-                imageLoaded ? 'opacity-0' : 'opacity-100'
-              }`} 
-              style={{ 
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)'
-              }}
+            <div className={`absolute inset-0 bg-gray-100 ${imageLoaded ? 'hidden' : 'block'}`} />
+            <img
+              src={image}
+              alt={title}
+              className={`object-cover w-full h-full transition-transform duration-500 group-hover:scale-105 ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              onLoad={() => setImageLoaded(true)}
             />
-            
-            {/* Main image with srcset */}
-            <picture>
-              <source
-                type="image/webp"
-                srcSet={generateSrcSet(webpUrl)}
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              />
-              <img
-                src={image}
-                srcSet={generateSrcSet(image)}
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                alt={title}
-                loading="lazy"
-                className={`object-cover w-full h-full transition-all duration-500 group-hover:scale-105 ${
-                  imageLoaded ? 'opacity-100' : 'opacity-0'
-                }`}
-                onLoad={() => setImageLoaded(true)}
-              />
-            </picture>
           </div>
           <div className="p-4">
             <h2 className="text-base font-semibold text-gray-900">{title}</h2>
