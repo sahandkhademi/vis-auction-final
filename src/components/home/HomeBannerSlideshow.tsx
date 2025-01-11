@@ -3,15 +3,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
+import { lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Autoplay from "embla-carousel-autoplay";
 import { useState } from "react";
+
+// Lazy load carousel components
+const Carousel = lazy(() => import("@/components/ui/carousel").then(mod => ({ default: mod.Carousel })));
+const CarouselContent = lazy(() => import("@/components/ui/carousel").then(mod => ({ default: mod.CarouselContent })));
+const CarouselItem = lazy(() => import("@/components/ui/carousel").then(mod => ({ default: mod.CarouselItem })));
+
+// Loading fallback for carousel
+const CarouselLoader = () => (
+  <div className="h-[80vh] bg-gray-100 animate-pulse" />
+);
 
 export const HomeBannerSlideshow = () => {
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
@@ -67,76 +73,76 @@ export const HomeBannerSlideshow = () => {
 
   return (
     <div className="relative">
-      <Carousel 
-        className="h-[80vh]"
-        opts={{
-          align: "start",
-          loop: true,
-        }}
-        plugins={autoplayOptions}
-      >
-        <CarouselContent className="-ml-0">
-          <AnimatePresence>
-            {banners.map((banner) => (
-              <CarouselItem key={banner.id} className="pl-0">
-                <div className="relative h-[80vh] overflow-hidden">
-                  <div className="absolute inset-0">
-                    {/* Blur placeholder */}
-                    <div 
-                      className={`absolute inset-0 bg-gray-100 transition-opacity duration-500 ${
-                        loadedImages[banner.id] ? 'opacity-0' : 'opacity-100'
-                      }`}
-                      style={{ 
-                        backdropFilter: 'blur(10px)',
-                        WebkitBackdropFilter: 'blur(10px)'
-                      }}
-                    />
-                    
-                    {/* Main image */}
-                    <img
-                      src={banner.image_url}
-                      alt={banner.title}
-                      className={`w-full h-full object-cover transition-opacity duration-500 ${
-                        loadedImages[banner.id] ? 'opacity-100' : 'opacity-0'
-                      }`}
-                      onLoad={() => handleImageLoad(banner.id)}
-                      loading="eager"
-                      sizes="100vw"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30" />
-                  </div>
-                  
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                    className="relative h-full flex items-end"
-                  >
-                    <div className="max-w-[1400px] mx-auto px-6 pb-20 w-full">
-                      <div className="max-w-2xl text-white space-y-4">
-                        <h1 className="text-4xl font-serif">{banner.title}</h1>
-                        {banner.description && (
-                          <p className="text-sm text-gray-200 max-w-lg">
-                            {banner.description}
-                          </p>
-                        )}
-                        {banner.button_text && banner.button_link && (
-                          <Button 
-                            className="mt-6 bg-white text-black hover:bg-white/90 transition-colors duration-300"
-                            onClick={() => window.location.href = banner.button_link}
-                          >
-                            {banner.button_text}
-                          </Button>
-                        )}
-                      </div>
+      <Suspense fallback={<CarouselLoader />}>
+        <Carousel 
+          className="h-[80vh]"
+          opts={{
+            align: "start",
+            loop: true,
+          }}
+          plugins={autoplayOptions}
+        >
+          <CarouselContent className="-ml-0">
+            <AnimatePresence>
+              {banners.map((banner) => (
+                <CarouselItem key={banner.id} className="pl-0">
+                  <div className="relative h-[80vh] overflow-hidden">
+                    <div className="absolute inset-0">
+                      <div 
+                        className={`absolute inset-0 bg-gray-100 transition-opacity duration-500 ${
+                          loadedImages[banner.id] ? 'opacity-0' : 'opacity-100'
+                        }`}
+                        style={{ 
+                          backdropFilter: 'blur(10px)',
+                          WebkitBackdropFilter: 'blur(10px)'
+                        }}
+                      />
+                      
+                      <img
+                        src={banner.image_url}
+                        alt={banner.title}
+                        className={`w-full h-full object-cover transition-opacity duration-500 ${
+                          loadedImages[banner.id] ? 'opacity-100' : 'opacity-0'
+                        }`}
+                        onLoad={() => handleImageLoad(banner.id)}
+                        loading="eager"
+                        sizes="100vw"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30" />
                     </div>
-                  </motion.div>
-                </div>
-              </CarouselItem>
-            ))}
-          </AnimatePresence>
-        </CarouselContent>
-      </Carousel>
+                    
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.8, delay: 0.2 }}
+                      className="relative h-full flex items-end"
+                    >
+                      <div className="max-w-[1400px] mx-auto px-6 pb-20 w-full">
+                        <div className="max-w-2xl text-white space-y-4">
+                          <h1 className="text-4xl font-serif">{banner.title}</h1>
+                          {banner.description && (
+                            <p className="text-sm text-gray-200 max-w-lg">
+                              {banner.description}
+                            </p>
+                          )}
+                          {banner.button_text && banner.button_link && (
+                            <Button 
+                              className="mt-6 bg-white text-black hover:bg-white/90 transition-colors duration-300"
+                              onClick={() => window.location.href = banner.button_link}
+                            >
+                              {banner.button_text}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+                </CarouselItem>
+              ))}
+            </AnimatePresence>
+          </CarouselContent>
+        </Carousel>
+      </Suspense>
     </div>
   );
 };
