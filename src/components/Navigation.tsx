@@ -1,16 +1,13 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { User as SupabaseUser } from "@supabase/supabase-js";
-import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useUser } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { navigationLinks } from "./navigation/NavigationLinks";
 import { DesktopNav } from "./navigation/DesktopNav";
 import { MobileNav } from "./navigation/MobileNav";
 import { UserActions } from "./navigation/UserActions";
@@ -18,21 +15,9 @@ import { UserActions } from "./navigation/UserActions";
 const Navigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [open, setOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const user = useUser();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Track page visits
   useEffect(() => {
@@ -63,107 +48,118 @@ const Navigation = () => {
   const { data: searchResults } = useQuery({
     queryKey: ["search-results"],
     queryFn: async () => {
-      const { data: artworks } = await supabase
+      if (!searchQuery.trim()) return [];
+
+      const { data: artworks, error } = await supabase
         .from("artworks")
-        .select("id, title, artist")
-        .eq("status", "published");
+        .select("id, title, artist, image_url")
+        .ilike("title", `%${searchQuery}%`)
+        .limit(5);
 
-      const { data: artists } = await supabase
-        .from("artists")
-        .select("id, name");
-
-      return {
-        artworks: artworks || [],
-        artists: artists || [],
-      };
+      if (error) throw error;
+      return artworks;
     },
+    enabled: searchQuery.length > 0,
   });
 
-  useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setOpen((open) => !open);
-      }
-    };
-    document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
-  }, []);
+  const handleSearchClick = () => {
+    setIsSearchOpen(!isSearchOpen);
+    if (!isSearchOpen) {
+      setTimeout(() => {
+        document.querySelector<HTMLInputElement>("#search-input")?.focus();
+      }, 100);
+    }
+  };
+
+  const handleSearchSelect = (id: string) => {
+    setIsSearchOpen(false);
+    setSearchQuery("");
+    navigate(`/auctions/${id}`);
+  };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
-      <div className="max-w-[1400px] mx-auto px-6">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-3">
-            <Link to="/" className="flex items-center space-x-3">
-              <img 
-                src="/lovable-uploads/48e1bd0c-6d7a-461c-a150-3037fa8f5f59.png" 
-                alt="VIS Auction Logo" 
-                className="h-8 w-8 hidden md:block"
-              />
-              <span className="text-xl font-serif text-gray-900">
-                VIS Auction
-              </span>
-            </Link>
-          </div>
-          
-          <DesktopNav />
-          <div className="flex items-center space-x-2">
-            <UserActions user={user} setOpen={setOpen} />
-            <MobileNav 
-              mobileMenuOpen={mobileMenuOpen}
-              setMobileMenuOpen={setMobileMenuOpen}
-              setOpen={setOpen}
+    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 pb-4">
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 hidden md:flex">
+          <a
+            className="mr-6 flex items-center space-x-2"
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate("/");
+            }}
+          >
+            <img
+              src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png"
+              alt="VIS Logo"
+              className="h-6 w-6"
             />
+            <span className="hidden font-bold sm:inline-block">
+              VIS Auction
+            </span>
+          </a>
+          <DesktopNav items={navigationLinks} />
+        </div>
+        <MobileNav />
+        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+          <div className="w-full flex-1 md:w-auto md:flex-none">
+            <button
+              onClick={handleSearchClick}
+              className={cn(
+                "inline-flex items-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 relative w-full justify-start text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64",
+                isSearchOpen && "hidden md:inline-flex"
+              )}
+            >
+              <span className="hidden lg:inline-flex">
+                Search artworks...
+              </span>
+              <span className="inline-flex lg:hidden">Search...</span>
+              <kbd className="pointer-events-none absolute right-1.5 top-1.5 hidden h-6 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </button>
           </div>
+          <UserActions />
         </div>
       </div>
 
-      <CommandDialog 
-        open={open} 
-        onOpenChange={setOpen}
-        aria-label="Search dialog"
-      >
-        <CommandInput 
-          placeholder="Search artworks and artists..." 
-          aria-label="Search input"
-        />
-        <CommandList aria-label="Search results">
-          <CommandEmpty>No results found.</CommandEmpty>
-          {searchResults?.artworks && searchResults.artworks.length > 0 && (
-            <CommandGroup heading="Artworks">
-              {searchResults.artworks.map((artwork) => (
-                <CommandItem
-                  key={artwork.id}
-                  onSelect={() => {
-                    navigate(`/auctions/${artwork.id}`);
-                    setOpen(false);
-                  }}
-                  role="option"
-                >
-                  {artwork.title} by {artwork.artist}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-          {searchResults?.artists && searchResults.artists.length > 0 && (
-            <CommandGroup heading="Artists">
-              {searchResults.artists.map((artist) => (
-                <CommandItem
-                  key={artist.id}
-                  onSelect={() => {
-                    navigate(`/artists/${artist.id}`);
-                    setOpen(false);
-                  }}
-                  role="option"
-                >
-                  {artist.name}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-        </CommandList>
-      </CommandDialog>
+      {isSearchOpen && (
+        <div className="container">
+          <div className="relative">
+            <Input
+              id="search-input"
+              className="w-full"
+              placeholder="Search artworks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchResults && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 z-50 mt-2 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md">
+                <ScrollArea className="max-h-[300px]">
+                  <div className="p-2">
+                    {searchResults.map((result) => (
+                      <div key={result.id}>
+                        <button
+                          className="w-full rounded-md p-2 text-left hover:bg-[#00337F] hover:text-white"
+                          onClick={() => handleSearchSelect(result.id)}
+                        >
+                          <div className="text-sm font-medium">
+                            {result.title}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {result.artist}
+                          </div>
+                        </button>
+                        <Separator className="my-1" />
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 };
