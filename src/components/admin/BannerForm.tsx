@@ -118,7 +118,7 @@ export const BannerForm = ({ defaultValues, onSuccess }: BannerFormProps) => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-h-[80vh] overflow-y-auto pr-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-h-[80vh] overflow-y-auto px-6">
         <div className="space-y-4">
           <div>
             <Label>Title</Label>
