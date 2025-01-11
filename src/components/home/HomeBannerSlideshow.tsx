@@ -44,6 +44,10 @@ export const HomeBannerSlideshow = () => {
     }));
   };
 
+  const handleSelect = (index: number) => {
+    setCurrentIndex(index);
+  };
+
   if (error) {
     return (
       <Alert variant="destructive" className="mb-6">
@@ -82,7 +86,7 @@ export const HomeBannerSlideshow = () => {
             loop: true,
           }}
           plugins={autoplayOptions}
-          onSelect={setCurrentIndex}
+          onSelect={handleSelect}
         >
           <CarouselContent className="-ml-0">
             <AnimatePresence mode="wait">
