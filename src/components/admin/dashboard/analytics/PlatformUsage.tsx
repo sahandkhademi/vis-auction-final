@@ -90,7 +90,6 @@ export const PlatformUsage = () => {
     );
   }
 
-  // Show loading state or empty state if no data
   if (!deviceData?.length && !platformData?.length) {
     console.log("No data available. Device data:", deviceData, "Platform data:", platformData);
     return (
@@ -104,12 +103,12 @@ export const PlatformUsage = () => {
   }
 
   return (
-    <Card className="mb-8">
+    <Card className="mb-12">
       <CardHeader>
         <CardTitle>Platform & Device Usage</CardTitle>
         <CardDescription>Distribution of visits by platform and device type</CardDescription>
       </CardHeader>
-      <CardContent className="pb-8">
+      <CardContent className="pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="h-[300px]">
             <h3 className="text-sm font-medium mb-4">Device Types</h3>
