@@ -118,7 +118,7 @@ export const BannerForm = ({ defaultValues, onSuccess }: BannerFormProps) => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-h-[80vh] overflow-y-auto pr-6">
         <div className="space-y-4">
           <div>
             <Label>Title</Label>
@@ -226,7 +226,7 @@ export const BannerForm = ({ defaultValues, onSuccess }: BannerFormProps) => {
           )}
         </div>
 
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 sticky bottom-0 bg-background py-4 border-t">
           <Button
             type="submit"
             disabled={isLoading}
