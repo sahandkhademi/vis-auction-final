@@ -26,7 +26,7 @@ const HowItWorks = () => {
           <div className="bg-secondary/50 rounded-lg p-6">
             <h2 className="text-2xl font-medium mb-4 text-[#00337F]">2. Add a Payment Method</h2>
             <p className="text-gray-600">
-              Before placing bids, you need to add a payment method. Go to your profile dashboard and click the "Payment" tab. Enter your payment details securely—this will allow you to bid on items and complete payments if you win.
+              Before placing bids, you need ito add a payment method. Go to your profile dashboard and click the "Payment" tab. Enter your payment details securely—this will allow you to bid on items and complete payments if you win.
             </p>
           </div>
 
