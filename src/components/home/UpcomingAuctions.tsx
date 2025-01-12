@@ -68,7 +68,7 @@ export const UpcomingAuctions = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30">
                   <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 className="text-5xl font-semibold mb-1 font-serif">{artwork.title}</h3>
+                    <h3 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold mb-1 font-serif">{artwork.title}</h3>
                     <p className="text-sm text-gray-200">{artwork.artist}</p>
                   </div>
                 </div>
