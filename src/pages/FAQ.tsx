@@ -17,16 +17,16 @@ const FAQ = () => {
               What is a bid?
             </AccordionTrigger>
             <AccordionContent className="text-gray-700">
-              A bid is the amount of money you’re willing to pay for an item. For example, if an artwork starts at $10, you can bid $10 or more. If someone bids $15 after you, you’ll need to offer a higher amount, like $20, to stay in the auction.
+              A bid is the amount of money you're willing to pay for an item. For example, if an artwork starts at $10, you can bid $10 or more. If someone bids $15 after you, you'll need to offer a higher amount, like $20, to stay in the auction.
             </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="item-2" className="border-none">
             <AccordionTrigger className="text-lg font-medium hover:no-underline">
-              What happens if I’m outbid?
+              What happens if I'm outbid?
             </AccordionTrigger>
             <AccordionContent className="text-gray-700">
-              If someone offers more than your bid, you’ll receive an email notification. You can choose to place a higher bid or let the other person win.
+              If someone offers more than your bid, you'll receive an email notification. You can choose to place a higher bid or let the other person win.
             </AccordionContent>
           </AccordionItem>
 
@@ -53,13 +53,11 @@ const FAQ = () => {
               What happens if I win?
             </AccordionTrigger>
             <AccordionContent className="text-gray-700">
-              If you have the highest bid when the auction closes, the item is yours! Your payment method will be charged, and you’ll receive an email with details about the item and shipping. Pick up is also available at school. 
+              If you have the highest bid when the auction closes, the item is yours! Your payment method will be charged, and you'll receive an email with details about the item and shipping. Pick up is also available at school. 
             </AccordionContent>
           </AccordionItem>
-        </Accordion>
-      
 
-      <AccordionItem value="item-6" className="border-none">
+          <AccordionItem value="item-6" className="border-none">
             <AccordionTrigger className="text-lg font-medium hover:no-underline">
               Is my payment information safe?
             </AccordionTrigger>
@@ -67,9 +65,8 @@ const FAQ = () => {
               Absolutely! All payments on our platform are processed securely through Stripe, a trusted and industry-leading payment processor. Stripe uses advanced encryption and security measures to keep your payment details completely safe.
             </AccordionContent>
           </AccordionItem>
-        </Accordion>
 
-      <AccordionItem value="item-7" className="border-none">
+          <AccordionItem value="item-7" className="border-none">
             <AccordionTrigger className="text-lg font-medium hover:no-underline">
               Can I trust the platform with my credit card details?
             </AccordionTrigger>
@@ -78,7 +75,6 @@ const FAQ = () => {
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-    
       </div>
 
       <p className="text-sm text-muted-foreground text-center mt-6">
