@@ -21,7 +21,7 @@ const About = () => {
       </div>
 
       <p className="text-sm text-muted-foreground text-center mt-6">
-        Join us in shaping the future of digital art collecting.
+        Need to write more here later.
       </p>
     </div>
   );
