@@ -78,8 +78,9 @@ const FAQ = () => {
       </div>
 
       <p className="text-sm text-muted-foreground text-center mt-8">
-        Still have questions? Contact our support team for assistance.
+        Still have questions? <a href="/about" className="text-[#00337F] hover:underline">Contact </a> our support team for assistance.
       </p>
+      
     </div>
   );
 };
