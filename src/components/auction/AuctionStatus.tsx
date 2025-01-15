@@ -6,6 +6,7 @@ import { PaymentStatus } from "./PaymentStatus";
 import { useAuctionCompletion } from "./hooks/useAuctionCompletion";
 import { usePaymentStatus } from "./hooks/usePaymentStatus";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -32,18 +33,21 @@ export const AuctionStatus = ({
   const isEnded = localCompletionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
   const hasFailedPayment = isWinner && localPaymentStatus === 'failed';
 
-  console.log('🔍 AuctionStatus Props:', {
-    currentBid,
-    endDate,
-    completionStatus: localCompletionStatus,
-    paymentStatus: localPaymentStatus,
-    winnerId: localWinnerId,
-    userId: user?.id,
-    isWinner,
-    isEnded,
-    hasFailedPayment,
-    auctionId
-  });
+  useEffect(() => {
+    if (hasFailedPayment) {
+      console.log('🔄 Handling payment failure for winner:', user?.id);
+      supabase.functions.invoke('handle-payment-failure', {
+        body: { 
+          auctionId,
+          userId: user?.id
+        }
+      }).then(() => {
+        toast.error("Payment processing failed. You'll receive an email with further instructions.");
+      }).catch(error => {
+        console.error('❌ Error handling payment failure:', error);
+      });
+    }
+  }, [hasFailedPayment, auctionId, user?.id]);
 
   const { data: highestBid } = useQuery({
     queryKey: ['highestBid', auctionId],
@@ -174,7 +178,7 @@ export const AuctionStatus = ({
 
   usePaymentStatus(handleRefetch);
 
-  const hasCompletedPayment = (isWinner) && localPaymentStatus === 'completed';
+  const hasCompletedPayment = isWinner && localPaymentStatus === 'completed';
   const showWinMessage = isWinner;
   const needsPayment = isWinner && localPaymentStatus === 'pending';
 

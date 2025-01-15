@@ -16,6 +16,10 @@ serve(async (req) => {
     const { auctionId, userId } = await req.json();
     console.log('🔄 Processing payment failure for auction:', auctionId, 'user:', userId);
 
+    if (!auctionId || !userId) {
+      throw new Error('Missing required parameters');
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -44,15 +48,17 @@ serve(async (req) => {
       throw new Error('Winner email not found');
     }
 
-    // Update payment status to failed
-    const { error: updateError } = await supabaseClient
-      .from('artworks')
-      .update({ payment_status: 'failed' })
-      .eq('id', auctionId);
+    // Update payment status to failed if not already failed
+    if (auction.payment_status !== 'failed') {
+      const { error: updateError } = await supabaseClient
+        .from('artworks')
+        .update({ payment_status: 'failed' })
+        .eq('id', auctionId);
 
-    if (updateError) {
-      console.error('❌ Error updating payment status:', updateError);
-      throw updateError;
+      if (updateError) {
+        console.error('❌ Error updating payment status:', updateError);
+        throw updateError;
+      }
     }
 
     const auctionUrl = `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}/auction/${auction.id}`;
@@ -79,21 +85,32 @@ serve(async (req) => {
       console.log('✅ Email sent successfully');
     }
 
-    // Create in-app notification
-    console.log('🔔 Creating in-app notification for user:', userId);
-    const { error: notificationError } = await supabaseClient
+    // Create in-app notification if it doesn't exist yet
+    const { data: existingNotification } = await supabaseClient
       .from('notifications')
-      .insert({
-        user_id: userId,
-        title: 'Payment Processing Failed',
-        message: `We were unable to process your payment for "${auction.title}". Please complete your payment manually.`,
-        type: 'payment_failed'
-      });
+      .select('id')
+      .eq('user_id', userId)
+      .eq('type', 'payment_failed')
+      .eq('auction_id', auctionId)
+      .maybeSingle();
 
-    if (notificationError) {
-      console.error('❌ Error creating notification:', notificationError);
-    } else {
-      console.log('✅ Notification created successfully');
+    if (!existingNotification) {
+      console.log('🔔 Creating in-app notification for user:', userId);
+      const { error: notificationError } = await supabaseClient
+        .from('notifications')
+        .insert({
+          user_id: userId,
+          title: 'Payment Processing Failed',
+          message: `We were unable to process your payment for "${auction.title}". Please complete your payment manually.`,
+          type: 'payment_failed',
+          auction_id: auctionId
+        });
+
+      if (notificationError) {
+        console.error('❌ Error creating notification:', notificationError);
+      } else {
+        console.log('✅ Notification created successfully');
+      }
     }
 
     return new Response(
