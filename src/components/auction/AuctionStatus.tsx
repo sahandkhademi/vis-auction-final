@@ -30,6 +30,7 @@ export const AuctionStatus = ({
   const [localPaymentStatus, setLocalPaymentStatus] = useState(paymentStatus);
   const isWinner = user?.id === localWinnerId;
   const isEnded = localCompletionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
+  const hasFailedPayment = isWinner && localPaymentStatus === 'failed';
 
   console.log('🔍 AuctionStatus Props:', {
     currentBid,
@@ -40,10 +41,10 @@ export const AuctionStatus = ({
     userId: user?.id,
     isWinner,
     isEnded,
+    hasFailedPayment,
     auctionId
   });
 
-  // Fetch highest bid to determine potential winner
   const { data: highestBid } = useQuery({
     queryKey: ['highestBid', auctionId],
     queryFn: async () => {
@@ -173,8 +174,9 @@ export const AuctionStatus = ({
 
   usePaymentStatus(handleRefetch);
 
-  const hasCompletedPayment = (isWinner || isPotentialWinner) && localPaymentStatus === 'completed';
-  const showWinMessage = isWinner || isPotentialWinner;
+  const hasCompletedPayment = (isWinner) && localPaymentStatus === 'completed';
+  const showWinMessage = isWinner;
+  const needsPayment = isWinner && localPaymentStatus === 'pending';
 
   return (
     <div className="space-y-4">
@@ -183,18 +185,17 @@ export const AuctionStatus = ({
         endDate={endDate}
         isEnded={isEnded}
         isWinner={isWinner}
-        isPotentialWinner={isPotentialWinner}
+        isPotentialWinner={false}
         hasCompletedPayment={hasCompletedPayment}
         showWinMessage={showWinMessage}
       />
 
-      {hasCompletedPayment && (
-        <PaymentStatus 
-          hasCompletedPayment={hasCompletedPayment}
-          needsPayment={false}
-          isEnded={isEnded}
-        />
-      )}
+      <PaymentStatus 
+        hasCompletedPayment={hasCompletedPayment}
+        needsPayment={needsPayment}
+        isEnded={isEnded}
+        hasFailedPayment={hasFailedPayment}
+      />
     </div>
   );
 };

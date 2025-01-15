@@ -14,6 +14,7 @@ serve(async (req) => {
 
   try {
     const { auctionId, userId } = await req.json();
+    console.log('🔄 Processing payment failure for auction:', auctionId, 'user:', userId);
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -34,16 +35,30 @@ serve(async (req) => {
       .single();
 
     if (auctionError || !auction) {
+      console.error('❌ Error fetching auction:', auctionError);
       throw new Error('Auction not found');
     }
 
     if (!auction.winner?.email) {
+      console.error('❌ Winner email not found');
       throw new Error('Winner email not found');
+    }
+
+    // Update payment status to failed
+    const { error: updateError } = await supabaseClient
+      .from('artworks')
+      .update({ payment_status: 'failed' })
+      .eq('id', auctionId);
+
+    if (updateError) {
+      console.error('❌ Error updating payment status:', updateError);
+      throw updateError;
     }
 
     const auctionUrl = `${Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '')}/auction/${auction.id}`;
 
     // Send email notification
+    console.log('📧 Sending email to:', auction.winner.email);
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -59,11 +74,14 @@ serve(async (req) => {
     });
 
     if (!emailResponse.ok) {
-      console.error('Failed to send email:', await emailResponse.text());
+      console.error('❌ Failed to send email:', await emailResponse.text());
+    } else {
+      console.log('✅ Email sent successfully');
     }
 
     // Create in-app notification
-    await supabaseClient
+    console.log('🔔 Creating in-app notification for user:', userId);
+    const { error: notificationError } = await supabaseClient
       .from('notifications')
       .insert({
         user_id: userId,
@@ -71,6 +89,12 @@ serve(async (req) => {
         message: `We were unable to process your payment for "${auction.title}". Please complete your payment manually.`,
         type: 'payment_failed'
       });
+
+    if (notificationError) {
+      console.error('❌ Error creating notification:', notificationError);
+    } else {
+      console.log('✅ Notification created successfully');
+    }
 
     return new Response(
       JSON.stringify({ success: true }),
@@ -80,7 +104,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error handling payment failure:', error);
+    console.error('❌ Error handling payment failure:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 
