@@ -11,10 +11,10 @@ const FAQ = () => {
       <h1 className="text-3xl font-semibold mb-6">Frequently Asked Questions</h1>
       
       <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow-lg border border-gray-100">
-          <Accordion type="single" collapsible className="divide-y">
+        <div className="bg-white border border-gray-100">
+          <Accordion type="single" collapsible className="divide-y text-right">
             <AccordionItem value="item-1" className="px-6">
-              <AccordionTrigger className="text-lg font-medium hover:no-underline py-6 text-[#00337F]">
+              <AccordionTrigger className="text-lg font-medium hover:no-underline py-6 text-gold">
                 What is a bid?
               </AccordionTrigger>
               <AccordionContent className="pb-6 text-gray-600">
@@ -23,7 +23,7 @@ const FAQ = () => {
             </AccordionItem>
 
             <AccordionItem value="item-2" className="px-6">
-              <AccordionTrigger className="text-lg font-medium hover:no-underline py-6 text-[#00337F]">
+              <AccordionTrigger className="text-lg font-medium hover:no-underline py-6 text-gold">
                 What happens if I'm outbid?
               </AccordionTrigger>
               <AccordionContent className="pb-6 text-gray-600">
@@ -32,7 +32,7 @@ const FAQ = () => {
             </AccordionItem>
 
             <AccordionItem value="item-3" className="px-6">
-              <AccordionTrigger className="text-lg font-medium hover:no-underline py-6 text-[#00337F]">
+              <AccordionTrigger className="text-lg font-medium hover:no-underline py-6 text-gold">
                 Is bidding free?
               </AccordionTrigger>
               <AccordionContent className="pb-6 text-gray-600">
@@ -41,7 +41,7 @@ const FAQ = () => {
             </AccordionItem>
 
             <AccordionItem value="item-4" className="px-6">
-              <AccordionTrigger className="text-lg font-medium hover:no-underline py-6 text-[#00337F]">
+              <AccordionTrigger className="text-lg font-medium hover:no-underline py-6 text-gold">
                 What happens after I win an auction?
               </AccordionTrigger>
               <AccordionContent className="pb-6 text-gray-600">
@@ -50,7 +50,7 @@ const FAQ = () => {
             </AccordionItem>
 
             <AccordionItem value="item-5" className="px-6">
-              <AccordionTrigger className="text-lg font-medium hover:no-underline py-6 text-[#00337F]">
+              <AccordionTrigger className="text-lg font-medium hover:no-underline py-6 text-gold">
                 What happens if I win?
               </AccordionTrigger>
               <AccordionContent className="pb-6 text-gray-600">
@@ -59,7 +59,7 @@ const FAQ = () => {
             </AccordionItem>
 
             <AccordionItem value="item-6" className="px-6">
-              <AccordionTrigger className="text-lg font-medium hover:no-underline py-6 text-[#00337F]">
+              <AccordionTrigger className="text-lg font-medium hover:no-underline py-6 text-gold">
                 Is my payment information safe?
               </AccordionTrigger>
               <AccordionContent className="pb-6 text-gray-600">
@@ -68,7 +68,7 @@ const FAQ = () => {
             </AccordionItem>
 
             <AccordionItem value="item-7" className="px-6">
-              <AccordionTrigger className="text-lg font-medium hover:no-underline py-6 text-[#00337F]">
+              <AccordionTrigger className="text-lg font-medium hover:no-underline py-6 text-gold">
                 Can I trust the platform with my credit card details?
               </AccordionTrigger>
               <AccordionContent className="pb-6 text-gray-600">
@@ -78,7 +78,7 @@ const FAQ = () => {
           </Accordion>
         </div>
 
-        <p className="text-sm text-muted-foreground text-center mt-8">
+        <p className="text-sm text-muted-foreground text-right mt-8">
           Still have questions? Contact our support team for assistance.
         </p>
       </div>
