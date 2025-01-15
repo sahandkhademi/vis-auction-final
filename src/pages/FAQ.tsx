@@ -7,8 +7,8 @@ import {
 
 const FAQ = () => {
   return (
-    <div className="container max-w-4xl mx-auto px-4">
-      <h1 className="text-3xl font-semibold mb-6">Frequently Asked Questions</h1>
+    <div className="container max-w-4xl mx-auto px-4 py-12">
+      <h1 className="text-3xl font-semibold mb-8">Frequently Asked Questions</h1>
       
       <div className="border rounded-lg">
         <Accordion type="single" collapsible className="divide-y">
@@ -78,9 +78,8 @@ const FAQ = () => {
       </div>
 
       <p className="text-sm text-muted-foreground text-center mt-8">
-        Still have questions? <a href="/about" className="text-[#00337F] hover:underline">Contact our support team</a>  for assistance.
+        Still have questions? Contact our support team for assistance.
       </p>
-      
     </div>
   );
 };

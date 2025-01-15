@@ -1,26 +1,18 @@
 import { CheckCircle2 } from "lucide-react";
-import { PaymentFailureStatus } from "./PaymentFailureStatus";
-import { PaymentButton } from "./PaymentButton";
 
 interface PaymentStatusProps {
   hasCompletedPayment: boolean;
   needsPayment: boolean;
   isEnded: boolean;
-  hasFailedPayment?: boolean;
 }
 
 export const PaymentStatus = ({
   hasCompletedPayment,
   needsPayment,
-  isEnded,
-  hasFailedPayment = false
+  isEnded
 }: PaymentStatusProps) => {
-  if (!isEnded || (!hasCompletedPayment && !needsPayment && !hasFailedPayment)) {
+  if (!isEnded || (!hasCompletedPayment && !needsPayment)) {
     return null;
-  }
-
-  if (hasFailedPayment) {
-    return <PaymentFailureStatus show={true} />;
   }
 
   if (hasCompletedPayment) {
@@ -39,10 +31,6 @@ export const PaymentStatus = ({
         </div>
       </div>
     );
-  }
-
-  if (needsPayment) {
-    return <PaymentButton auctionId={auctionId} currentPrice={currentBid} />;
   }
 
   return null;

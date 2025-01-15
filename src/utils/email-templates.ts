@@ -70,29 +70,6 @@ export const getBrandTextStyle = () => `
   color: #1a1a1a;
 `;
 
-export const getPaymentFailureTemplate = (title: string, price: number, auctionUrl?: string) => `
-  <div style="${getBaseEmailStyle()}">
-    <div style="${getLogoContainerStyle()}">
-      <img src="https://dsrjyryrxfruexcwbxea.supabase.co/storage/v1/object/public/artist-avatars/vis-logo.png" 
-           alt="Vienna International School" 
-           style="${getLogoStyle()}" />
-      <span style="${getBrandTextStyle()}">VIS Auction</span>
-    </div>
-    <h1 style="${getHeadingStyle()}">Payment Action Required</h1>
-    <p>We were unable to process your payment for "${title}".</p>
-    <p style="${getPriceStyle()}">Amount Due: €${price.toLocaleString()}</p>
-    <p>Please complete your payment within 48 hours to secure your win.</p>
-    ${auctionUrl ? `
-      <a href="${auctionUrl}" style="${getButtonStyle()}">
-        Complete Payment
-      </a>
-    ` : ''}
-    <div style="${getFooterStyle()}">
-      <small>This is an automated message from VIS Auction.</small>
-    </div>
-  </div>
-`;
-
 export const getAuctionWinTemplate = (title: string, price: number, auctionUrl?: string) => `
   <div style="${getBaseEmailStyle()}">
     <div style="${getLogoContainerStyle()}">

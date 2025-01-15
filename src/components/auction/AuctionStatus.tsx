@@ -6,7 +6,6 @@ import { PaymentStatus } from "./PaymentStatus";
 import { useAuctionCompletion } from "./hooks/useAuctionCompletion";
 import { usePaymentStatus } from "./hooks/usePaymentStatus";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 interface AuctionStatusProps {
   currentBid: number;
@@ -31,24 +30,20 @@ export const AuctionStatus = ({
   const [localPaymentStatus, setLocalPaymentStatus] = useState(paymentStatus);
   const isWinner = user?.id === localWinnerId;
   const isEnded = localCompletionStatus === 'completed' || (endDate && new Date(endDate) < new Date());
-  const hasFailedPayment = isWinner && localPaymentStatus === 'failed';
 
-  useEffect(() => {
-    if (hasFailedPayment) {
-      console.log('🔄 Handling payment failure for winner:', user?.id);
-      supabase.functions.invoke('handle-payment-failure', {
-        body: { 
-          auctionId,
-          userId: user?.id
-        }
-      }).then(() => {
-        toast.error("Payment processing failed. You'll receive an email with further instructions.");
-      }).catch(error => {
-        console.error('❌ Error handling payment failure:', error);
-      });
-    }
-  }, [hasFailedPayment, auctionId, user?.id]);
+  console.log('🔍 AuctionStatus Props:', {
+    currentBid,
+    endDate,
+    completionStatus: localCompletionStatus,
+    paymentStatus: localPaymentStatus,
+    winnerId: localWinnerId,
+    userId: user?.id,
+    isWinner,
+    isEnded,
+    auctionId
+  });
 
+  // Fetch highest bid to determine potential winner
   const { data: highestBid } = useQuery({
     queryKey: ['highestBid', auctionId],
     queryFn: async () => {
@@ -178,9 +173,8 @@ export const AuctionStatus = ({
 
   usePaymentStatus(handleRefetch);
 
-  const hasCompletedPayment = isWinner && localPaymentStatus === 'completed';
-  const showWinMessage = isWinner;
-  const needsPayment = isWinner && localPaymentStatus === 'pending';
+  const hasCompletedPayment = (isWinner || isPotentialWinner) && localPaymentStatus === 'completed';
+  const showWinMessage = isWinner || isPotentialWinner;
 
   return (
     <div className="space-y-4">
@@ -189,17 +183,18 @@ export const AuctionStatus = ({
         endDate={endDate}
         isEnded={isEnded}
         isWinner={isWinner}
-        isPotentialWinner={false}
+        isPotentialWinner={isPotentialWinner}
         hasCompletedPayment={hasCompletedPayment}
         showWinMessage={showWinMessage}
       />
 
-      <PaymentStatus 
-        hasCompletedPayment={hasCompletedPayment}
-        needsPayment={needsPayment}
-        isEnded={isEnded}
-        hasFailedPayment={hasFailedPayment}
-      />
+      {hasCompletedPayment && (
+        <PaymentStatus 
+          hasCompletedPayment={hasCompletedPayment}
+          needsPayment={false}
+          isEnded={isEnded}
+        />
+      )}
     </div>
   );
 };
