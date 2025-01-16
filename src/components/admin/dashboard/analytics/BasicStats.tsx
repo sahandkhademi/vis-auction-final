@@ -92,7 +92,7 @@ export const BasicStats = () => {
   });
 
   const { data: avgSessionTime } = useQuery({
-    queryKey: ["avg-session-time", Date.now()], // Add timestamp to force refresh
+    queryKey: ["avg-session-time", Date.now()],
     queryFn: async () => {
       console.log("Fetching average session time...");
       const thirtyDaysAgo = new Date();
@@ -102,8 +102,9 @@ export const BasicStats = () => {
         .from("website_visits")
         .select("session_duration")
         .gt('session_duration', 0)
-        .lt('session_duration', 14400) // 4 hours max
-        .gte('visited_at', thirtyDaysAgo.toISOString());
+        .lt('session_duration', 14400)
+        .gte('visited_at', thirtyDaysAgo.toISOString())
+        .order('visited_at', { ascending: false });
 
       if (error) {
         console.error("Error fetching session duration:", error);
