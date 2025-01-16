@@ -94,21 +94,29 @@ export const BasicStats = () => {
   const { data: avgSessionTime } = useQuery({
     queryKey: ["avg-session-time"],
     queryFn: async () => {
-      console.log("Fetching average session time...");
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
       const { data, error } = await supabase
         .from("website_visits")
         .select("session_duration")
-        .not("session_duration", "is", null);
+        .gte('visited_at', thirtyDaysAgo.toISOString())
+        .not('session_duration', 'is', null);
 
       if (error) {
         console.error("Error fetching session duration:", error);
         throw error;
       }
 
-      console.log("Session duration data:", data);
-      const totalDuration = data.reduce((sum, visit) => sum + (visit.session_duration || 0), 0);
-      return data.length ? Math.round(totalDuration / data.length) : 0;
+      if (!data || data.length === 0) return 0;
+
+      const validDurations = data.filter(visit => visit.session_duration && visit.session_duration > 0);
+      if (validDurations.length === 0) return 0;
+
+      const totalDuration = validDurations.reduce((sum, visit) => sum + (visit.session_duration || 0), 0);
+      return Math.round(totalDuration / validDurations.length);
     },
+    refetchInterval: 60000, // Refetch every minute
   });
 
   const { data: previousPeriodData } = useQuery({
