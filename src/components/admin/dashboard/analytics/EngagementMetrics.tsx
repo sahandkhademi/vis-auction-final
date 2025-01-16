@@ -46,8 +46,8 @@ export const EngagementMetrics = () => {
       }
 
       // Count unique visitors by session_id
-      const uniqueSessions = new Set();
-      uniqueVisitors.forEach(visit => {
+      const uniqueSessions = new Set<string>();
+      uniqueVisitors?.forEach(visit => {
         const date = new Date(visit.visited_at).toISOString().split('T')[0];
         if (dailyData.has(date)) {
           uniqueSessions.add(`${date}-${visit.session_id}`);
@@ -58,8 +58,8 @@ export const EngagementMetrics = () => {
       });
 
       // Count registered users by visitor_id
-      const registeredUsers = new Set();
-      registeredVisitors.forEach(visit => {
+      const registeredUsers = new Set<string>();
+      registeredVisitors?.forEach(visit => {
         const date = new Date(visit.visited_at).toISOString().split('T')[0];
         if (dailyData.has(date)) {
           registeredUsers.add(`${date}-${visit.visitor_id}`);
