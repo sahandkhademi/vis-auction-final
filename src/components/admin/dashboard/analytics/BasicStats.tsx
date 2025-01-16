@@ -108,7 +108,8 @@ export const BasicStats = () => {
 
       if (error) {
         console.error("Error fetching session duration:", error);
-        throw error;
+        console.error("Error details:", error.message, error.details);
+        return 0;
       }
 
       if (!data || data.length === 0) {
