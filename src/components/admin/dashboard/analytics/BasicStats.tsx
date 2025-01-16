@@ -99,24 +99,45 @@ export const BasicStats = () => {
 
       const { data, error } = await supabase
         .from("website_visits")
-        .select("session_duration")
+        .select("session_duration, visited_at")
         .gte('visited_at', thirtyDaysAgo.toISOString())
-        .not('session_duration', 'is', null);
+        .not('session_duration', 'is', null)
+        .order('visited_at', { ascending: false });
 
       if (error) {
         console.error("Error fetching session duration:", error);
         throw error;
       }
 
-      if (!data || data.length === 0) return 0;
+      if (!data || data.length === 0) {
+        console.log("No session data available");
+        return 0;
+      }
 
-      const validDurations = data.filter(visit => visit.session_duration && visit.session_duration > 0);
-      if (validDurations.length === 0) return 0;
+      const validDurations = data.filter(visit => 
+        visit.session_duration && 
+        visit.session_duration > 0 && 
+        visit.session_duration < 14400 // 4 hours in seconds
+      );
 
-      const totalDuration = validDurations.reduce((sum, visit) => sum + (visit.session_duration || 0), 0);
-      return Math.round(totalDuration / validDurations.length);
+      if (validDurations.length === 0) {
+        console.log("No valid session durations found");
+        return 0;
+      }
+
+      console.log("Valid session durations:", validDurations.map(v => ({
+        duration: v.session_duration,
+        visited_at: v.visited_at
+      })));
+
+      const totalDuration = validDurations.reduce((sum, visit) => sum + visit.session_duration!, 0);
+      const avgDuration = Math.round(totalDuration / validDurations.length);
+      
+      console.log("Calculated average duration:", avgDuration);
+      return avgDuration;
     },
-    refetchInterval: 60000, // Refetch every minute
+    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 25000, // Consider data stale after 25 seconds
   });
 
   const { data: previousPeriodData } = useQuery({
@@ -163,6 +184,7 @@ export const BasicStats = () => {
   };
 
   const formatSessionDuration = (seconds: number) => {
+    if (!seconds) return '0m 0s';
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}m ${remainingSeconds}s`;
