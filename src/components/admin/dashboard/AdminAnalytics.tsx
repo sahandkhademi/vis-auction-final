@@ -9,7 +9,6 @@ import { PlatformUsage } from "./analytics/PlatformUsage";
 export const AdminAnalytics = () => {
   return (
     <div className="space-y-8">
-      <h2 className="text-2xl font-bold">Admin Analytics</h2>
       <EmailTester />
       
       <motion.div
