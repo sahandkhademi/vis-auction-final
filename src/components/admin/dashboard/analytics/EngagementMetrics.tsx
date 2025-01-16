@@ -30,10 +30,8 @@ export const EngagementMetrics = () => {
         throw registeredError;
       }
 
-      // Process data to get daily counts
-      const dailyData = new Map();
-
       // Initialize the last 7 days
+      const dailyData = new Map();
       for (let i = 0; i < 7; i++) {
         const date = new Date();
         date.setDate(date.getDate() - i);
@@ -45,29 +43,44 @@ export const EngagementMetrics = () => {
         });
       }
 
-      // Count unique visitors by session_id
-      const uniqueSessions = new Set<string>();
+      // Process unique visitors day by day
+      const processedDays = new Set<string>();
+      const dailyUniqueSessions = new Map<string, Set<string>>();
+
       uniqueVisitors?.forEach(visit => {
         const date = new Date(visit.visited_at).toISOString().split('T')[0];
-        if (dailyData.has(date)) {
-          uniqueSessions.add(`${date}-${visit.session_id}`);
-          const data = dailyData.get(date);
-          data.unique = Array.from(uniqueSessions).filter(s => s.startsWith(date)).length;
-          dailyData.set(date, data);
+        if (!dailyUniqueSessions.has(date)) {
+          dailyUniqueSessions.set(date, new Set<string>());
+        }
+        if (visit.session_id) {
+          dailyUniqueSessions.get(date)?.add(visit.session_id);
         }
       });
 
-      // Count registered users by visitor_id
-      const registeredUsers = new Set<string>();
+      // Process registered users day by day
+      const dailyRegisteredUsers = new Map<string, Set<string>>();
+
       registeredVisitors?.forEach(visit => {
         const date = new Date(visit.visited_at).toISOString().split('T')[0];
-        if (dailyData.has(date)) {
-          registeredUsers.add(`${date}-${visit.visitor_id}`);
-          const data = dailyData.get(date);
-          data.registered = Array.from(registeredUsers).filter(s => s.startsWith(date)).length;
-          dailyData.set(date, data);
+        if (!dailyRegisteredUsers.has(date)) {
+          dailyRegisteredUsers.set(date, new Set<string>());
+        }
+        if (visit.visitor_id) {
+          dailyRegisteredUsers.get(date)?.add(visit.visitor_id);
         }
       });
+
+      // Update daily counts
+      for (const [date, data] of dailyData.entries()) {
+        const uniqueSessionsForDay = dailyUniqueSessions.get(date)?.size || 0;
+        const registeredUsersForDay = dailyRegisteredUsers.get(date)?.size || 0;
+        
+        dailyData.set(date, {
+          ...data,
+          unique: uniqueSessionsForDay,
+          registered: registeredUsersForDay
+        });
+      }
 
       return Array.from(dailyData.values()).reverse();
     },
