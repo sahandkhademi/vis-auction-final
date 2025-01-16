@@ -92,14 +92,15 @@ export const BasicStats = () => {
   });
 
   const { data: avgSessionTime } = useQuery({
-    queryKey: ["avg-session-time"],
+    queryKey: ["avg-session-time", Date.now()], // Add timestamp to force refresh
     queryFn: async () => {
+      console.log("Fetching average session time...");
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
       const { data, error } = await supabase
         .from("website_visits")
-        .select("session_duration, visited_at")
+        .select("session_duration")
         .gte('visited_at', thirtyDaysAgo.toISOString())
         .not('session_duration', 'is', null)
         .order('visited_at', { ascending: false });
@@ -125,19 +126,20 @@ export const BasicStats = () => {
         return 0;
       }
 
-      console.log("Valid session durations:", validDurations.map(v => ({
-        duration: v.session_duration,
-        visited_at: v.visited_at
-      })));
-
       const totalDuration = validDurations.reduce((sum, visit) => sum + visit.session_duration!, 0);
       const avgDuration = Math.round(totalDuration / validDurations.length);
       
+      console.log("Raw session data:", data);
+      console.log("Valid durations count:", validDurations.length);
+      console.log("Total duration:", totalDuration);
       console.log("Calculated average duration:", avgDuration);
+      
       return avgDuration;
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
-    staleTime: 25000, // Consider data stale after 25 seconds
+    refetchInterval: 5000, // Reduce interval to 5 seconds for testing
+    staleTime: 3000, // Reduce stale time to 3 seconds
+    cacheTime: 0, // Disable caching
+    refetchOnWindowFocus: true,
   });
 
   const { data: previousPeriodData } = useQuery({
