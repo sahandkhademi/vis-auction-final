@@ -92,7 +92,7 @@ export const BasicStats = () => {
   });
 
   const { data: avgSessionTime } = useQuery({
-    queryKey: ["avg-session-time", Date.now()], // Add timestamp to force refresh
+    queryKey: ["avg-session-time"],
     queryFn: async () => {
       console.log("Fetching average session time...");
       const thirtyDaysAgo = new Date();
@@ -101,8 +101,9 @@ export const BasicStats = () => {
       const { data, error } = await supabase
         .from("website_visits")
         .select("session_duration")
+        .gt('session_duration', 0)
+        .lt('session_duration', 14400) // 4 hours max
         .gte('visited_at', thirtyDaysAgo.toISOString())
-        .not('session_duration', 'is', null)
         .order('visited_at', { ascending: false });
 
       if (error) {
@@ -115,31 +116,18 @@ export const BasicStats = () => {
         return 0;
       }
 
-      const validDurations = data.filter(visit => 
-        visit.session_duration && 
-        visit.session_duration > 0 && 
-        visit.session_duration < 14400 // 4 hours in seconds
-      );
-
-      if (validDurations.length === 0) {
-        console.log("No valid session durations found");
-        return 0;
-      }
-
-      const totalDuration = validDurations.reduce((sum, visit) => sum + visit.session_duration!, 0);
-      const avgDuration = Math.round(totalDuration / validDurations.length);
+      const totalDuration = data.reduce((sum, visit) => sum + (visit.session_duration || 0), 0);
+      const avgDuration = Math.round(totalDuration / data.length);
       
-      console.log("Raw session data:", data);
-      console.log("Valid durations count:", validDurations.length);
+      console.log("Session data count:", data.length);
       console.log("Total duration:", totalDuration);
-      console.log("Calculated average duration:", avgDuration);
+      console.log("Average duration:", avgDuration);
       
       return avgDuration;
     },
-    refetchInterval: 5000, // Reduce interval to 5 seconds for testing
-    staleTime: 3000, // Reduce stale time to 3 seconds
-    gcTime: 0, // Using gcTime instead of cacheTime
-    refetchOnWindowFocus: true,
+    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 25000,      // Consider data stale after 25 seconds
+    gcTime: 0,             // Don't cache the data
   });
 
   const { data: previousPeriodData } = useQuery({
