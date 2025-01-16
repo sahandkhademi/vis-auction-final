@@ -138,7 +138,7 @@ export const BasicStats = () => {
     },
     refetchInterval: 5000, // Reduce interval to 5 seconds for testing
     staleTime: 3000, // Reduce stale time to 3 seconds
-    cacheTime: 0, // Disable caching
+    gcTime: 0, // Using gcTime instead of cacheTime
     refetchOnWindowFocus: true,
   });
 
