@@ -74,8 +74,10 @@ const Auctions = () => {
               id={artwork.id}
               title={artwork.title}
               artist={artwork.artist}
+              artist_id={artwork.artist_id}
               image={artwork.image_url || "/placeholder.svg"}
-              currentBid={artwork.current_price || artwork.starting_price}
+              currentBid={artwork.current_price || 0}
+              startingPrice={artwork.starting_price}
               category={artwork.format || "Uncategorized"}
               endDate={artwork.end_date}
             />
