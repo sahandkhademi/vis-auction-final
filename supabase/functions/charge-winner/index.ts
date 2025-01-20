@@ -30,7 +30,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get auction details
+    // Get auction details with winner information
     const { data: auction, error: auctionError } = await supabaseClient
       .from('artworks')
       .select(`
@@ -58,6 +58,12 @@ serve(async (req) => {
     if (!auction.winner) {
       console.error('❌ No winner found for auction');
       throw new Error('No winner found for auction');
+    }
+
+    // Verify the winner's email exists
+    if (!auction.winner.email) {
+      console.error('❌ Winner has no email address:', auction.winner.id);
+      throw new Error('Winner has no email address');
     }
 
     // Get winner's payment method
@@ -102,6 +108,19 @@ serve(async (req) => {
       console.log('👤 Created new customer:', customerId);
     }
 
+    // Verify the payment method is attached to the customer
+    try {
+      await stripe.paymentMethods.attach(paymentMethod.stripe_payment_method_id, {
+        customer: customerId,
+      });
+      console.log('✅ Payment method attached to customer');
+    } catch (error) {
+      if (error.code !== 'payment_method_already_attached') {
+        console.error('❌ Error attaching payment method:', error);
+        throw error;
+      }
+    }
+
     // Create payment intent
     console.log('💰 Creating payment intent for amount:', Math.round(auction.current_price * 100));
     const paymentIntent = await stripe.paymentIntents.create({
@@ -111,6 +130,8 @@ serve(async (req) => {
       payment_method: paymentMethod.stripe_payment_method_id,
       off_session: true,
       confirm: true,
+      payment_method_types: ['card'],
+      setup_future_usage: 'off_session',
     });
 
     console.log('✅ Payment intent created:', paymentIntent.id, 'status:', paymentIntent.status);
