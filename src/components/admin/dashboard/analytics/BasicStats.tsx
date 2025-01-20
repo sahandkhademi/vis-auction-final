@@ -92,23 +92,43 @@ export const BasicStats = () => {
   });
 
   const { data: avgSessionTime } = useQuery({
-    queryKey: ["avg-session-time"],
+    queryKey: ["avg-session-time", Date.now()],
     queryFn: async () => {
       console.log("Fetching average session time...");
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
       const { data, error } = await supabase
         .from("website_visits")
         .select("session_duration")
-        .not("session_duration", "is", null);
+        .gt('session_duration', 0)
+        .lt('session_duration', 14400)
+        .gte('visited_at', thirtyDaysAgo.toISOString())
+        .order('visited_at', { ascending: false });
 
       if (error) {
         console.error("Error fetching session duration:", error);
-        throw error;
+        console.error("Error details:", error.message, error.details);
+        return 0;
       }
 
-      console.log("Session duration data:", data);
+      if (!data || data.length === 0) {
+        console.log("No session data available");
+        return 0;
+      }
+
       const totalDuration = data.reduce((sum, visit) => sum + (visit.session_duration || 0), 0);
-      return data.length ? Math.round(totalDuration / data.length) : 0;
+      const avgDuration = Math.round(totalDuration / data.length);
+      
+      console.log("Session data count:", data.length);
+      console.log("Total duration:", totalDuration);
+      console.log("Average duration:", avgDuration);
+      
+      return avgDuration;
     },
+    refetchInterval: 10000, // Refetch every 10 seconds
+    staleTime: 5000,      // Consider data stale after 5 seconds
+    gcTime: 0,            // Don't cache the data
   });
 
   const { data: previousPeriodData } = useQuery({
@@ -155,6 +175,7 @@ export const BasicStats = () => {
   };
 
   const formatSessionDuration = (seconds: number) => {
+    if (!seconds) return '0m 0s';
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}m ${remainingSeconds}s`;
