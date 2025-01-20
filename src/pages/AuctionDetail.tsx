@@ -7,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { ArtworkImage } from "@/components/auction/ArtworkImage";
 import { AuctionDetails } from "@/components/auction/AuctionDetails";
 import { ArtworkWithArtist } from "@/types/auction";
-import { useAuctionSubscription } from "@/hooks/useAuctionSubscription";
 
 const AuctionDetail = () => {
   const { id } = useParams();
@@ -44,6 +43,31 @@ const AuctionDetail = () => {
     enabled: !!id,
   });
 
+  // Record page visit
+  useEffect(() => {
+    const recordVisit = async () => {
+      try {
+        const sessionId = crypto.randomUUID();
+        const { data, error } = await supabase.rpc('track_website_visit', {
+          p_session_id: sessionId,
+          p_path: window.location.pathname,
+          p_user_agent: navigator.userAgent
+        });
+
+        if (error) {
+          console.error('Error recording visit:', error);
+          return;
+        }
+
+        console.log('Visit recorded successfully:', data);
+      } catch (error) {
+        console.error('Failed to record visit:', error);
+      }
+    };
+
+    recordVisit();
+  }, [id]);
+
   // Subscribe to auction updates
   useEffect(() => {
     if (!id) return;
@@ -64,7 +88,6 @@ const AuctionDetail = () => {
           console.log('🔄 Received auction update:', payload);
           const newData = payload.new as { completion_status: string };
           
-          // If auction has completed, refresh the page data
           if (newData.completion_status === 'completed') {
             console.log('🏁 Auction completed, refreshing data');
             await refetch();
@@ -79,30 +102,6 @@ const AuctionDetail = () => {
       supabase.removeChannel(channel);
     };
   }, [id, refetch]);
-
-  // Use custom hook for bid subscriptions
-  useAuctionSubscription(id, refetch, setCurrentHighestBid);
-
-  const fetchCurrentHighestBid = async () => {
-    if (!id) return;
-
-    const { data, error } = await supabase
-      .from('bids')
-      .select('amount')
-      .eq('auction_id', id)
-      .order('amount', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error fetching highest bid:', error);
-      return;
-    }
-
-    if (data) {
-      setCurrentHighestBid(data.amount);
-    }
-  };
 
   if (artworkError) {
     toast.error("Error loading artwork details");
@@ -134,7 +133,7 @@ const AuctionDetail = () => {
             artwork={artwork}
             currentHighestBid={currentHighestBid}
             isLoading={isLoading}
-            onBidPlaced={fetchCurrentHighestBid}
+            onBidPlaced={() => {}}
           />
         </div>
       </div>
