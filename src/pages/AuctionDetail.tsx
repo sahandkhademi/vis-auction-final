@@ -47,7 +47,7 @@ const AuctionDetail = () => {
   useEffect(() => {
     if (!id) return;
 
-    console.log('🔄 Setting up auction completion subscription');
+    console.log('🔄 Setting up auction subscriptions');
     
     // Subscribe to auction status updates
     const auctionChannel = supabase
@@ -95,44 +95,53 @@ const AuctionDetail = () => {
 
     // Fetch initial highest bid
     const fetchHighestBid = async () => {
-      const { data, error } = await supabase
-        .from('bids')
-        .select('amount')
-        .eq('auction_id', id)
-        .order('amount', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from('bids')
+          .select('amount')
+          .eq('auction_id', id)
+          .order('amount', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching highest bid:', error);
-        return;
-      }
+        if (error) {
+          console.error('Error fetching highest bid:', error);
+          return;
+        }
 
-      if (data) {
-        setCurrentHighestBid(data.amount);
+        if (data) {
+          setCurrentHighestBid(data.amount);
+        }
+      } catch (error) {
+        console.error('Failed to fetch highest bid:', error);
       }
     };
 
     fetchHighestBid();
 
-    // Record page visit
+    // Record page visit silently - don't block on errors
     const recordVisit = async () => {
       try {
         const sessionId = crypto.randomUUID();
-        await supabase.rpc('track_website_visit', {
+        const { error } = await supabase.rpc('track_website_visit', {
           p_session_id: sessionId,
           p_path: window.location.pathname,
           p_user_agent: navigator.userAgent
         });
+        
+        if (error) {
+          console.warn('Non-critical: Failed to record visit:', error);
+        }
       } catch (error) {
-        console.error('Failed to record visit:', error);
+        console.warn('Non-critical: Failed to record visit:', error);
       }
     };
 
+    // Don't await this - let it run in background
     recordVisit();
 
     return () => {
-      console.log('🔄 Cleaning up auction completion subscription');
+      console.log('🔄 Cleaning up auction subscriptions');
       supabase.removeChannel(auctionChannel);
       supabase.removeChannel(bidsChannel);
     };
