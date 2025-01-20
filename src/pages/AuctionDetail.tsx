@@ -43,39 +43,15 @@ const AuctionDetail = () => {
     enabled: !!id,
   });
 
-  // Record page visit
-  useEffect(() => {
-    const recordVisit = async () => {
-      try {
-        const sessionId = crypto.randomUUID();
-        const { data, error } = await supabase.rpc('track_website_visit', {
-          p_session_id: sessionId,
-          p_path: window.location.pathname,
-          p_user_agent: navigator.userAgent
-        });
-
-        if (error) {
-          console.error('Error recording visit:', error);
-          return;
-        }
-
-        console.log('Visit recorded successfully:', data);
-      } catch (error) {
-        console.error('Failed to record visit:', error);
-      }
-    };
-
-    recordVisit();
-  }, [id]);
-
-  // Subscribe to auction updates
+  // Subscribe to auction updates and bids
   useEffect(() => {
     if (!id) return;
 
     console.log('🔄 Setting up auction completion subscription');
     
-    const channel = supabase
-      .channel('auction-completion')
+    // Subscribe to auction status updates
+    const auctionChannel = supabase
+      .channel('auction-updates')
       .on(
         'postgres_changes',
         {
@@ -97,9 +73,68 @@ const AuctionDetail = () => {
       )
       .subscribe();
 
+    // Subscribe to new bids
+    const bidsChannel = supabase
+      .channel('new-bids')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'bids',
+          filter: `auction_id=eq.${id}`
+        },
+        async (payload) => {
+          const newBid = payload.new as { amount: number };
+          console.log('📈 New bid received:', newBid);
+          setCurrentHighestBid(newBid.amount);
+          toast.info(`New bid: €${newBid.amount.toLocaleString()}`);
+        }
+      )
+      .subscribe();
+
+    // Fetch initial highest bid
+    const fetchHighestBid = async () => {
+      const { data, error } = await supabase
+        .from('bids')
+        .select('amount')
+        .eq('auction_id', id)
+        .order('amount', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching highest bid:', error);
+        return;
+      }
+
+      if (data) {
+        setCurrentHighestBid(data.amount);
+      }
+    };
+
+    fetchHighestBid();
+
+    // Record page visit
+    const recordVisit = async () => {
+      try {
+        const sessionId = crypto.randomUUID();
+        await supabase.rpc('track_website_visit', {
+          p_session_id: sessionId,
+          p_path: window.location.pathname,
+          p_user_agent: navigator.userAgent
+        });
+      } catch (error) {
+        console.error('Failed to record visit:', error);
+      }
+    };
+
+    recordVisit();
+
     return () => {
       console.log('🔄 Cleaning up auction completion subscription');
-      supabase.removeChannel(channel);
+      supabase.removeChannel(auctionChannel);
+      supabase.removeChannel(bidsChannel);
     };
   }, [id, refetch]);
 
@@ -133,7 +168,7 @@ const AuctionDetail = () => {
             artwork={artwork}
             currentHighestBid={currentHighestBid}
             isLoading={isLoading}
-            onBidPlaced={() => {}}
+            onBidPlaced={() => refetch()}
           />
         </div>
       </div>
