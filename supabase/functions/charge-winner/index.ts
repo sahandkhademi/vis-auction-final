@@ -19,6 +19,8 @@ serve(async (req) => {
       throw new Error('Auction ID is required');
     }
 
+    console.log('🔔 Processing charge for auction:', auctionId);
+
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
@@ -42,37 +44,79 @@ serve(async (req) => {
       .single();
 
     if (auctionError || !auction) {
+      console.error('❌ Error fetching auction:', auctionError);
       throw new Error('Auction not found');
     }
 
+    console.log('📦 Auction details:', {
+      id: auction.id,
+      winner_id: auction.winner?.id,
+      winner_email: auction.winner?.email,
+      price: auction.current_price
+    });
+
     if (!auction.winner) {
+      console.error('❌ No winner found for auction');
       throw new Error('No winner found for auction');
     }
 
     // Get winner's payment method
-    const { data: paymentMethod } = await supabaseClient
+    const { data: paymentMethod, error: paymentMethodError } = await supabaseClient
       .from('user_payment_methods')
       .select('*')
       .eq('user_id', auction.winner.id)
       .eq('is_valid', true)
       .single();
 
+    if (paymentMethodError) {
+      console.error('❌ Error fetching payment method:', paymentMethodError);
+      throw new Error('Error fetching payment method');
+    }
+
     if (!paymentMethod) {
+      console.error('❌ No valid payment method found for winner:', auction.winner.id);
       throw new Error('No valid payment method found for winner');
     }
 
+    console.log('💳 Found payment method:', {
+      id: paymentMethod.stripe_payment_method_id,
+      brand: paymentMethod.card_brand,
+      last_four: paymentMethod.last_four
+    });
+
+    // Get or create customer
+    let customerId;
+    const customers = await stripe.customers.list({
+      email: auction.winner.email,
+      limit: 1,
+    });
+
+    if (customers.data.length > 0) {
+      customerId = customers.data[0].id;
+      console.log('👤 Using existing customer:', customerId);
+    } else {
+      const customer = await stripe.customers.create({
+        email: auction.winner.email,
+      });
+      customerId = customer.id;
+      console.log('👤 Created new customer:', customerId);
+    }
+
     // Create payment intent
+    console.log('💰 Creating payment intent for amount:', Math.round(auction.current_price * 100));
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(auction.current_price * 100), // Convert to cents
+      amount: Math.round(auction.current_price * 100),
       currency: 'eur',
-      customer: await getOrCreateCustomer(stripe, auction.winner.email || ''),
+      customer: customerId,
       payment_method: paymentMethod.stripe_payment_method_id,
       off_session: true,
       confirm: true,
     });
 
+    console.log('✅ Payment intent created:', paymentIntent.id, 'status:', paymentIntent.status);
+
     // Update auction with payment intent
-    await supabaseClient
+    const { error: updateError } = await supabaseClient
       .from('artworks')
       .update({
         payment_intent_id: paymentIntent.id,
@@ -80,7 +124,10 @@ serve(async (req) => {
       })
       .eq('id', auctionId);
 
-    console.log('✅ Winner charged successfully:', paymentIntent.id);
+    if (updateError) {
+      console.error('❌ Error updating auction:', updateError);
+      throw updateError;
+    }
 
     return new Response(
       JSON.stringify({ success: true, paymentIntentId: paymentIntent.id }),
@@ -100,20 +147,3 @@ serve(async (req) => {
     );
   }
 });
-
-async function getOrCreateCustomer(stripe: Stripe, email: string): Promise<string> {
-  const customers = await stripe.customers.list({
-    email: email,
-    limit: 1,
-  });
-
-  if (customers.data.length > 0) {
-    return customers.data[0].id;
-  }
-
-  const customer = await stripe.customers.create({
-    email: email,
-  });
-
-  return customer.id;
-}
