@@ -13,27 +13,25 @@ serve(async (req) => {
   }
 
   try {
-    const { artworkId } = await req.json();
+    const { auctionId } = await req.json();
     
-    if (!artworkId) {
+    if (!auctionId) {
       throw new Error('Auction ID is required');
     }
 
-    console.log('🔔 Processing charge for auction:', artworkId);
+    console.log('🔔 Processing charge for auction:', auctionId);
 
-    // Initialize Stripe
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
       apiVersion: '2023-10-16',
     });
 
-    // Initialize Supabase with service role key for admin access
-    const supabaseAdmin = createClient(
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
     // Get auction details with winner information
-    const { data: auction, error: auctionError } = await supabaseAdmin
+    const { data: auction, error: auctionError } = await supabaseClient
       .from('artworks')
       .select(`
         *,
@@ -42,7 +40,7 @@ serve(async (req) => {
           email
         )
       `)
-      .eq('id', artworkId)
+      .eq('id', auctionId)
       .single();
 
     if (auctionError || !auction) {
@@ -69,7 +67,7 @@ serve(async (req) => {
     }
 
     // Get winner's payment method
-    const { data: paymentMethod, error: paymentMethodError } = await supabaseAdmin
+    const { data: paymentMethod, error: paymentMethodError } = await supabaseClient
       .from('user_payment_methods')
       .select('*')
       .eq('user_id', auction.winner.id)
@@ -138,14 +136,14 @@ serve(async (req) => {
 
     console.log('✅ Payment intent created:', paymentIntent.id, 'status:', paymentIntent.status);
 
-    // Update auction with payment intent using admin client
-    const { error: updateError } = await supabaseAdmin
+    // Update auction with payment intent
+    const { error: updateError } = await supabaseClient
       .from('artworks')
       .update({
         payment_intent_id: paymentIntent.id,
         payment_status: paymentIntent.status === 'succeeded' ? 'completed' : 'failed'
       })
-      .eq('id', artworkId);
+      .eq('id', auctionId);
 
     if (updateError) {
       console.error('❌ Error updating auction:', updateError);
