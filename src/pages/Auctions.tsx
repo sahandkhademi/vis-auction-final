@@ -9,21 +9,28 @@ const Auctions = () => {
   const { data: artworks, isLoading, error } = useQuery({
     queryKey: ["artworks"],
     queryFn: async () => {
-      console.log("Fetching artworks...");
-      const { data, error } = await supabase
-        .from("artworks")
-        .select("*")
-        .eq("status", "published")
-        .order("created_at", { ascending: false });
+      try {
+        console.log("Fetching artworks...");
+        const { data, error } = await supabase
+          .from("artworks")
+          .select("*")
+          .eq("status", "published")
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching artworks:", error);
-        throw error;
+        if (error) {
+          console.error("Error fetching artworks:", error);
+          throw error;
+        }
+        
+        console.log("Fetched artworks:", data);
+        return data;
+      } catch (err) {
+        console.error("Failed to fetch artworks:", err);
+        throw err;
       }
-      
-      console.log("Fetched artworks:", data);
-      return data;
     },
+    retry: 1,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   if (isLoading) {
