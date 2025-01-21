@@ -8,7 +8,7 @@ import {
 const FAQ = () => {
   return (
     <div className="container max-w-4xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-semibold mb-8">Frequently Asked Questions</h1>
+      <h1 className="text-3xl font-semibold mb-6">Frequently Asked Questions</h1>
       
       <div className="border rounded-lg">
         <Accordion type="single" collapsible className="divide-y">
