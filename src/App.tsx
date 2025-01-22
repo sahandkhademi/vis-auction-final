@@ -45,13 +45,19 @@ const PageViewTracker = () => {
   useEffect(() => {
     const trackPageView = async () => {
       console.log("Recording page view for:", location.pathname);
+      
+      // First get the IP address from a reliable service
+      const ipResponse = await fetch('https://api.ipify.org?format=json');
+      const { ip } = await ipResponse.json();
+      
       const { data, error } = await supabase
         .from('website_visits')
         .insert([{ 
           path: location.pathname,
           user_agent: navigator.userAgent,
           device_type: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
-          platform: navigator.platform
+          platform: navigator.platform,
+          ip_address: ip // Add the IP address to the record
         }]);
 
       if (error) {
