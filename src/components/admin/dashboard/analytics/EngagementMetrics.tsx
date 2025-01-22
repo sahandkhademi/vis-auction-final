@@ -7,6 +7,7 @@ export const EngagementMetrics = () => {
   const { data: retentionData } = useQuery({
     queryKey: ["user-retention-trend"],
     queryFn: async () => {
+      console.log("Fetching retention data...");
       const { data, error } = await supabase
         .from("user_retention")
         .select("*")
@@ -17,6 +18,8 @@ export const EngagementMetrics = () => {
         console.error("Error fetching retention data:", error);
         throw error;
       }
+
+      console.log("Raw retention data:", data);
       
       return data.map(day => ({
         date: new Date(day.visit_date).toLocaleDateString('en-US', { weekday: 'short' }),
@@ -30,7 +33,7 @@ export const EngagementMetrics = () => {
     <Card className="col-span-4">
       <CardHeader>
         <CardTitle>User Engagement</CardTitle>
-        <CardDescription>Daily unique visitor breakdown over the last 7 days</CardDescription>
+        <CardDescription>Daily unique visitors (by IP) over the last 7 days</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
