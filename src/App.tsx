@@ -80,7 +80,7 @@ const PageViewTracker = () => {
         .from('website_visits')
         .update({ session_duration: duration })
         .eq('ip_address', ip)
-        .is('session_duration', 0);
+        .eq('session_duration', 0); // Changed from .is() to .eq()
 
       if (error) {
         console.error("Error updating session duration:", error);
