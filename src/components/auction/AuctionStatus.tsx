@@ -193,8 +193,6 @@ export const AuctionStatus = ({
           hasCompletedPayment={hasCompletedPayment}
           needsPayment={false}
           isEnded={isEnded}
-          auctionId={auctionId}
-          currentBid={currentBid}
         />
       )}
     </div>
