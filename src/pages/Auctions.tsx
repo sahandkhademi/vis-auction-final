@@ -9,28 +9,21 @@ const Auctions = () => {
   const { data: artworks, isLoading, error } = useQuery({
     queryKey: ["artworks"],
     queryFn: async () => {
-      try {
-        console.log("Fetching artworks...");
-        const { data, error } = await supabase
-          .from("artworks")
-          .select("*")
-          .eq("status", "published")
-          .order("created_at", { ascending: false });
+      console.log("Fetching artworks...");
+      const { data, error } = await supabase
+        .from("artworks")
+        .select("*")
+        .eq("status", "published")
+        .order("created_at", { ascending: false });
 
-        if (error) {
-          console.error("Error fetching artworks:", error);
-          throw error;
-        }
-        
-        console.log("Fetched artworks:", data);
-        return data;
-      } catch (err) {
-        console.error("Failed to fetch artworks:", err);
-        throw err;
+      if (error) {
+        console.error("Error fetching artworks:", error);
+        throw error;
       }
+      
+      console.log("Fetched artworks:", data);
+      return data;
     },
-    retry: 1,
-    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   if (isLoading) {
@@ -74,10 +67,8 @@ const Auctions = () => {
               id={artwork.id}
               title={artwork.title}
               artist={artwork.artist}
-              artist_id={artwork.artist_id}
               image={artwork.image_url || "/placeholder.svg"}
-              currentBid={artwork.current_price || 0}
-              startingPrice={artwork.starting_price}
+              currentBid={artwork.current_price || artwork.starting_price}
               category={artwork.format || "Uncategorized"}
               endDate={artwork.end_date}
             />

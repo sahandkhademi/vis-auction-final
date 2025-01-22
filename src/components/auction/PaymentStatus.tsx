@@ -4,16 +4,12 @@ interface PaymentStatusProps {
   hasCompletedPayment: boolean;
   needsPayment: boolean;
   isEnded: boolean;
-  auctionId?: string;
-  currentBid?: number;
 }
 
 export const PaymentStatus = ({
   hasCompletedPayment,
   needsPayment,
-  isEnded,
-  auctionId,
-  currentBid
+  isEnded
 }: PaymentStatusProps) => {
   if (!isEnded || (!hasCompletedPayment && !needsPayment)) {
     return null;

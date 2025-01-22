@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArtworkImage } from "@/components/auction/ArtworkImage";
 import { AuctionDetails } from "@/components/auction/AuctionDetails";
 import { ArtworkWithArtist } from "@/types/auction";
+import { useAuctionSubscription } from "@/hooks/useAuctionSubscription";
 
 const AuctionDetail = () => {
   const { id } = useParams();
@@ -43,15 +44,14 @@ const AuctionDetail = () => {
     enabled: !!id,
   });
 
-  // Subscribe to auction updates and bids
+  // Subscribe to auction updates
   useEffect(() => {
     if (!id) return;
 
-    console.log('🔄 Setting up auction subscriptions');
+    console.log('🔄 Setting up auction completion subscription');
     
-    // Subscribe to auction status updates
-    const auctionChannel = supabase
-      .channel('auction-updates')
+    const channel = supabase
+      .channel('auction-completion')
       .on(
         'postgres_changes',
         {
@@ -64,6 +64,7 @@ const AuctionDetail = () => {
           console.log('🔄 Received auction update:', payload);
           const newData = payload.new as { completion_status: string };
           
+          // If auction has completed, refresh the page data
           if (newData.completion_status === 'completed') {
             console.log('🏁 Auction completed, refreshing data');
             await refetch();
@@ -73,79 +74,35 @@ const AuctionDetail = () => {
       )
       .subscribe();
 
-    // Subscribe to new bids
-    const bidsChannel = supabase
-      .channel('new-bids')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'bids',
-          filter: `auction_id=eq.${id}`
-        },
-        async (payload) => {
-          const newBid = payload.new as { amount: number };
-          console.log('📈 New bid received:', newBid);
-          setCurrentHighestBid(newBid.amount);
-          toast.info(`New bid: €${newBid.amount.toLocaleString()}`);
-        }
-      )
-      .subscribe();
-
-    // Fetch initial highest bid
-    const fetchHighestBid = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('bids')
-          .select('amount')
-          .eq('auction_id', id)
-          .order('amount', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error fetching highest bid:', error);
-          return;
-        }
-
-        if (data) {
-          setCurrentHighestBid(data.amount);
-        }
-      } catch (error) {
-        console.error('Failed to fetch highest bid:', error);
-      }
-    };
-
-    fetchHighestBid();
-
-    // Record page visit silently - don't block on errors
-    const recordVisit = async () => {
-      try {
-        const sessionId = crypto.randomUUID();
-        const { error } = await supabase.rpc('track_website_visit', {
-          p_session_id: sessionId,
-          p_path: window.location.pathname,
-          p_user_agent: navigator.userAgent
-        });
-        
-        if (error) {
-          console.warn('Non-critical: Failed to record visit:', error);
-        }
-      } catch (error) {
-        console.warn('Non-critical: Failed to record visit:', error);
-      }
-    };
-
-    // Don't await this - let it run in background
-    recordVisit();
-
     return () => {
-      console.log('🔄 Cleaning up auction subscriptions');
-      supabase.removeChannel(auctionChannel);
-      supabase.removeChannel(bidsChannel);
+      console.log('🔄 Cleaning up auction completion subscription');
+      supabase.removeChannel(channel);
     };
   }, [id, refetch]);
+
+  // Use custom hook for bid subscriptions
+  useAuctionSubscription(id, refetch, setCurrentHighestBid);
+
+  const fetchCurrentHighestBid = async () => {
+    if (!id) return;
+
+    const { data, error } = await supabase
+      .from('bids')
+      .select('amount')
+      .eq('auction_id', id)
+      .order('amount', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching highest bid:', error);
+      return;
+    }
+
+    if (data) {
+      setCurrentHighestBid(data.amount);
+    }
+  };
 
   if (artworkError) {
     toast.error("Error loading artwork details");
@@ -177,7 +134,7 @@ const AuctionDetail = () => {
             artwork={artwork}
             currentHighestBid={currentHighestBid}
             isLoading={isLoading}
-            onBidPlaced={() => refetch()}
+            onBidPlaced={fetchCurrentHighestBid}
           />
         </div>
       </div>
