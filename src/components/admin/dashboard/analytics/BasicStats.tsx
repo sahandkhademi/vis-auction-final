@@ -97,17 +97,32 @@ export const BasicStats = () => {
       console.log("Fetching average session time...");
       const { data, error } = await supabase
         .from("website_visits")
-        .select("session_duration")
-        .not("session_duration", "is", null);
+        .select("session_duration, ip_address")
+        .not("session_duration", "is", null)
+        .gt("session_duration", 0);
 
       if (error) {
         console.error("Error fetching session duration:", error);
         throw error;
       }
 
-      console.log("Session duration data:", data);
-      const totalDuration = data.reduce((sum, visit) => sum + (visit.session_duration || 0), 0);
-      return data.length ? Math.round(totalDuration / data.length) : 0;
+      // Group by IP address and get the average duration for each IP
+      const ipSessions = data.reduce<Record<string, number[]>>((acc, visit) => {
+        if (!acc[visit.ip_address]) {
+          acc[visit.ip_address] = [];
+        }
+        acc[visit.ip_address].push(visit.session_duration);
+        return acc;
+      }, {});
+
+      // Calculate average session duration across all IPs
+      const totalDuration = Object.values(ipSessions).reduce((sum, durations: number[]) => {
+        const avgForIP = durations.reduce((a, b) => a + b, 0) / durations.length;
+        return sum + avgForIP;
+      }, 0);
+
+      const uniqueIPs = Object.keys(ipSessions).length;
+      return uniqueIPs ? Math.round(totalDuration / uniqueIPs) : 0;
     },
   });
 
