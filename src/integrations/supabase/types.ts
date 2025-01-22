@@ -386,6 +386,7 @@ export type Database = {
         Row: {
           device_type: string | null
           id: string
+          ip_address: string | null
           path: string | null
           platform: string | null
           session_duration: number | null
@@ -397,6 +398,7 @@ export type Database = {
         Insert: {
           device_type?: string | null
           id?: string
+          ip_address?: string | null
           path?: string | null
           platform?: string | null
           session_duration?: number | null
@@ -408,6 +410,7 @@ export type Database = {
         Update: {
           device_type?: string | null
           id?: string
+          ip_address?: string | null
           path?: string | null
           platform?: string | null
           session_duration?: number | null

@@ -7,21 +7,35 @@ export const EngagementMetrics = () => {
   const { data: retentionData } = useQuery({
     queryKey: ["user-retention-trend"],
     queryFn: async () => {
+      console.log("Fetching retention data...");
       const { data, error } = await supabase
-        .from("user_retention")
-        .select("*")
-        .order('visit_date', { ascending: true })
-        .limit(7);
+        .from("website_visits")
+        .select('visited_at, ip_address, visitor_id')
+        .gte('visited_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 
       if (error) {
         console.error("Error fetching retention data:", error);
         throw error;
       }
-      
-      return data.map(day => ({
-        date: new Date(day.visit_date).toLocaleDateString('en-US', { weekday: 'short' }),
-        unique: day.total_visitors,
-        registered: day.registered_visitors
+
+      console.log("Raw visit data:", data);
+
+      // Group by day and count unique IPs and visitors
+      const dailyStats = data.reduce<Record<string, { unique: Set<string>, registered: Set<string> }>>((acc, visit) => {
+        const day = new Date(visit.visited_at).toLocaleDateString('en-US', { weekday: 'short' });
+        if (!acc[day]) {
+          acc[day] = { unique: new Set<string>(), registered: new Set<string>() };
+        }
+        if (visit.ip_address) acc[day].unique.add(visit.ip_address);
+        if (visit.visitor_id) acc[day].registered.add(visit.visitor_id);
+        return acc;
+      }, {});
+
+      // Convert sets to counts and format for chart
+      return Object.entries(dailyStats).map(([date, stats]) => ({
+        date,
+        unique: stats.unique.size,
+        registered: stats.registered.size
       }));
     },
   });
@@ -30,7 +44,7 @@ export const EngagementMetrics = () => {
     <Card className="col-span-4">
       <CardHeader>
         <CardTitle>User Engagement</CardTitle>
-        <CardDescription>Daily unique visitor breakdown over the last 7 days</CardDescription>
+        <CardDescription>Daily unique visitors (by IP) over the last 7 days</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
