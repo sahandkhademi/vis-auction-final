@@ -11,25 +11,6 @@ export const EngagementMetrics = () => {
       const { data, error } = await supabase
         .from("website_visits")
         .select('visited_at, ip_address, visitor_id')
-        .gte('visited_atLet me help fix the TypeScript errors in the EngagementMetrics component. The issue is with the type definitions for the dailyStats object.
-
-<lov-code>
-Let's update the EngagementMetrics.tsx file:
-
-<lov-write file_path="src/components/admin/dashboard/analytics/EngagementMetrics.tsx">
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-export const EngagementMetrics = () => {
-  const { data: retentionData } = useQuery({
-    queryKey: ["user-retention-trend"],
-    queryFn: async () => {
-      console.log("Fetching retention data...");
-      const { data, error } = await supabase
-        .from("website_visits")
-        .select('visited_at, ip_address, visitor_id')
         .gte('visited_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 
       if (error) {
@@ -40,7 +21,7 @@ export const EngagementMetrics = () => {
       console.log("Raw visit data:", data);
 
       // Group by day and count unique IPs and visitors
-      const dailyStats = data.reduce((acc: { [key: string]: { unique: Set<string>, registered: Set<string> } }, visit) => {
+      const dailyStats = data.reduce<Record<string, { unique: Set<string>, registered: Set<string> }>>((acc, visit) => {
         const day = new Date(visit.visited_at).toLocaleDateString('en-US', { weekday: 'short' });
         if (!acc[day]) {
           acc[day] = { unique: new Set<string>(), registered: new Set<string>() };
@@ -50,7 +31,7 @@ export const EngagementMetrics = () => {
         return acc;
       }, {});
 
-      // Convert sets to counts
+      // Convert sets to counts and format for chart
       return Object.entries(dailyStats).map(([date, stats]) => ({
         date,
         unique: stats.unique.size,
