@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Toaster } from "sonner";
@@ -38,12 +38,42 @@ const PageLoader = () => (
   </div>
 );
 
+// Track page views
+const PageViewTracker = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    const trackPageView = async () => {
+      console.log("Recording page view for:", location.pathname);
+      const { data, error } = await supabase
+        .from('website_visits')
+        .insert([{ 
+          path: location.pathname,
+          user_agent: navigator.userAgent,
+          device_type: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
+          platform: navigator.platform
+        }]);
+
+      if (error) {
+        console.error("Error recording visit:", error);
+      } else {
+        console.log("Visit recorded successfully:", data);
+      }
+    };
+
+    trackPageView();
+  }, [location.pathname]);
+
+  return null;
+};
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionContextProvider supabaseClient={supabase}>
         <BrowserRouter>
           <div className="min-h-screen flex flex-col bg-background">
+            <PageViewTracker />
             <Navigation />
             <main className={`flex-grow ${location.pathname.startsWith('/auction/') ? 'pt-6' : 'pt-24'} pb-16`}>
               <Suspense fallback={<PageLoader />}>

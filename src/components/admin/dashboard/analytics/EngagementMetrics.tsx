@@ -9,22 +9,33 @@ export const EngagementMetrics = () => {
     queryFn: async () => {
       console.log("Fetching retention data...");
       const { data, error } = await supabase
-        .from("user_retention")
-        .select("*")
-        .order('visit_date', { ascending: true })
-        .limit(7);
+        .from("website_visits")
+        .select('visited_at, ip_address, visitor_id')
+        .gte('visited_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
 
       if (error) {
         console.error("Error fetching retention data:", error);
         throw error;
       }
 
-      console.log("Raw retention data:", data);
-      
-      return data.map(day => ({
-        date: new Date(day.visit_date).toLocaleDateString('en-US', { weekday: 'short' }),
-        unique: day.total_visitors,
-        registered: day.registered_visitors
+      console.log("Raw visit data:", data);
+
+      // Group by day and count unique IPs and visitors
+      const dailyStats = data.reduce((acc: Record<string, { unique: number, registered: number }>, visit) => {
+        const day = new Date(visit.visited_at).toLocaleDateString('en-US', { weekday: 'short' });
+        if (!acc[day]) {
+          acc[day] = { unique: new Set(), registered: new Set() };
+        }
+        if (visit.ip_address) acc[day].unique.add(visit.ip_address);
+        if (visit.visitor_id) acc[day].registered.add(visit.visitor_id);
+        return acc;
+      }, {});
+
+      // Convert sets to counts
+      return Object.entries(dailyStats).map(([date, stats]) => ({
+        date,
+        unique: stats.unique.size,
+        registered: stats.registered.size
       }));
     },
   });
