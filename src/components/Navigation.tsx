@@ -34,17 +34,19 @@ const Navigation = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Track page visits
+  // Track page visits and get IP address
   useEffect(() => {
     const recordVisit = async () => {
       try {
         const sessionId = localStorage.getItem('visitorSession') || crypto.randomUUID();
         localStorage.setItem('visitorSession', sessionId);
 
-        const { data, error } = await supabase.rpc('track_website_visit', {
-          p_session_id: sessionId,
-          p_path: location.pathname,
-          p_user_agent: navigator.userAgent
+        const { data, error } = await supabase.functions.invoke('track_website_visit', {
+          body: {
+            session_id: sessionId,
+            path: location.pathname,
+            user_agent: navigator.userAgent
+          }
         });
 
         if (error) {

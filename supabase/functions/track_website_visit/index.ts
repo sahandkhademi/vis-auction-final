@@ -20,6 +20,7 @@ serve(async (req) => {
     const { session_id, path, user_agent } = await req.json()
     const ip_address = req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip')
 
+    // Track the visit
     const { data, error } = await supabaseClient.rpc('track_website_visit', {
       p_session_id: session_id,
       p_path: path,
@@ -29,14 +30,25 @@ serve(async (req) => {
 
     if (error) throw error
 
-    return new Response(JSON.stringify({ id: data }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    })
+    // Return both the visit ID and IP address
+    return new Response(
+      JSON.stringify({ 
+        id: data,
+        ip_address: ip_address || 'unknown'
+      }), 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    )
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    })
+    console.error('Error in track_website_visit:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }), 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
+      }
+    )
   }
 })
