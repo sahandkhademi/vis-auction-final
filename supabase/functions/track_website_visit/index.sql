@@ -23,12 +23,13 @@ BEGIN
   
   v_platform := CASE 
     WHEN p_user_agent ILIKE '%windows%' THEN 'Windows'
-    WHEN p_user_agent ILIKE '%mac%' THEN 'MacOS'
+    WHEN p_user_agent ILIKE '%mac%' OR p_user_agent ILIKE '%macintosh%' OR p_user_agent ILIKE '%macintel%' THEN 'MacOS'
     WHEN p_user_agent ILIKE '%linux%' THEN 'Linux'
     WHEN p_user_agent ILIKE '%android%' THEN 'Android'
     WHEN p_user_agent ILIKE '%ios%' OR p_user_agent ILIKE '%iphone%' OR p_user_agent ILIKE '%ipad%' THEN 'iOS'
     ELSE 'Other'
-  END;
+END;
+
   
   -- Get visitor ID if authenticated
   v_visitor_id := auth.uid();
