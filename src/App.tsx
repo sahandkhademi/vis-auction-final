@@ -48,15 +48,10 @@ const PageViewTracker = () => {
     const trackPageView = async () => {
       console.log("Recording page view for:", location.pathname);
       
-      // Get the IP address using our edge function
-      const ipResponse = await supabase.functions.invoke('get-ip-address');
-      const { data: ipData, error: ipError } = ipResponse;
+      // Get the IP address
+      const ipResponse = await fetch('https://api.ipify.org?format=json');
+      const { ip } = await ipResponse.json();
       
-      if (ipError) {
-        console.error("Error getting IP:", ipError);
-        return;
-      }
-
       const { data, error } = await supabase
         .from('website_visits')
         .insert([{ 
@@ -64,8 +59,8 @@ const PageViewTracker = () => {
           user_agent: navigator.userAgent,
           device_type: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
           platform: navigator.platform,
-          ip_address: ipData.ip,
-          session_duration: 0
+          ip_address: ip,
+          session_duration: 0 // Initialize duration
         }]);
 
       if (error) {
@@ -76,21 +71,16 @@ const PageViewTracker = () => {
     };
 
     const updateSessionDuration = async () => {
-      const ipResponse = await supabase.functions.invoke('get-ip-address');
-      const { data: ipData, error: ipError } = ipResponse;
+      const ipResponse = await fetch('https://api.ipify.org?format=json');
+      const { ip } = await ipResponse.json();
       
-      if (ipError) {
-        console.error("Error getting IP:", ipError);
-        return;
-      }
-      
-      const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
+      const duration = Math.floor((Date.now() - sessionStartTime) / 1000); // Convert to seconds
       
       const { error } = await supabase
         .from('website_visits')
         .update({ session_duration: duration })
-        .eq('ip_address', ipData.ip)
-        .eq('session_duration', 0);
+        .eq('ip_address', ip)
+        .eq('session_duration', 0); // Changed from .is() to .eq()
 
       if (error) {
         console.error("Error updating session duration:", error);
@@ -99,6 +89,7 @@ const PageViewTracker = () => {
 
     trackPageView();
 
+    // Update duration when user leaves the page
     window.addEventListener('beforeunload', updateSessionDuration);
     
     return () => {
