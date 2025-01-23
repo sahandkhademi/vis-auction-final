@@ -14,23 +14,32 @@ DECLARE
   v_visitor_id UUID;
   v_visit_id UUID;
 BEGIN
-  -- Extract device type and platform from user agent
+  -- Extract device type from user agent
   v_device_type := CASE 
     WHEN p_user_agent ILIKE '%mobile%' OR p_user_agent ILIKE '%android%' OR p_user_agent ILIKE '%iphone%' THEN 'Mobile'
     WHEN p_user_agent ILIKE '%tablet%' OR p_user_agent ILIKE '%ipad%' THEN 'Tablet'
     ELSE 'Desktop'
   END;
   
+  -- Extract platform from user agent
   v_platform := CASE 
     WHEN p_user_agent ILIKE '%windows%' THEN 'Windows'
-    WHEN p_user_agent ILIKE '%mac%' OR p_user_agent ILIKE '%macintosh%' OR p_user_agent ILIKE '%macintel%' THEN 'MacOS'
+    WHEN p_user_agent ILIKE '%mac%' OR 
+         p_user_agent ILIKE '%macintosh%' OR 
+         p_user_agent ILIKE '%macintel%' OR 
+         p_user_agent ILIKE '%intel mac%' THEN 'MacOS'
     WHEN p_user_agent ILIKE '%linux%' THEN 'Linux'
     WHEN p_user_agent ILIKE '%android%' THEN 'Android'
-    WHEN p_user_agent ILIKE '%ios%' OR p_user_agent ILIKE '%iphone%' OR p_user_agent ILIKE '%ipad%' THEN 'iOS'
-    ELSE 'Other'
-END;
+    WHEN p_user_agent ILIKE '%ios%' OR 
+         p_user_agent ILIKE '%iphone%' OR 
+         p_user_agent ILIKE '%ipad%' THEN 'iOS'
+    ELSE 'Unknown (' || p_user_agent || ')'
+  END;
 
-  
+  -- Optional: Log the user agent for debugging purposes
+  INSERT INTO user_agent_logs (user_agent, detected_platform) 
+  VALUES (p_user_agent, v_platform);
+
   -- Get visitor ID if authenticated
   v_visitor_id := auth.uid();
   
