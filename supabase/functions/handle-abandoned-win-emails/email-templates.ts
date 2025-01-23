@@ -1,1 +1,1 @@
-export * from '../../../src/utils/email-templates';
+export * from '../_shared/email-templates.ts';
